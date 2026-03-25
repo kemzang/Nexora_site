@@ -24,10 +24,8 @@ export class AuthService {
         }
       }
 
-      // Update last login
-      if (data.user) {
-        await this.updateLastLogin(data.user.id)
-      }
+      // L'utilisateur est créé directement dans auth.users
+      // Pas besoin de mettre à jour une table séparée
 
       return {
         user: data.user ? this.mapAuthUser(data.user) : null,
@@ -124,16 +122,7 @@ export class AuthService {
     }
   }
 
-  private static async updateLastLogin(userId: string): Promise<void> {
-    try {
-      // Pour l'instant, nous allons simplement logger le temps
-      // La mise à jour sera gérée par les triggers Supabase
-      console.log('User logged in:', userId)
-    } catch (error) {
-      console.error('Error updating last login:', error)
-    }
-  }
-
+  
   private static mapAuthUser(user: any): AuthUser {
     return {
       id: user.id,
@@ -142,9 +131,9 @@ export class AuthService {
       lastName: user.user_metadata?.last_name || null,
       avatarUrl: user.user_metadata?.avatar_url || null,
       emailVerified: user.email_confirmed_at !== null,
-      isActive: true, // You might want to check this from your users table
+      isActive: true,
       createdAt: user.created_at,
-      lastLogin: user.last_sign_in_at
+      lastLogin: user.last_sign_in_at || null
     }
   }
 }

@@ -57,7 +57,9 @@ export default function RegisterPage() {
       
       if (result.error) {
         setError(result.error)
+        setLoading(false)
       } else {
+        setLoading(false)
         setSuccess(true)
         setTimeout(() => {
           router.push('/auth/login')
