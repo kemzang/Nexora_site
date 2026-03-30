@@ -36,7 +36,7 @@ export default function HomePage() {
               <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
                 <Brain className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Xenora</span>
+              <span className="text-xl font-bold text-white">Nexora</span>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -87,7 +87,7 @@ export default function HomePage() {
             </h1>
             
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Xenora est l'extension VS Code qui vous donne accès à une intelligence artificielle 
+              Nexora est l'extension VS Code qui vous donne accès à une intelligence artificielle 
               puissante pour coder plus vite, mieux et avec plus de confiance.
             </p>
             
@@ -98,7 +98,7 @@ export default function HomePage() {
                   Essayer gratuitement
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white/20 text-white px-8 py-4 text-lg hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-purple-400/50 text-purple-300 px-8 py-4 text-lg hover:bg-purple-600/20 hover:text-white hover:border-purple-400">
                 <Code className="mr-2 h-5 w-5" />
                 Voir la démo
               </Button>
@@ -208,7 +208,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -218,26 +218,32 @@ export default function HomePage() {
                 <CardHeader className="text-center">
                   <CardTitle className="text-white">Free</CardTitle>
                   <div className="text-3xl font-bold text-white">0€</div>
-                  <CardDescription className="text-gray-300">Pour commencer</CardDescription>
+                  <CardDescription className="text-gray-300">Pour débuter</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">50 tokens/mois</span>
+                      <span className="text-gray-300 text-sm">500 tokens/mois</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Chat IA basique</span>
+                      <span className="text-gray-300 text-sm">50 requêtes/jour</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">DeepSeek uniquement</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
                       <span className="text-gray-300 text-sm">Support communautaire</span>
                     </div>
                   </div>
-                  <Button className="w-full" variant="outline">
-                    Commencer
-                  </Button>
+                  <Link href="/checkout?plan=free&price=0">
+                    <Button className="w-full" variant="outline">
+                      Commencer
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
@@ -262,24 +268,30 @@ export default function HomePage() {
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">1000 tokens/mois</span>
+                      <span className="text-gray-300 text-sm">10 000 tokens/mois</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Chat IA avancé</span>
+                      <span className="text-gray-300 text-sm">500 requêtes/jour</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Auto-complétion illimitée</span>
+                      <span className="text-gray-300 text-sm">GPT-4o Mini, Claude Haiku, Gemini</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">Agent + Auto-complétion</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
                       <span className="text-gray-300 text-sm">Support prioritaire</span>
                     </div>
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-                    Choisir Pro
-                  </Button>
+                  <Link href="/checkout?plan=pro&price=999">
+                    <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                      Choisir Pro
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
@@ -291,32 +303,77 @@ export default function HomePage() {
             >
               <Card className="backdrop-blur-xl bg-white/10 border border-white/20 h-full">
                 <CardHeader className="text-center">
-                  <CardTitle className="text-white">Enterprise</CardTitle>
-                  <div className="text-3xl font-bold text-white">49,99€</div>
+                  <CardTitle className="text-white">Business</CardTitle>
+                  <div className="text-3xl font-bold text-white">29,99€</div>
                   <CardDescription className="text-gray-300">par mois</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Tokens illimités</span>
+                      <span className="text-gray-300 text-sm">50 000 tokens/mois</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Tous les modèles IA</span>
+                      <span className="text-gray-300 text-sm">2 000 requêtes/jour</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">API dédiée</span>
+                      <span className="text-gray-300 text-sm">GPT-4o, Claude Sonnet</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Support 24/7</span>
+                      <span className="text-gray-300 text-sm">Mode équipe</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">Support prioritaire</span>
                     </div>
                   </div>
-                  <Button className="w-full" variant="outline">
-                    Contacter les ventes
-                  </Button>
+                  <Link href="/checkout?plan=business&price=2999">
+                    <Button className="w-full" variant="outline">
+                      Choisir Business
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="backdrop-blur-xl bg-white/10 border border-white/20 h-full">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-white">Enterprise</CardTitle>
+                  <div className="text-3xl font-bold text-white">99,99€</div>
+                  <CardDescription className="text-gray-300">par mois</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">200 000 tokens/mois</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">Requêtes illimitées</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">Tous les modèles + custom</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-gray-300 text-sm">SSO + Support 24/7</span>
+                    </div>
+                  </div>
+                  <Link href="/checkout?plan=enterprise&price=9999">
+                    <Button className="w-full" variant="outline">
+                      Contacter les ventes
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
@@ -338,7 +395,7 @@ export default function HomePage() {
                   Prêt à transformer votre façon de coder ?
                 </h2>
                 <p className="text-xl text-gray-300 mb-8">
-                  Rejoignez des milliers de développeurs qui utilisent déjà Xenora 
+                  Rejoignez des milliers de développeurs qui utilisent déjà Nexora 
                   pour coder plus intelligemment.
                 </p>
                 <Link href="/auth/register">
@@ -362,7 +419,7 @@ export default function HomePage() {
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
                   <Brain className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-lg font-bold text-white">Xenora</span>
+                <span className="text-lg font-bold text-white">Nexora</span>
               </div>
               <p className="text-gray-400 text-sm">
                 L'extension VS Code qui transforme votre code avec l'intelligence artificielle.
@@ -399,7 +456,7 @@ export default function HomePage() {
           
           <div className="border-t border-white/10 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">
-              © 2024 Xenora. Tous droits réservés.
+              © 2024 Nexora. Tous droits réservés.
             </p>
           </div>
         </div>

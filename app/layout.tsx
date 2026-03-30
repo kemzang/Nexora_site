@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Xenora - Extension VS Code IA Personnalisée",
+  title: "Nexora - Extension VS Code IA Personnalisée",
   description: "L'extension VS Code qui transforme votre code avec l'intelligence artificielle",
 };
 

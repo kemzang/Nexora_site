@@ -24,7 +24,7 @@ export default function DashboardPage() {
               <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
                 <Brain className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-white">Xenora</h1>
+              <h1 className="text-xl font-bold text-white">Nexora</h1>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="text-white">Actions rapides</CardTitle>
               <CardDescription className="text-gray-300">
-                Commencez à utiliser Xenora avec ces actions rapides
+                Commencez à utiliser Nexora avec ces actions rapides
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -186,7 +186,7 @@ export default function DashboardPage() {
               <Button variant="outline" className="border-white/20 text-white h-auto p-6 flex flex-col items-center space-y-2 hover:bg-white/10">
                 <Users className="w-8 h-8" />
                 <span className="font-semibold">Documentation</span>
-                <span className="text-sm opacity-80">Apprenez à utiliser Xenora</span>
+                <span className="text-sm opacity-80">Apprenez à utiliser Nexora</span>
               </Button>
             </CardContent>
           </Card>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
         >
           <Card className="backdrop-blur-xl bg-white/10 border border-white/20">
             <CardHeader>
-              <CardTitle className="text-white">Commencer avec Xenora</CardTitle>
+              <CardTitle className="text-white">Commencer avec Nexora</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start space-x-4">
@@ -210,7 +210,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h4 className="text-white font-semibold">Installez l'extension VS Code</h4>
-                  <p className="text-gray-300 text-sm">Téléchargez Xenora depuis le marketplace VS Code</p>
+                  <p className="text-gray-300 text-sm">Téléchargez Nexora depuis le marketplace VS Code</p>
                 </div>
               </div>
               

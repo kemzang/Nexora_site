@@ -138,7 +138,7 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <CardTitle className="text-2xl font-bold text-white">
-                  Rejoindre <span className="gradient-text">Xenora</span>
+                  Rejoindre <span className="gradient-text">Nexora</span>
                 </CardTitle>
                 <CardDescription className="text-gray-300">
                   Créez votre compte et transformez votre développement
@@ -273,7 +273,7 @@ export default function RegisterPage() {
           <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
             <CardContent className="p-6">
               <h3 className="text-white font-semibold mb-4 text-center">
-                Ce que vous obtenez avec Xenora :
+                Ce que vous obtenez avec Nexora :
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">

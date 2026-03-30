@@ -93,7 +93,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold text-white">
-                Bienvenue sur <span className="gradient-text">Xenora</span>
+                Bienvenue sur <span className="gradient-text">Nexora</span>
               </CardTitle>
               <CardDescription className="text-gray-300">
                 L'extension VS Code IA qui transforme votre code

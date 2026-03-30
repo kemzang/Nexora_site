@@ -1,6 +1,6 @@
-# Xenora - Extension VS Code IA Personnalisée
+# Nexora - Extension VS Code IA Personnalisée
 
-Xenora est une extension VS Code qui fournit des services d'IA assistée par abonnement, similaire à Continue ou Cursor, mais avec notre propre infrastructure et modèle économique.
+Nexora est une extension VS Code qui fournit des services d'IA assistée par abonnement, similaire à Continue ou Cursor, mais avec notre propre infrastructure et modèle économique.
 
 ## 🚀 Démarrage Rapide
 
@@ -15,7 +15,7 @@ Xenora est une extension VS Code qui fournit des services d'IA assistée par abo
 1. Clonez le repository :
 ```bash
 git clone <repository-url>
-cd xenora
+cd nexora
 ```
 
 2. Installez les dépendances :
@@ -40,7 +40,7 @@ npm run dev
 ### Structure des Dossiers
 
 ```
-xenora/
+nexora/
 ├── app/                    # Pages Next.js App Router
 │   ├── auth/              # Pages d'authentification
 │   │   ├── login/
@@ -156,11 +156,11 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 
 ## 📞 Contact
 
-- **Website** : https://xenora.ai
-- **Documentation** : https://docs.xenora.ai
-- **Support** : support@xenora.ai
-- **Twitter** : @xenora_ai
+- **Website** : https://nexora.ai
+- **Documentation** : https://docs.nexora.ai
+- **Support** : support@nexora.ai
+- **Twitter** : @nexora_ai
 
 ---
 
-*Ce document est évolutif et sera mis à jour au fur et à mesure du développement du projet Xenora.*
+*Ce document est évolutif et sera mis à jour au fur et à mesure du développement du projet Nexora.*
