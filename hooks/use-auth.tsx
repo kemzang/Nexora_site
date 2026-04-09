@@ -8,8 +8,8 @@ import type { AuthUser, LoginCredentials, RegisterCredentials } from '@/types'
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
-  signIn: (credentials: LoginCredentials) => Promise<{ error?: string }>
-  signUp: (credentials: RegisterCredentials) => Promise<{ error?: string }>
+  signIn: (credentials: LoginCredentials) => Promise<{ error?: string, token?: string }>
+  signUp: (credentials: RegisterCredentials) => Promise<{ error?: string, token?: string }>
   signOut: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.user) {
         setUser(result.user)
       }
-      return { error: result.error }
+      return { error: result.error, token: result.session?.access_token }
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Unknown error' }
     } finally {
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.user) {
         setUser(result.user)
       }
-      return { error: result.error }
+      return { error: result.error, token: result.session?.access_token }
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Unknown error' }
     } finally {

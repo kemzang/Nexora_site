@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -23,12 +23,15 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-export default function LoginPage() {
+function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { signIn } = useAuth()
   const { showToast } = useToast()
+
+  const callback = searchParams.get('callback')
 
   const {
     register,
@@ -48,7 +51,14 @@ export default function LoginPage() {
         setError(result.error)
       } else {
         showToast('Connexion réussie !', 'success')
-        router.push('/dashboard')
+        
+        if (callback && result.token) {
+          // Si on a un callback (VS Code), on redirige vers l'URL spéciale
+          const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${result.token}`
+          window.location.href = redirectUrl
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la connexion')
@@ -168,7 +178,7 @@ export default function LoginPage() {
               <div className="text-gray-300">
                 Pas encore de compte ?{' '}
                 <Link 
-                  href="/auth/register" 
+                  href={`/auth/register${callback ? `?callback=${encodeURIComponent(callback)}` : ''}`} 
                   className="text-purple-400 hover:text-purple-300 transition-colors font-semibold"
                 >
                   Créer un compte
@@ -209,5 +219,17 @@ export default function LoginPage() {
         </motion.div>
       </motion.div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

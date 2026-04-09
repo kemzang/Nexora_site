@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -29,13 +29,16 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { signUp } = useAuth()
   const { showToast } = useToast()
+
+  const callback = searchParams.get('callback')
 
   const {
     register,
@@ -77,8 +80,14 @@ export default function RegisterPage() {
         showToast('Inscription réussie ! Vérifiez votre email.', 'success')
         setLoading(false)
         setSuccess(true)
+        
         setTimeout(() => {
-          router.push('/auth/login')
+          if (callback && result.token) {
+            const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${result.token}`
+            window.location.href = redirectUrl
+          } else {
+            router.push('/auth/login')
+          }
         }, 3000)
       }
     } catch (err) {
@@ -104,8 +113,7 @@ export default function RegisterPage() {
             Inscription réussie !
           </h1>
           <p className="text-gray-300 mb-8">
-            Vérifiez votre email pour activer votre compte.<br />
-            Vous allez être redirigé vers la page de connexion...
+            {callback ? "Votre compte a été créé. Vous allez être redirigé vers l'extension..." : "Vérifiez votre email pour activer votre compte. Vous allez être redirigé vers la page de connexion..."}
           </p>
           <div className="flex justify-center">
             <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
@@ -268,7 +276,7 @@ export default function RegisterPage() {
                 <div className="text-gray-300">
                   Déjà un compte ?{' '}
                   <Link 
-                    href="/auth/login" 
+                    href={`/auth/login${callback ? `?callback=${encodeURIComponent(callback)}` : ''}`} 
                     className="text-purple-400 hover:text-purple-300 transition-colors font-semibold"
                   >
                     Se connecter
@@ -316,5 +324,17 @@ export default function RegisterPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }
