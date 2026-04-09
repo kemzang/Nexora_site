@@ -8,6 +8,7 @@ import type { AuthUser, LoginCredentials, RegisterCredentials } from '@/types'
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
+  token: string | null
   signIn: (credentials: LoginCredentials) => Promise<{ error?: string, token?: string }>
   signUp: (credentials: RegisterCredentials) => Promise<{ error?: string, token?: string }>
   signOut: () => Promise<void>
@@ -18,13 +19,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const currentUser = await AuthService.getCurrentUser()
-        setUser(currentUser)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const currentUser = await AuthService.getCurrentUser()
+          setUser(currentUser)
+          setToken(session.access_token)
+        }
       } catch (error) {
         console.error('Error initializing auth:', error)
       } finally {
@@ -40,8 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && session?.user) {
           const authUser = await AuthService.getCurrentUser()
           setUser(authUser)
+          setToken(session.access_token)
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
+          setToken(null)
         }
       }
     )
@@ -53,8 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     try {
       const result = await AuthService.signIn(credentials)
-      if (result.user) {
+      if (result.user && result.session) {
         setUser(result.user)
+        setToken(result.session.access_token)
       }
       return { error: result.error, token: result.session?.access_token }
     } catch (error) {
@@ -68,8 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     try {
       const result = await AuthService.signUp(credentials)
-      if (result.user) {
+      if (result.user && result.session) {
         setUser(result.user)
+        setToken(result.session.access_token)
       }
       return { error: result.error, token: result.session?.access_token }
     } catch (error) {
@@ -84,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await AuthService.signOut()
       setUser(null)
+      setToken(null)
     } catch (error) {
       console.error('Error signing out:', error)
     } finally {
@@ -93,8 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const currentUser = await AuthService.getCurrentUser()
       setUser(currentUser)
+      if (session) setToken(session.access_token)
     } catch (error) {
       console.error('Error refreshing user:', error)
     }
@@ -103,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     loading,
+    token,
     signIn,
     signUp,
     signOut,

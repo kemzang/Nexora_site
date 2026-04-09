@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -35,10 +35,22 @@ function RegisterForm() {
   const [success, setSuccess] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signUp } = useAuth()
+  const { signUp, user, token } = useAuth()
   const { showToast } = useToast()
 
   const callback = searchParams.get('callback')
+
+  // Redirection si déjà connecté
+  useEffect(() => {
+    if (user && token) {
+      if (callback) {
+        const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
+        window.location.href = redirectUrl
+      } else {
+        router.push('/dashboard')
+      }
+    }
+  }, [user, token, callback, router])
 
   const {
     register,

@@ -126,9 +126,8 @@ export function AvatarUpload({
         <Button
           onClick={triggerFileInput}
           disabled={uploading}
-          variant="outline"
           size="sm"
-          className="w-full"
+          className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300"
         >
           {uploading ? (
             <>

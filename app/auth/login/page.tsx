@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -28,10 +28,23 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signIn } = useAuth()
+  const { signIn, user, token } = useAuth()
   const { showToast } = useToast()
 
   const callback = searchParams.get('callback')
+
+  // Redirection si déjà connecté
+  useEffect(() => {
+    if (user && token) {
+      if (callback) {
+        // Si on a un callback (VS Code), on redirige vers l'URL spéciale
+        const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
+        window.location.href = redirectUrl
+      } else {
+        router.push('/dashboard')
+      }
+    }
+  }, [user, token, callback, router])
 
   const {
     register,

@@ -171,20 +171,20 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-auto p-6 flex flex-col items-center space-y-2">
+              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-auto p-6 flex flex-col items-center space-y-2 border-none shadow-lg shadow-purple-500/20">
                 <Code className="w-8 h-8" />
                 <span className="font-semibold">Créer une API Key</span>
                 <span className="text-sm opacity-80">Générez votre clé pour VS Code</span>
               </Button>
               
-              <Button variant="outline" className="border-white/20 text-white h-auto p-6 flex flex-col items-center space-y-2 hover:bg-white/10">
-                <CreditCard className="w-8 h-8" />
+              <Button className="bg-white/5 hover:bg-white/10 border border-white/10 text-white h-auto p-6 flex flex-col items-center space-y-2 transition-all duration-300">
+                <CreditCard className="w-8 h-8 text-purple-400" />
                 <span className="font-semibold">Mettre à niveau</span>
                 <span className="text-sm opacity-80">Passez au plan Pro</span>
               </Button>
               
-              <Button variant="outline" className="border-white/20 text-white h-auto p-6 flex flex-col items-center space-y-2 hover:bg-white/10">
-                <Users className="w-8 h-8" />
+              <Button className="bg-white/5 hover:bg-white/10 border border-white/10 text-white h-auto p-6 flex flex-col items-center space-y-2 transition-all duration-300">
+                <Users className="w-8 h-8 text-blue-400" />
                 <span className="font-semibold">Documentation</span>
                 <span className="text-sm opacity-80">Apprenez à utiliser Nexora</span>
               </Button>

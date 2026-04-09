@@ -93,12 +93,12 @@ export default function HomePage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/register">
-                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg">
+                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg border-none shadow-lg shadow-purple-500/20">
                   <Rocket className="mr-2 h-5 w-5" />
                   Essayer gratuitement
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-purple-400/50 text-purple-300 px-8 py-4 text-lg hover:bg-purple-600/20 hover:text-white hover:border-purple-400">
+              <Button size="lg" className="bg-white/5 border border-purple-400/30 text-purple-300 px-8 py-4 text-lg hover:bg-purple-600/20 hover:text-white hover:border-purple-400 transition-all duration-300">
                 <Code className="mr-2 h-5 w-5" />
                 Voir la démo
               </Button>
@@ -240,7 +240,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <Link href="/checkout?plan=free&price=0">
-                    <Button className="w-full" variant="outline">
+                    <Button className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300">
                       Commencer
                     </Button>
                   </Link>
@@ -331,7 +331,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <Link href="/checkout?plan=business&price=2999">
-                    <Button className="w-full" variant="outline">
+                    <Button className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300">
                       Choisir Business
                     </Button>
                   </Link>
@@ -370,7 +370,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <Link href="/checkout?plan=enterprise&price=9999">
-                    <Button className="w-full" variant="outline">
+                    <Button className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300">
                       Contacter les ventes
                     </Button>
                   </Link>
