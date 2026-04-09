@@ -42,15 +42,14 @@ function RegisterForm() {
 
   // Redirection si déjà connecté
   useEffect(() => {
-    if (user && token) {
-      if (callback) {
-        const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
-        window.location.href = redirectUrl
-      } else {
-        router.push('/dashboard')
-      }
+    if (user && token && callback && !success) {
+      setSuccess(true)
+      const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
+      window.location.href = redirectUrl
+    } else if (user && token && !callback) {
+      router.push('/dashboard')
     }
-  }, [user, token, callback, router])
+  }, [user, token, callback, router, success])
 
   const {
     register,
@@ -110,26 +109,48 @@ function RegisterForm() {
   }
 
   if (success) {
+    const redirectUrl = callback && token ? `${callback}${callback.includes('?') ? '&' : '?'}token=${token}` : null
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="text-center w-full max-w-md"
         >
-          <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-4">
-            Inscription réussie !
-          </h1>
-          <p className="text-gray-300 mb-8">
-            {callback ? "Votre compte a été créé. Vous allez être redirigé vers l'extension..." : "Vérifiez votre email pour activer votre compte. Vous allez être redirigé vers la page de connexion..."}
-          </p>
-          <div className="flex justify-center">
-            <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-          </div>
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl p-8">
+            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-4">
+              Inscription réussie !
+            </h1>
+            <p className="text-gray-300 mb-8">
+              {callback ? "Nous tentons de vous rediriger vers l'extension..." : "Vérifiez votre email pour activer votre compte. Vous allez être redirigé vers la page de connexion..."}
+            </p>
+            
+            {callback && redirectUrl ? (
+              <div className="space-y-4">
+                <Button 
+                  onClick={() => window.location.href = redirectUrl}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3"
+                >
+                  Ouvrir VS Code
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => router.push('/dashboard')}
+                  className="text-gray-400 hover:text-white"
+                >
+                  Aller au Dashboard
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </Card>
         </motion.div>
       </div>
     )

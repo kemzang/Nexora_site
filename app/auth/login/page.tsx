@@ -25,6 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 function LoginForm() {
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -35,16 +36,15 @@ function LoginForm() {
 
   // Redirection si déjà connecté
   useEffect(() => {
-    if (user && token) {
-      if (callback) {
-        // Si on a un callback (VS Code), on redirige vers l'URL spéciale
-        const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
-        window.location.href = redirectUrl
-      } else {
-        router.push('/dashboard')
-      }
+    if (user && token && callback && !success) {
+      setSuccess(true)
+      const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
+      // Tentative de redirection automatique
+      window.location.href = redirectUrl
+    } else if (user && token && !callback) {
+      router.push('/dashboard')
     }
-  }, [user, token, callback, router])
+  }, [user, token, callback, router, success])
 
   const {
     register,
@@ -66,7 +66,7 @@ function LoginForm() {
         showToast('Connexion réussie !', 'success')
         
         if (callback && result.token) {
-          // Si on a un callback (VS Code), on redirige vers l'URL spéciale
+          setSuccess(true)
           const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${result.token}`
           window.location.href = redirectUrl
         } else {
@@ -78,6 +78,47 @@ function LoginForm() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (success && callback) {
+    const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center w-full max-w-md"
+        >
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl p-8">
+            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Zap className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-4">
+              Connexion réussie !
+            </h1>
+            <p className="text-gray-300 mb-8">
+              Nous tentons de vous rediriger vers VS Code...
+            </p>
+            <div className="space-y-4">
+              <Button 
+                onClick={() => window.location.href = redirectUrl}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3"
+              >
+                Ouvrir VS Code
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-400 hover:text-white"
+              >
+                Aller au Dashboard
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
