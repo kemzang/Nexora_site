@@ -1,21 +1,56 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Brain, Zap, Code, TrendingUp, Users, CreditCard, Settings, LogOut } from 'lucide-react'
+import { Brain, Zap, Code, TrendingUp, Users, CreditCard, Settings, LogOut, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import { Modal } from '@/components/ui/modal'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
+    setIsSignOutModalOpen(false)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Sign Out Confirmation Modal */}
+      <Modal
+        isOpen={isSignOutModalOpen}
+        onClose={() => setIsSignOutModalOpen(false)}
+        title="Confirmer la déconnexion"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-gray-300 mb-8">
+            Êtes-vous sûr de vouloir vous déconnecter de votre compte Nexora ?
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={handleSignOut}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              Se déconnecter
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setIsSignOutModalOpen(false)}
+              className="flex-1 text-gray-400 hover:text-white hover:bg-white/10"
+            >
+              Annuler
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Header */}
       <header className="border-b border-white/10 backdrop-blur-xl bg-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,7 +81,7 @@ export default function DashboardPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleSignOut}
+                  onClick={() => setIsSignOutModalOpen(true)}
                   className="text-white hover:bg-white/10"
                 >
                   <LogOut className="w-4 h-4" />

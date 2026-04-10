@@ -39,8 +39,21 @@ function LoginForm() {
     if (user && token && callback && !success) {
       setSuccess(true)
       const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${token}`
-      // Tentative de redirection automatique
-      window.location.href = redirectUrl
+      
+      // Tentative de redirection automatique plus robuste
+      const openVSCode = () => {
+        // Méthode 1: window.location.assign
+        window.location.assign(redirectUrl)
+        
+        // Méthode 2: Iframe fallback (souvent plus fiable pour les custom protocols)
+        const iframe = document.createElement('iframe')
+        iframe.style.display = 'none'
+        iframe.src = redirectUrl
+        document.body.appendChild(iframe)
+        setTimeout(() => document.body.removeChild(iframe), 1000)
+      }
+
+      openVSCode()
     } else if (user && token && !callback) {
       router.push('/dashboard')
     }
@@ -68,7 +81,17 @@ function LoginForm() {
         if (callback && result.token) {
           setSuccess(true)
           const redirectUrl = `${callback}${callback.includes('?') ? '&' : '?'}token=${result.token}`
-          window.location.href = redirectUrl
+          
+          // Redirection directe lors de la soumission du formulaire
+          const openVSCode = () => {
+            window.location.assign(redirectUrl)
+            const iframe = document.createElement('iframe')
+            iframe.style.display = 'none'
+            iframe.src = redirectUrl
+            document.body.appendChild(iframe)
+            setTimeout(() => document.body.removeChild(iframe), 1000)
+          }
+          openVSCode()
         } else {
           router.push('/dashboard')
         }
