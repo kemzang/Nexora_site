@@ -33,6 +33,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [redirectToken, setRedirectToken] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signUp, user, token } = useAuth()
@@ -44,7 +45,10 @@ function RegisterForm() {
   // Redirection si déjà connecté
   useEffect(() => {
     if (user && token && callback) {
-      if (!success) setSuccess(true)
+      if (!success) {
+        setSuccess(true)
+        setRedirectToken(token)
+      }
     } else if (user && token && !callback) {
       router.push('/dashboard')
     }
@@ -90,11 +94,12 @@ function RegisterForm() {
         showToast('Inscription réussie !', 'success')
         
         if (callback && result.token) {
+          setRedirectToken(result.token)
           const redirectUrl = getRedirectUrl(result.token)
           if (redirectUrl) {
-            window.location.href = redirectUrl
+            window.location.assign(redirectUrl)
           }
-          setTimeout(() => setSuccess(true), 500)
+          setSuccess(true)
         } else {
           setSuccess(true)
           setTimeout(() => {
@@ -110,7 +115,8 @@ function RegisterForm() {
   }
 
   if (success) {
-    const redirectUrl = callback && token ? getRedirectUrl(token) : null
+    const finalToken = redirectToken || token
+    const redirectUrl = callback && finalToken ? getRedirectUrl(finalToken) : null
     return (
       <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center p-4 overflow-hidden relative">
         {/* Animated Background */}
