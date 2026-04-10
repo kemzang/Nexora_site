@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Brain, Sparkles, Lock, CheckCircle } from 'lucide-react'
+import { Loader2, Sparkles, Lock, CheckCircle, Zap } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 
 const schema = z.object({
@@ -103,11 +103,15 @@ export default function ResetPasswordPage() {
           <CardHeader className="text-center space-y-6">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} className="flex justify-center">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Brain className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-purple-500/20">
+                  <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute -top-1 -right-1">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute -top-1 -right-1"
+                >
+                  <Zap className="w-4 h-4 text-yellow-400" />
                 </motion.div>
               </div>
             </motion.div>

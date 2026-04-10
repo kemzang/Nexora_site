@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Sparkles, Brain, Zap, CheckCircle, Code, Rocket } from 'lucide-react'
+import { Loader2, Sparkles, Zap, CheckCircle, Code, Rocket, ArrowRight } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 
 const registerSchema = z.object({
@@ -114,44 +114,65 @@ function RegisterForm() {
   if (success) {
     const redirectUrl = callback && token ? `${callback}${callback.includes('?') ? '&' : '?'}token=${token}` : null
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center p-4 overflow-hidden relative">
+        {/* Animated Background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/20 blur-[120px] rounded-full animate-pulse" />
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center w-full max-w-md"
+          className="text-center w-full max-w-md relative z-10"
         >
-          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl p-8">
-            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-4">
+          <Card className="backdrop-blur-2xl bg-white/[0.03] border-white/10 shadow-2xl p-10 rounded-[2rem]">
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-500/40"
+            >
+              <Code className="w-12 h-12 text-white" />
+            </motion.div>
+
+            <h1 className="text-3xl font-bold text-white mb-4 tracking-tight">
               Inscription réussie !
             </h1>
-            <p className="text-gray-300 mb-8">
-              {callback ? "Nous tentons de vous rediriger vers l'extension..." : "Vérifiez votre email pour activer votre compte. Vous allez être redirigé vers la page de connexion..."}
-            </p>
             
             {callback && redirectUrl ? (
-              <div className="space-y-4">
-                <Button 
-                  onClick={() => window.location.href = redirectUrl}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3"
-                >
-                  Ouvrir VS Code
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => router.push('/dashboard')}
-                  className="text-gray-400 hover:text-white"
-                >
-                  Aller au Dashboard
-                </Button>
-              </div>
+              <>
+                <p className="text-gray-400 mb-10 leading-relaxed">
+                  Votre compte a été créé avec succès. Cliquez sur le bouton ci-dessous pour ouvrir VS Code et commencer à coder.
+                </p>
+                <div className="space-y-4">
+                  <Button 
+                    onClick={() => window.location.href = redirectUrl}
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-7 rounded-2xl text-lg shadow-xl shadow-indigo-600/20 group transition-all"
+                  >
+                    Ouvrir VS Code
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => router.push('/dashboard')}
+                    className="w-full text-gray-500 hover:text-white hover:bg-white/5 py-6 rounded-2xl"
+                  >
+                    Aller au Dashboard web
+                  </Button>
+                </div>
+              </>
             ) : (
-              <div className="flex justify-center">
-                <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-              </div>
+              <>
+                <p className="text-gray-400 mb-8 leading-relaxed">
+                  Vérifiez votre email pour activer votre compte. Vous allez être redirigé vers la page de connexion...
+                </p>
+                <div className="flex justify-center">
+                  <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </>
             )}
           </Card>
         </motion.div>
@@ -176,25 +197,25 @@ function RegisterForm() {
           <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
             <CardHeader className="text-center space-y-6">
               {/* Logo */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="flex justify-center"
-              >
-                <div className="relative">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Rocket className="w-8 h-8 text-white" />
-                  </div>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute -top-1 -right-1"
-                  >
-                    <Sparkles className="w-4 h-4 text-yellow-400" />
-                  </motion.div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="flex justify-center"
+            >
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-purple-500/20">
+                  <Sparkles className="w-8 h-8 text-white" />
                 </div>
-              </motion.div>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute -top-1 -right-1"
+                >
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                </motion.div>
+              </div>
+            </motion.div>
 
               <div className="space-y-2">
                 <CardTitle className="text-2xl font-bold text-white">

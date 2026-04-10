@@ -5,14 +5,13 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
-  Brain, 
+  Sparkles, 
   Zap, 
   Code, 
   TrendingUp, 
   Users, 
   CheckCircle, 
   ArrowRight,
-  Sparkles,
   Rocket,
   Shield,
   Globe
@@ -32,11 +31,11 @@ export default function HomePage() {
       <nav className="relative z-10 border-b border-white/10 backdrop-blur-xl bg-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Nexora</span>
+              <span className="text-xl font-bold text-white tracking-tight">Nexora</span>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -68,15 +67,15 @@ export default function HomePage() {
           >
             <div className="flex justify-center mb-6">
               <div className="relative">
-                <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl flex items-center justify-center shadow-2xl">
-                  <Brain className="w-10 h-10 text-white" />
+                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-purple-500/40">
+                  <Sparkles className="w-10 h-10 text-white" />
                 </div>
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                   className="absolute -top-2 -right-2"
                 >
-                  <Sparkles className="w-6 h-6 text-yellow-400" />
+                  <Zap className="w-6 h-6 text-yellow-400" />
                 </motion.div>
               </div>
             </div>
@@ -133,7 +132,7 @@ export default function HomePage() {
               <Card className="backdrop-blur-xl bg-white/10 border border-white/20 h-full">
                 <CardHeader>
                   <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
-                    <Brain className="w-6 h-6 text-purple-400" />
+                    <Sparkles className="w-6 h-6 text-purple-400" />
                   </div>
                   <CardTitle className="text-white">Chat IA Intégré</CardTitle>
                 </CardHeader>
@@ -416,12 +415,12 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-lg font-bold text-white">Nexora</span>
               </div>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-sm leading-relaxed">
                 L'extension VS Code qui transforme votre code avec l'intelligence artificielle.
               </p>
             </div>
