@@ -5,27 +5,27 @@ import { useEffect, useState } from 'react'
 export const dynamic = 'force-dynamic'
 
 export default function ContinueRedirectPage() {
-  const [mounted, setMounted] = useState(false)
   const [status, setStatus] = useState('loading')
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState('Initialisation...')
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-
-    const handleAuth = async () => {
+    // Délai pour éviter les problèmes d'hydration
+    const timer = setTimeout(async () => {
       try {
-        // Attendre un peu pour s'assurer que tout est chargé
-        await new Promise(resolve => setTimeout(resolve, 100))
+        setMessage('Vérification de l\'authentification...')
         
+        // Import dynamique pour éviter les problèmes SSR
         const { supabase } = await import('@/lib/supabase')
         
-        const urlParams = new URLSearchParams(window.location.search)
-        const state = urlParams.get('state')
-        const error = urlParams.get('error')
+        // Récupération sécurisée des paramètres URL
+        let state = null
+        let error = null
+        
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search)
+          state = urlParams.get('state')
+          error = urlParams.get('error')
+        }
         
         if (error) {
           setStatus('error')
@@ -33,13 +33,23 @@ export default function ContinueRedirectPage() {
           return
         }
 
+        setMessage('Vérification de la session utilisateur...')
+        
         const { data: { user }, error: userError } = await supabase.auth.getUser()
         
         if (userError || !user) {
-          const loginUrl = `/auth/login?redirect=${encodeURIComponent(window.location.href)}`
-          window.location.href = loginUrl
+          setMessage('Redirection vers la page de connexion...')
+          
+          if (typeof window !== 'undefined') {
+            const loginUrl = `/auth/login?redirect=${encodeURIComponent(window.location.href)}`
+            setTimeout(() => {
+              window.location.href = loginUrl
+            }, 1000)
+          }
           return
         }
+
+        setMessage('Génération du code d\'authentification...')
 
         const response = await fetch('/api/auth/generate-auth-code', {
           method: 'POST',
@@ -55,35 +65,28 @@ export default function ContinueRedirectPage() {
           return
         }
 
-        const vscodeUrl = new URL('vscode://Nexora.nexora/auth')
-        vscodeUrl.searchParams.set('code', data.code)
-        if (state) vscodeUrl.searchParams.set('state', state)
-
         setStatus('success')
         setMessage('Authentification réussie! Redirection vers VS Code...')
 
-        setTimeout(() => {
-          window.location.href = vscodeUrl.toString()
-        }, 1500)
+        if (typeof window !== 'undefined') {
+          const vscodeUrl = new URL('vscode://Nexora.nexora/auth')
+          vscodeUrl.searchParams.set('code', data.code)
+          if (state) vscodeUrl.searchParams.set('state', state)
+
+          setTimeout(() => {
+            window.location.href = vscodeUrl.toString()
+          }, 2000)
+        }
 
       } catch (err) {
         console.error('Auth error:', err)
         setStatus('error')
         setMessage('Erreur inattendue lors de l\'authentification')
       }
-    }
+    }, 500) // Délai de 500ms pour éviter les problèmes d'hydration
 
-    handleAuth()
-  }, [mounted])
-
-  // Affichage de chargement pendant le montage
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-      </div>
-    )
-  }
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
@@ -96,7 +99,7 @@ export default function ContinueRedirectPage() {
         {status === 'loading' && (
           <div className="space-y-4">
             <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto"></div>
-            <p className="text-gray-300">Authentification en cours...</p>
+            <p className="text-gray-300">{message}</p>
           </div>
         )}
 
@@ -123,7 +126,11 @@ export default function ContinueRedirectPage() {
             </div>
             <p className="text-red-400 font-medium">{message}</p>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload()
+                }
+              }}
               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Réessayer
