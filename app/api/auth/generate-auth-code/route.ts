@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: userId,
         name: 'VS Code Auth Code (temporaire)',
-        key_prefix: code.slice(0, 15),
+        key_prefix: code.slice(0, 10), // Limité à 10 caractères selon le schéma
         key_hash: createHash('sha256').update(code).digest('hex'),
         permissions: { auth_code: true, temporary: true },
         rate_limit_per_minute: 1,
