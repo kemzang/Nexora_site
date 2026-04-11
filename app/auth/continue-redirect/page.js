@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 
 export const dynamic = 'force-dynamic'
 
-export default function Page() {
+export default function ContinueRedirectPage() {
   const [mounted, setMounted] = useState(false)
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [status, setStatus] = useState('loading')
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -18,7 +18,6 @@ export default function Page() {
 
     const handleAuth = async () => {
       try {
-        // Import dynamique pour éviter les problèmes SSR
         const { supabase } = await import('@/lib/supabase')
         
         const urlParams = new URLSearchParams(window.location.search)
