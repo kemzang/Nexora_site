@@ -73,9 +73,13 @@ export default function ContinueRedirectPage() {
           vscodeUrl.searchParams.set('code', data.code)
           if (state) vscodeUrl.searchParams.set('state', state)
 
+          // Ouvrir VS Code
+          window.location.href = vscodeUrl.toString()
+
+          // Après 3 secondes, rediriger vers le dashboard sur le site
           setTimeout(() => {
-            window.location.href = vscodeUrl.toString()
-          }, 2000)
+            window.location.href = '/dashboard'
+          }, 3000)
         }
 
       } catch (err) {
@@ -112,7 +116,7 @@ export default function ContinueRedirectPage() {
             </div>
             <p className="text-green-400 font-medium">{message}</p>
             <p className="text-gray-400 text-sm">
-              Si VS Code ne s'ouvre pas automatiquement, vous pouvez fermer cette fenêtre.
+              VS Code va s'ouvrir automatiquement. Vous serez redirigé vers le dashboard dans quelques secondes.
             </p>
           </div>
         )}
