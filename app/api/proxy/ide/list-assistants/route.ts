@@ -8,6 +8,46 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nexora-mu-henna.vercel.app'
+
+// Modèles disponibles selon le plan
+function getModelsForPlan(plan: string, token: string) {
+  const apiBase = `${BASE_URL}/api/proxy/model-proxy`
+
+  const miniModel = {
+    title: 'Nexora Mini',
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+    apiBase,
+    apiKey: token,
+  }
+
+  const proModel = {
+    title: 'Nexora Pro (GPT-4o)',
+    provider: 'openai',
+    model: 'gpt-4o',
+    apiBase,
+    apiKey: token,
+  }
+
+  const deepseekModel = {
+    title: 'Nexora DeepSeek',
+    provider: 'openai', // Continue utilise le format OpenAI
+    model: 'deepseek-chat',
+    apiBase,
+    apiKey: token,
+  }
+
+  switch (plan) {
+    case 'pro':
+      return { models: [proModel, miniModel], autocomplete: miniModel }
+    case 'enterprise':
+      return { models: [proModel, deepseekModel, miniModel], autocomplete: miniModel }
+    default: // free
+      return { models: [miniModel], autocomplete: miniModel }
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization')
@@ -22,32 +62,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Retourner l'assistant Nexora au format Continue Hub
+    // Récupérer le plan actif de l'utilisateur
+    const { data: subscription } = await supabase
+      .from('user_subscriptions')
+      .select('plan_id, status, subscription_plans(name)')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single()
+
+    // Déterminer le plan (free par défaut)
+    const planName = (subscription?.subscription_plans as { name?: string } | null)?.name?.toLowerCase() || 'free'
+    const { models, autocomplete } = getModelsForPlan(planName, token)
+
     const assistants = [
       {
         id: 'nexora-assistant',
         name: 'Nexora AI',
-        description: 'Assistant IA Nexora pour VS Code',
+        description: `Assistant IA Nexora - Plan ${planName}`,
         slug: 'nexora/nexora-assistant',
         iconUrl: null,
         configJson: JSON.stringify({
           name: 'Nexora AI',
-          models: [
-            {
-              title: 'Nexora AI',
-              provider: 'openai',
-              model: 'gpt-4o',
-              apiBase: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nexora-mu-henna.vercel.app'}/api/proxy/model-proxy`,
-              apiKey: token, // On passe le token comme apiKey pour l'authentification
-            }
-          ],
-          tabAutocompleteModel: {
-            title: 'Nexora Autocomplete',
-            provider: 'openai',
-            model: 'gpt-4o-mini',
-            apiBase: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nexora-mu-henna.vercel.app'}/api/proxy/model-proxy`,
-            apiKey: token,
-          }
+          models,
+          tabAutocompleteModel: autocomplete,
         }),
         ownerType: 'organization',
         ownerSlug: 'nexora',

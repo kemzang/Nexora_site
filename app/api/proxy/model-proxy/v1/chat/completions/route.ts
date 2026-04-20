@@ -29,14 +29,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Messages requis' }, { status: 400 })
     }
 
-    // Choisir le provider selon le modèle demandé
-    let apiUrl = 'https://api.openai.com/v1/chat/completions'
-    let apiKey = process.env.OPENAI_API_KEY!
-    let selectedModel = model || 'gpt-4o'
+    // DeepSeek par défaut si aucun modèle passé
+    let selectedModel = model || 'deepseek-chat'
+    let apiUrl: string
+    let apiKey: string
 
-    if (model?.startsWith('deepseek')) {
+    if (!model || model.startsWith('deepseek')) {
       apiUrl = 'https://api.deepseek.com/chat/completions'
       apiKey = process.env.DEEPSEEK_API_KEY!
+    } else {
+      apiUrl = 'https://api.openai.com/v1/chat/completions'
+      apiKey = process.env.OPENAI_API_KEY!
     }
 
     if (!apiKey) {
