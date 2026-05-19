@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import {
-  Sparkles, Settings, LogOut, ArrowRight, LayoutDashboard, Key, FileText, HelpCircle, ChevronRight,
-  Bell, Search, Menu, X, Activity, Wallet
+  Settings, LogOut, LayoutDashboard, Key, FileText, HelpCircle, ChevronRight,
+  Bell, Menu, X, Activity, Wallet
 } from 'lucide-react'
 import Link from 'next/link'
 import { Modal } from '@/components/ui/modal'
@@ -19,8 +19,8 @@ import FacturesSection from '@/app/dashboard/sections/FacturesSection'
 import AideSection from '@/app/dashboard/sections/AideSection'
 
 const sidebarLinks = [
-  { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-  { icon: Key, label: 'API Keys', section: 'api-keys' },
+  { icon: LayoutDashboard, label: 'Vue d\'ensemble', section: 'dashboard' },
+  { icon: Key, label: 'Clés API', section: 'api-keys' },
   { icon: Activity, label: 'Utilisation', section: 'utilisation' },
   { icon: Wallet, label: 'Abonnement', section: 'abonnement' },
   { icon: FileText, label: 'Factures', section: 'factures' },
@@ -29,11 +29,20 @@ const sidebarLinks = [
 
 const sections: Record<string, React.FC<{ user: any; onNavigate: (s: string) => void }>> = {
   dashboard: ({ user, onNavigate }) => <OverviewSection user={user} onNavigate={onNavigate} />,
-  'api-keys': () => <ApiKeysSection />,
+  'api-keys': ({ user }) => <ApiKeysSection />,
   utilisation: () => <UtilisationSection />,
-  abonnement: () => <AbonnementSection />,
+  abonnement: ({ onNavigate }) => <AbonnementSection onNavigate={onNavigate} />,
   factures: () => <FacturesSection />,
   aide: () => <AideSection />,
+}
+
+function NexoraLogo({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const s = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8'
+  return (
+    <div className={`${s} rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 flex-shrink-0`}>
+      <span className="text-white font-bold text-sm tracking-tight select-none">N</span>
+    </div>
+  )
 }
 
 export default function DashboardPage() {
@@ -60,7 +69,7 @@ export default function DashboardPage() {
     setSidebarOpen(false)
   }
 
-  const sectionTitle = sidebarLinks.find(l => l.section === activeSection)?.label || 'Dashboard'
+  const sectionTitle = sidebarLinks.find(l => l.section === activeSection)?.label || 'Vue d\'ensemble'
   const ActiveComponent = sections[activeSection] || sections.dashboard
 
   if (loading || !user) {
@@ -74,6 +83,8 @@ export default function DashboardPage() {
     )
   }
 
+  const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || '?'
+
   return (
     <div className="min-h-screen bg-background">
       <Modal
@@ -83,9 +94,9 @@ export default function DashboardPage() {
       >
         <div className="text-center">
           <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
-            <LogOut className="w-7 h-7 text-red-500" />
+            <LogOut className="w-7 h-7 text-red-400" />
           </div>
-          <p className="text-muted-foreground mb-8">
+          <p className="text-muted-foreground mb-8 text-sm">
             Êtes-vous sûr de vouloir vous déconnecter de votre compte Nexora ?
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -100,94 +111,113 @@ export default function DashboardPage() {
       </Modal>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed top-0 left-0 z-50 h-full w-64 border-r border-border/50 bg-sidebar transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-between h-16 px-5 border-b border-border/50">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-500 flex items-center justify-center shadow-md shadow-indigo-500/20">
-              <Sparkles className="w-4 h-4 text-white" />
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 border-r border-border/60 bg-sidebar transition-transform duration-300 lg:translate-x-0 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Logo */}
+        <div className="flex items-center justify-between h-16 px-5 border-b border-border/60">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <NexoraLogo />
+            <div>
+              <span className="font-bold text-sm text-foreground tracking-tight">Nexora</span>
+              <span className="block text-[10px] text-muted-foreground leading-none">Dashboard</span>
             </div>
-            <span className="font-semibold text-sm">Nexora</span>
           </Link>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground p-1 rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <nav className="p-3 space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-0.5">
           {sidebarLinks.map(link => (
             <button
               key={link.label}
               onClick={() => handleNavigate(link.section)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left relative ${
                 activeSection === link.section
-                  ? 'bg-indigo-500/10 text-indigo-300 font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  ? 'bg-indigo-500/12 text-indigo-300 font-medium'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
               }`}
             >
-              <link.icon className="w-4 h-4 shrink-0" />
+              {activeSection === link.section && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-indigo-400 rounded-full" />
+              )}
+              <link.icon className={`w-4 h-4 shrink-0 ${activeSection === link.section ? 'text-indigo-400' : ''}`} />
               <span>{link.label}</span>
-              {activeSection === link.section && <ChevronRight className="w-3.5 h-3.5 ml-auto text-indigo-400" />}
+              {activeSection === link.section && <ChevronRight className="w-3.5 h-3.5 ml-auto text-indigo-400/60" />}
             </button>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/50">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
-              {user.firstName?.[0]}{user.lastName?.[0]}
+        {/* User info at bottom */}
+        <div className="p-3 border-t border-border/60">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-foreground text-sm font-medium truncate">{user.firstName} {user.lastName}</p>
-              <p className="text-xs truncate">{user.email}</p>
+              <p className="text-foreground text-xs font-semibold truncate">{user.firstName} {user.lastName}</p>
+              <p className="text-muted-foreground text-[10px] truncate">{user.email}</p>
             </div>
+          </div>
+          <div className="flex gap-1 mt-1 px-1">
+            <button
+              onClick={() => handleNavigate('aide')}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Paramètres
+            </button>
+            <button
+              onClick={() => setIsSignOutModalOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Déconnexion
+            </button>
           </div>
         </div>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-          <div className="flex items-center justify-between h-full px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground hover:text-foreground">
+      {/* Main content */}
+      <div className="lg:pl-64 flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="sticky top-0 z-30 h-14 border-b border-border/60 bg-background/90 backdrop-blur-xl">
+          <div className="flex items-center justify-between h-full px-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                 <Menu className="w-5 h-5" />
               </button>
-              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-                <LayoutDashboard className="w-4 h-4" />
-                <span>/</span>
-                <span className="text-foreground">{sectionTitle}</span>
+              <div className="hidden sm:flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Dashboard</span>
+                <span className="text-muted-foreground/40">/</span>
+                <span className="text-foreground font-medium">{sectionTitle}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => handleNavigate('aide')} className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-                <Search className="w-4 h-4" />
-              </button>
-              <button className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+            <div className="flex items-center gap-2">
+              <button className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-colors">
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full ring-1 ring-background" />
               </button>
-              <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-border/50">
-                <Button variant="ghost" size="sm" onClick={() => handleNavigate('aide')} className="text-muted-foreground hover:text-foreground">
-                  <Settings className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setIsSignOutModalOpen(true)} className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10">
-                  <LogOut className="w-4 h-4" />
-                </Button>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity">
+                {initials}
               </div>
             </div>
           </div>
         </header>
 
-        <main className="px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page content */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18 }}
             >
               <ActiveComponent user={user} onNavigate={handleNavigate} />
             </motion.div>
