@@ -144,13 +144,21 @@ export async function POST(req: NextRequest) {
 
     const limitReached = await checkMonthlyLimit(userId, userPlan)
     if (limitReached) {
-      const planName = PLANS[userPlan]?.nameFr || userPlan
+      // Seconds until end of current month
+      const now = new Date()
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      const retryAfter = Math.ceil((endOfMonth.getTime() - now.getTime()) / 1000)
+
       return NextResponse.json({
         error: `Limite de tokens mensuelle atteinte (${limitReached} tokens). Passez au plan supérieur pour continuer à utiliser Nexora.`,
         code: 'MONTHLY_LIMIT_REACHED',
         plan: userPlan,
         limit: Number(limitReached),
-      }, { status: 403 })
+        retry_after: retryAfter,
+      }, {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfter) },
+      })
     }
 
     const { model: selectedModel, complexity, downgraded } = selectBestModel(userPlan, preferredModel as ModelId, messages)
@@ -176,7 +184,19 @@ export async function POST(req: NextRequest) {
     }, selectedModel.apiIdentifier)
 
     if (!aiResponse.ok) {
-      return NextResponse.json({ error: await aiResponse.text() }, { status: aiResponse.status })
+      const errorText = await aiResponse.text()
+      const responseHeaders: Record<string, string> = {}
+
+      if (aiResponse.status === 429) {
+        const upstreamRetryAfter = aiResponse.headers.get('retry-after') || aiResponse.headers.get('x-ratelimit-reset-requests') || '60'
+        responseHeaders['Retry-After'] = upstreamRetryAfter
+        return NextResponse.json(
+          { error: 'Upstream rate limit exceeded', retry_after: parseInt(upstreamRetryAfter), details: errorText },
+          { status: 429, headers: responseHeaders }
+        )
+      }
+
+      return NextResponse.json({ error: errorText }, { status: aiResponse.status })
     }
 
     void supabase.from('usage_sessions').insert({

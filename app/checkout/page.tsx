@@ -10,24 +10,30 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  CreditCard, Lock, CheckCircle, ArrowLeft, Loader2, Shield,
-  ChevronDown, Smartphone, Globe, Search, Wifi
+  CreditCard, Lock, ArrowLeft, Loader2, Shield,
+  ChevronDown, Smartphone, Globe, Search, Wifi, Phone, CheckCircle2
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/hooks/use-auth'
+import { useTranslation } from '@/lib/i18n/context'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { countries, validatePhone, type Country } from '@/lib/countries'
 
-const planDetails: Record<string, { name: string; price: string; priceXAF: number; features: string[]; color: string }> = {
-  free:       { name: 'Free',       price: '0€',    priceXAF: 0,     color: '#6366f1', features: ['1K tokens/mois', '20 requêtes/jour', 'DeepSeek, Gemini Flash'] },
-  neo:        { name: 'Neo',        price: '4€',    priceXAF: 2620,  color: '#38bdf8', features: ['15K tokens/mois', '150 requêtes/jour', 'Gemini Pro', 'Auto-complétion'] },
-  pro:        { name: 'Pro',        price: '9€',    priceXAF: 5900,  color: '#f59e0b', features: ['50K tokens/mois', '500 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent', 'Support prioritaire'] },
-  business:   { name: 'Business',   price: '17€',   priceXAF: 11150, color: '#10b981', features: ['200K tokens/mois', '2K requêtes/jour', '+ Claude Sonnet', 'Mode équipe'] },
-  enterprise: { name: 'Enterprise', price: '100€',  priceXAF: 65550, color: '#8b5cf6', features: ['1M tokens/mois', 'Requêtes illimitées', '+ Claude Opus, GPT-4', 'SSO + Support 24/7'] },
+/* ─── Plan config ────────────────────────────────────────────────── */
+const planDetails: Record<string, { name: string; price: string; priceXAF: number; color: string }> = {
+  free:       { name: 'Free',       price: '0€',   priceXAF: 0,     color: '#6366f1' },
+  neo:        { name: 'Neo',        price: '4€',   priceXAF: 2620,  color: '#38bdf8' },
+  pro:        { name: 'Pro',        price: '9€',   priceXAF: 5900,  color: '#f59e0b' },
+  business:   { name: 'Business',   price: '17€',  priceXAF: 11150, color: '#10b981' },
+  enterprise: { name: 'Enterprise', price: '100€', priceXAF: 65550, color: '#8b5cf6' },
 }
 
 type PaymentMethod = 'card' | 'mobile_money'
 
-function CountrySelector({ selected, onSelect }: { selected: Country; onSelect: (c: Country) => void }) {
+/* ─── Country Selector ───────────────────────────────────────────── */
+function CountrySelector({
+  selected, onSelect, placeholder,
+}: { selected: Country; onSelect: (c: Country) => void; placeholder: string }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -51,48 +57,57 @@ function CountrySelector({ selected, onSelect }: { selected: Country; onSelect: 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card border border-border/60 text-foreground hover:bg-accent transition-colors w-full"
+        className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl bg-card border border-border/60 text-foreground hover:bg-accent hover:border-border/80 transition-all w-full group"
       >
-        <span className="text-lg">{selected.flag}</span>
-        <span className="text-sm flex-1 text-left">{selected.name}</span>
-        <span className="text-xs text-muted-foreground">{selected.dialCode}</span>
+        <span className="text-xl">{selected.flag}</span>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-medium">{selected.name}</p>
+          <p className="text-xs text-muted-foreground">{selected.dialCode}</p>
+        </div>
         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
+
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            className="absolute z-50 mt-1.5 w-full bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden"
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 mt-1.5 w-full bg-card/95 backdrop-blur-xl border border-border/60 rounded-xl shadow-2xl overflow-hidden"
           >
-            <div className="p-2 border-b border-border/50">
+            <div className="p-2 border-b border-border/50 bg-black/20">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Rechercher un pays..."
+                  placeholder={placeholder}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-accent border border-border/50 rounded-lg text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-500/50"
+                  className="w-full pl-9 pr-3 py-2 bg-accent/50 border border-border/50 rounded-lg text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-500/50 transition-colors"
                   autoFocus
                 />
               </div>
             </div>
-            <div className="max-h-56 overflow-y-auto">
+            <div className="max-h-52 overflow-y-auto">
               {filtered.map(c => (
                 <button
                   key={c.code}
                   type="button"
                   onClick={() => { onSelect(c); setOpen(false); setSearch('') }}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-accent transition-colors ${c.code === selected.code ? 'bg-indigo-500/10' : ''}`}
+                  className={`flex items-center gap-3 w-full px-3.5 py-2.5 text-left hover:bg-accent transition-colors ${c.code === selected.code ? 'bg-indigo-500/10' : ''}`}
                 >
-                  <span className="text-lg">{c.flag}</span>
-                  <span className="text-sm text-foreground flex-1">{c.name}</span>
-                  <span className="text-xs text-muted-foreground">{c.dialCode}</span>
+                  <span className="text-xl">{c.flag}</span>
+                  <div className="flex-1">
+                    <p className="text-sm text-foreground">{c.name}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-mono">{c.dialCode}</span>
+                  {c.code === selected.code && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
                 </button>
               ))}
-              {filtered.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">Aucun pays trouvé</p>}
+              {filtered.length === 0 && (
+                <p className="text-muted-foreground text-sm text-center py-6">🔍 Aucun résultat</p>
+              )}
             </div>
           </motion.div>
         )}
@@ -101,95 +116,138 @@ function CountrySelector({ selected, onSelect }: { selected: Country; onSelect: 
   )
 }
 
-function formatCardNumber(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 16)
-  return digits.replace(/(.{4})/g, '$1 ').trim()
-}
-
-function formatExpiry(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 4)
-  if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  return digits
-}
-
-function VirtualCard({ number, name, expiry, focused }: {
-  number: string; name: string; expiry: string; focused: 'number' | 'expiry' | 'cvv' | 'name' | null
+/* ─── Phone input with dial code ─────────────────────────────────── */
+function PhoneInput({
+  country, value, onChange, placeholder, digits, valid,
+}: {
+  country: Country; value: string; onChange: (v: string) => void
+  placeholder: string; digits: string; valid: string
 }) {
-  const displayNumber = number
-    ? number.replace(/\d/g, (d, i) => (number.replace(/\s/g, '').length > 12 || i < number.length - 4 ? '•' : d))
-    : '•••• •••• •••• ••••'
-  const displayName = name || 'VOTRE NOM'
-  const displayExpiry = expiry || 'MM/AA'
+  const handleChange = (v: string) => {
+    const raw = v.replace(/\D/g, '').slice(0, country.phoneLength)
+    onChange(raw)
+  }
+  const isValid = value.length === country.phoneLength
 
   return (
-    <div className="relative h-44 rounded-2xl overflow-hidden select-none"
-      style={{ background: 'linear-gradient(135deg, #312e81 0%, #4c1d95 50%, #1e1b4b 100%)' }}>
-      {/* Texture circles */}
-      <div className="absolute -top-8 -right-8 w-48 h-48 rounded-full bg-white/5" />
-      <div className="absolute -bottom-12 -left-8 w-48 h-48 rounded-full bg-white/5" />
-      <div className="absolute top-1/2 right-8 w-24 h-24 rounded-full bg-white/[0.03]" />
-
-      {/* Content */}
-      <div className="absolute inset-0 p-5 flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center">
-              <span className="text-white font-bold text-xs">N</span>
-            </div>
-            <span className="text-white/80 text-xs font-medium tracking-wider">NEXORA</span>
-          </div>
-          <Wifi className="w-5 h-5 text-white/40 rotate-90" />
+    <div className="space-y-1.5">
+      <div className="flex gap-2">
+        <div className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-card border border-border/60 text-foreground min-w-fit">
+          <span className="text-lg">{country.flag}</span>
+          <span className="text-sm font-mono text-muted-foreground">{country.dialCode}</span>
         </div>
-
-        {/* Chip */}
-        <div className="w-10 h-7 rounded-md bg-gradient-to-br from-yellow-300/80 to-yellow-500/60 flex items-center justify-center">
-          <div className="w-6 h-4 rounded-sm border border-yellow-200/50 grid grid-cols-2 gap-0.5 p-0.5">
-            <div className="bg-yellow-200/30 rounded-sm" />
-            <div className="bg-yellow-200/30 rounded-sm" />
-            <div className="bg-yellow-200/30 rounded-sm" />
-            <div className="bg-yellow-200/30 rounded-sm" />
-          </div>
-        </div>
-
-        {/* Card number */}
-        <p className={`font-mono text-base tracking-[0.2em] transition-all ${focused === 'number' ? 'text-white' : 'text-white/80'}`}>
-          {number ? number.padEnd(19, ' ').replace(/ {1,4}/g, (m, i) => {
-            const pos = Math.floor(i / 5)
-            return ' ' + (number.replace(/\s/g, '').length > 12 ? '••••' : '').slice(0, 4)
-          }) : '•••• •••• •••• ••••'}
-        </p>
-
-        {/* Name & expiry */}
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-white/40 text-[10px] uppercase tracking-widest mb-0.5">Titulaire</p>
-            <p className={`text-sm font-medium tracking-wide uppercase transition-all ${focused === 'name' ? 'text-white' : 'text-white/80'}`}>
-              {displayName.toUpperCase().slice(0, 22)}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-white/40 text-[10px] uppercase tracking-widest mb-0.5">Exp.</p>
-            <p className={`text-sm font-mono transition-all ${focused === 'expiry' ? 'text-white' : 'text-white/80'}`}>
-              {displayExpiry}
-            </p>
-          </div>
-          {/* Visa-like logo placeholder */}
-          <div className="text-right ml-4">
-            <p className="text-white/60 font-bold text-lg italic" style={{ fontFamily: 'Georgia, serif' }}>VISA</p>
-          </div>
+        <div className="relative flex-1">
+          <Input
+            type="tel"
+            placeholder={placeholder || ('6' + '0'.repeat(Math.max(0, country.phoneLength - 1)))}
+            value={value}
+            onChange={e => handleChange(e.target.value)}
+            maxLength={country.phoneLength}
+            className={`bg-card border-border/60 focus:border-indigo-500/50 h-12 rounded-xl pr-10 transition-colors ${
+              isValid ? 'border-emerald-500/40 focus:border-emerald-500/60' : ''
+            }`}
+          />
+          {isValid && (
+            <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+          )}
         </div>
       </div>
+      <p className="text-xs text-muted-foreground px-1">
+        {value.length}/{country.phoneLength} {digits}
+        {isValid && <span className="text-emerald-400 ml-2">{valid}</span>}
+      </p>
     </div>
   )
 }
 
+/* ─── Card formatters ────────────────────────────────────────────── */
+function formatCardNumber(v: string) {
+  return v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
+}
+function formatExpiry(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 4)
+  return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d
+}
+
+/* ─── Virtual card ───────────────────────────────────────────────── */
+function VirtualCard({
+  number, name, expiry, focused, holder, exp,
+}: { number: string; name: string; expiry: string; focused: string | null; holder: string; exp: string }) {
+  const displayNumber = number || '•••• •••• •••• ••••'
+  const displayName = (name || holder).toUpperCase().slice(0, 22)
+  const displayExpiry = expiry || 'MM/AA'
+
+  return (
+    <motion.div
+      className="relative h-44 rounded-2xl overflow-hidden select-none shadow-2xl"
+      style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 70%, #2d1b69 100%)' }}
+      animate={{ rotateY: focused === 'cvv' ? 180 : 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Circles */}
+      <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5" />
+      <div className="absolute -bottom-14 -left-10 w-52 h-52 rounded-full bg-white/[0.03]" />
+      <div className="absolute top-1/3 right-12 w-28 h-28 rounded-full bg-indigo-400/5" />
+      {/* Shimmer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent" />
+
+      <div className="absolute inset-0 p-5 flex flex-col justify-between" style={{ backfaceVisibility: 'hidden' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xs">N</span>
+            </div>
+            <span className="text-white/70 text-xs font-semibold tracking-[0.2em]">NEXORA</span>
+          </div>
+          <Wifi className="w-5 h-5 text-white/30 rotate-90" />
+        </div>
+
+        <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-300/80 to-amber-500/60">
+          <div className="w-full h-full rounded-md border border-amber-200/40 grid grid-cols-2 gap-0.5 p-1">
+            {[0,1,2,3].map(i => <div key={i} className="bg-amber-100/20 rounded-sm" />)}
+          </div>
+        </div>
+
+        <div>
+          <p className={`font-mono text-base tracking-[0.22em] mb-4 transition-colors ${focused === 'number' ? 'text-white' : 'text-white/75'}`}>
+            {number
+              ? number.split(' ').map((g, i) => (
+                  <span key={i} className="mr-3">{g.padEnd(4, '•')}</span>
+                ))
+              : <span>•••• •••• •••• ••••</span>
+            }
+          </p>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-white/35 text-[9px] uppercase tracking-[0.2em] mb-0.5">{holder}</p>
+              <p className={`text-sm font-semibold tracking-wide transition-colors ${focused === 'name' ? 'text-white' : 'text-white/75'}`}>
+                {displayName}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-white/35 text-[9px] uppercase tracking-[0.2em] mb-0.5">{exp}</p>
+              <p className={`text-sm font-mono transition-colors ${focused === 'expiry' ? 'text-white' : 'text-white/75'}`}>
+                {displayExpiry}
+              </p>
+            </div>
+            <p className="text-white/50 font-bold text-xl italic ml-4" style={{ fontFamily: 'Georgia, serif' }}>VISA</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ─── Checkout form ──────────────────────────────────────────────── */
 function CheckoutForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { showToast } = useToast()
   const { user } = useAuth()
+  const { t } = useTranslation()
   const plan = searchParams.get('plan') || 'neo'
   const currentPlan = planDetails[plan] || planDetails.pro
+  const ch = t.checkout
 
   const [country, setCountry] = useState<Country>(countries[0])
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
@@ -203,35 +261,28 @@ function CheckoutForm() {
   const [cardName, setCardName] = useState('')
   const [cardExpiry, setCardExpiry] = useState('')
   const [cardCvv, setCardCvv] = useState('')
-  const [focusedField, setFocusedField] = useState<'number' | 'expiry' | 'cvv' | 'name' | null>(null)
-  const [showCvvBack, setShowCvvBack] = useState(false)
+  const [focusedField, setFocusedField] = useState<string | null>(null)
 
   useEffect(() => {
     if (!country.hasMobileMoney) {
-      setPaymentMethod('card'); setMomoChannel('')
+      setPaymentMethod('card')
+      setMomoChannel('')
     } else {
       setMomoChannel(country.momoChannels[0]?.id || '')
     }
     setPhone('')
   }, [country])
 
-  const handlePhoneChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, country.phoneLength)
-    setPhone(digits)
-  }
-
   const validateCard = (): string | null => {
-    if (!cardName.trim()) return 'Veuillez saisir le nom du titulaire'
-    const rawNumber = cardNumber.replace(/\s/g, '')
-    if (rawNumber.length < 16) return 'Numéro de carte incomplet (16 chiffres requis)'
-    if (!cardExpiry.match(/^\d{2}\/\d{2}$/)) return 'Date d\'expiration invalide (MM/AA)'
+    if (!cardName.trim()) return ch.errors.cardName
+    if (cardNumber.replace(/\s/g, '').length < 16) return ch.errors.cardNumber
+    if (!cardExpiry.match(/^\d{2}\/\d{2}$/)) return ch.errors.expiry
     const [mm, yy] = cardExpiry.split('/').map(Number)
     const now = new Date()
-    const cardYear = 2000 + yy
-    const cardMonth = mm
-    if (mm < 1 || mm > 12) return 'Mois d\'expiration invalide'
-    if (cardYear < now.getFullYear() || (cardYear === now.getFullYear() && cardMonth < now.getMonth() + 1)) return 'Carte expirée'
-    if (cardCvv.length < 3) return 'CVV incomplet (3 chiffres requis)'
+    if (mm < 1 || mm > 12) return ch.errors.expiryMonth
+    if (2000 + yy < now.getFullYear() || (2000 + yy === now.getFullYear() && mm < now.getMonth() + 1))
+      return ch.errors.expired
+    if (cardCvv.length < 3) return ch.errors.cvv
     return null
   }
 
@@ -240,37 +291,55 @@ function CheckoutForm() {
     setError(null)
 
     if (paymentMethod === 'card') {
-      const cardError = validateCard()
-      if (cardError) { setError(cardError); return }
+      const err = validateCard()
+      if (err) { setError(err); return }
+      if (phone && !validatePhone(phone, country)) {
+        setError(ch.errors.phoneLength.replace('{length}', String(country.phoneLength))); return
+      }
     } else {
-      if (!phone) { setError('Numéro de téléphone requis'); return }
-      if (!validatePhone(phone, country)) { setError(`Le numéro doit contenir ${country.phoneLength} chiffres`); return }
-      if (!momoChannel) { setError('Sélectionnez un opérateur'); return }
+      if (!phone) { setError(ch.errors.phone); return }
+      if (!validatePhone(phone, country)) {
+        setError(ch.errors.phoneLength.replace('{length}', String(country.phoneLength))); return
+      }
+      if (!momoChannel) { setError(ch.errors.operator); return }
     }
 
     setLoading(true)
     try {
+      const authToken = user ? await getAuthToken() : null
       const initRes = await fetch('/api/payments/initialize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           amount: currentPlan.priceXAF,
           currency: 'XAF',
           email: user?.email || 'guest@nexora.ai',
-          name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Client',
-          phone: paymentMethod === 'mobile_money' ? `${country.dialCode}${phone}` : undefined,
+          name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Client' : 'Client',
+          phone: phone ? `${country.dialCode}${phone}` : undefined,
           plan,
+          country: country.code,
         }),
       })
       const initData = await initRes.json()
-      if (!initData.success) { setError(initData.error || 'Erreur d\'initialisation'); setLoading(false); return }
+
+      if (!initData.success) {
+        if (initData.code === 'DUPLICATE_PAYMENT') {
+          setError(ch.errors.duplicate)
+        } else {
+          setError(initData.error || ch.errors.initError)
+        }
+        setLoading(false)
+        return
+      }
 
       if (paymentMethod === 'card') {
-        // TODO: Integrate direct card processing (Stripe/NotchPay direct card API)
         if (initData.authorizationUrl) {
           window.location.href = initData.authorizationUrl
         } else {
-          setError('URL de paiement non disponible')
+          setError(ch.errors.initError)
           setLoading(false)
         }
         return
@@ -279,148 +348,181 @@ function CheckoutForm() {
       const processRes = await fetch('/api/payments/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference: initData.reference, channel: momoChannel, phone: `${country.dialCode}${phone}` }),
+        body: JSON.stringify({
+          reference: initData.reference,
+          channel: momoChannel,
+          phone: `${country.dialCode}${phone}`,
+        }),
       })
       const processData = await processRes.json()
       if (processData.success) {
-        showToast('Validez le paiement sur votre téléphone', 'info')
+        showToast(ch.mobilePrompt, 'info')
         router.push(`/checkout/callback?reference=${initData.reference}`)
       } else {
-        setError(processData.message || 'Erreur de traitement')
+        setError(processData.message || ch.errors.initError)
         setLoading(false)
       }
     } catch {
-      setError('Erreur de connexion. Vérifiez votre réseau.')
+      setError(ch.errors.connection)
       setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background */}
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="absolute top-[-15%] left-[-15%] w-[50%] h-[50%] bg-indigo-600/8 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-15%] right-[-15%] w-[50%] h-[50%] bg-violet-600/8 blur-[150px] rounded-full pointer-events-none" />
+      <div className="orb orb-float-1 w-[600px] h-[600px] bg-indigo-600/8 top-[-20%] left-[-20%]" />
+      <div className="orb orb-float-2 w-[500px] h-[500px] bg-violet-600/6 bottom-[-15%] right-[-15%]" />
+      <div className="orb w-[400px] h-[400px] bg-purple-600/5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ filter: 'blur(100px)' }} />
 
-      <div className="relative z-10 w-full max-w-md">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <Link href="/#pricing" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors group">
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Retour aux tarifs
-          </Link>
+      {/* Nav top bar */}
+      <div className="fixed top-0 inset-x-0 z-50 h-14 border-b border-white/[0.06] bg-background/60 backdrop-blur-xl flex items-center px-4">
+        <Link href="/#pricing" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          {ch.back}
+        </Link>
+        <div className="ml-auto">
+          <LanguageSwitcher compact />
+        </div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md mt-14">
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
 
           {/* Plan summary */}
-          <Card className="glass mb-4 border-border/60">
+          <Card className="glass mb-4 border-white/[0.08] overflow-hidden">
+            <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${currentPlan.color}22` }}>
-                    <span className="text-sm font-bold" style={{ color: currentPlan.color }}>{currentPlan.name[0]}</span>
+                  <div className="relative w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${currentPlan.color}18` }}>
+                    <div className="absolute inset-0 opacity-50" style={{ background: `radial-gradient(circle at center, ${currentPlan.color}30, transparent)` }} />
+                    <span className="text-base font-bold relative z-10" style={{ color: currentPlan.color }}>{currentPlan.name[0]}</span>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Plan sélectionné</p>
+                    <p className="text-xs text-muted-foreground">{ch.planSelected}</p>
                     <p className="font-bold text-foreground">{currentPlan.name}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold">{currentPlan.price}</p>
-                  <p className="text-xs text-muted-foreground">{currentPlan.priceXAF.toLocaleString('fr-FR')} FCFA</p>
+                  <p className="text-2xl font-bold">{currentPlan.price}</p>
+                  {currentPlan.priceXAF > 0 && (
+                    <p className="text-xs text-muted-foreground">{currentPlan.priceXAF.toLocaleString('fr-FR')} FCFA</p>
+                  )}
                 </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {currentPlan.features.slice(0, 3).map(f => (
-                  <span key={f} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${currentPlan.color}18`, color: currentPlan.color }}>
-                    {f}
-                  </span>
-                ))}
               </div>
             </CardContent>
           </Card>
 
           {/* Payment form */}
-          <Card className="glass border-border/60">
+          <Card className="glass border-white/[0.08] overflow-hidden">
+            <div className="h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
             <CardHeader className="text-center space-y-3 pt-7 pb-5">
               <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                  <Lock className="w-5 h-5 text-white" />
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-500/30">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 to-transparent" />
+                  <Lock className="w-6 h-6 text-white relative z-10" />
                 </div>
               </div>
               <div>
-                <CardTitle className="text-lg font-bold">Paiement sécurisé</CardTitle>
-                <CardDescription className="text-sm">Vos données sont protégées par chiffrement TLS</CardDescription>
+                <CardTitle className="text-lg font-bold">{ch.title}</CardTitle>
+                <CardDescription className="text-sm">{ch.subtitle}</CardDescription>
               </div>
             </CardHeader>
+
             <CardContent className="space-y-5 px-6 pb-7">
-              {error && (
-                <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}>
-                  <Alert className="bg-red-500/10 border-red-500/25 text-red-400 rounded-xl">
-                    <AlertDescription className="text-sm">{error}</AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <Alert className="bg-red-500/10 border-red-500/25 text-red-400 rounded-xl">
+                      <AlertDescription className="text-sm">{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Country */}
+
+                {/* ── Country ── */}
                 <div className="space-y-2">
-                  <Label className="text-sm flex items-center gap-1.5 text-muted-foreground">
-                    <Globe className="w-3.5 h-3.5" /> Pays
+                  <Label className="text-sm flex items-center gap-1.5 text-muted-foreground font-medium">
+                    <Globe className="w-3.5 h-3.5" /> {ch.country}
                   </Label>
-                  <CountrySelector selected={country} onSelect={setCountry} />
+                  <CountrySelector
+                    selected={country}
+                    onSelect={setCountry}
+                    placeholder={ch.searchCountry}
+                  />
                 </div>
 
-                {/* Payment method */}
+                {/* ── Payment method tabs ── */}
                 <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Méthode de paiement</Label>
+                  <Label className="text-sm text-muted-foreground font-medium">{ch.method}</Label>
                   <div className={`grid gap-2 ${country.hasMobileMoney ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('card')}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm ${
+                      className={`relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm overflow-hidden ${
                         paymentMethod === 'card'
-                          ? 'bg-indigo-500/15 border-indigo-500/40 text-foreground font-medium'
-                          : 'bg-card border-border/50 text-muted-foreground hover:bg-accent'
+                          ? 'bg-indigo-500/15 border-indigo-500/40 text-foreground font-semibold'
+                          : 'bg-card border-border/50 text-muted-foreground hover:bg-accent hover:text-foreground'
                       }`}
                     >
-                      <CreditCard className="w-4 h-4" />
-                      Carte bancaire
+                      {paymentMethod === 'card' && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5" />
+                      )}
+                      <CreditCard className="w-4 h-4 relative z-10" />
+                      <span className="relative z-10">{ch.card}</span>
                     </button>
                     {country.hasMobileMoney && (
                       <button
                         type="button"
                         onClick={() => setPaymentMethod('mobile_money')}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm ${
+                        className={`relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm overflow-hidden ${
                           paymentMethod === 'mobile_money'
-                            ? 'bg-indigo-500/15 border-indigo-500/40 text-foreground font-medium'
-                            : 'bg-card border-border/50 text-muted-foreground hover:bg-accent'
+                            ? 'bg-indigo-500/15 border-indigo-500/40 text-foreground font-semibold'
+                            : 'bg-card border-border/50 text-muted-foreground hover:bg-accent hover:text-foreground'
                         }`}
                       >
-                        <Smartphone className="w-4 h-4" />
-                        Mobile Money
+                        {paymentMethod === 'mobile_money' && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5" />
+                        )}
+                        <Smartphone className="w-4 h-4 relative z-10" />
+                        <span className="relative z-10">{ch.momo}</span>
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* CARD FORM */}
+                {/* ── Card form ── */}
                 <AnimatePresence mode="wait">
                   {paymentMethod === 'card' && (
                     <motion.div
                       key="card"
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.25 }}
                       className="space-y-4"
                     >
-                      {/* Card preview */}
                       <VirtualCard
                         number={cardNumber}
                         name={cardName}
                         expiry={cardExpiry}
                         focused={focusedField}
+                        holder={ch.holder}
+                        exp={ch.exp}
                       />
 
                       {/* Cardholder name */}
                       <div className="space-y-1.5">
-                        <Label htmlFor="cardName" className="text-sm text-muted-foreground">Nom du titulaire</Label>
+                        <Label htmlFor="cardName" className="text-sm text-muted-foreground font-medium">{ch.cardName}</Label>
                         <Input
                           id="cardName"
                           placeholder="Jean Dupont"
@@ -428,7 +530,7 @@ function CheckoutForm() {
                           onChange={e => setCardName(e.target.value)}
                           onFocus={() => setFocusedField('name')}
                           onBlur={() => setFocusedField(null)}
-                          className="bg-card border-border/60 focus:border-indigo-500/50 uppercase"
+                          className="bg-card border-border/60 focus:border-indigo-500/50 uppercase h-12 rounded-xl"
                           maxLength={30}
                           autoComplete="cc-name"
                         />
@@ -436,7 +538,7 @@ function CheckoutForm() {
 
                       {/* Card number */}
                       <div className="space-y-1.5">
-                        <Label htmlFor="cardNumber" className="text-sm text-muted-foreground">Numéro de carte</Label>
+                        <Label htmlFor="cardNumber" className="text-sm text-muted-foreground font-medium">{ch.cardNumber}</Label>
                         <div className="relative">
                           <Input
                             id="cardNumber"
@@ -445,7 +547,7 @@ function CheckoutForm() {
                             onChange={e => setCardNumber(formatCardNumber(e.target.value))}
                             onFocus={() => setFocusedField('number')}
                             onBlur={() => setFocusedField(null)}
-                            className="bg-card border-border/60 focus:border-indigo-500/50 pr-10 font-mono tracking-widest"
+                            className="bg-card border-border/60 focus:border-indigo-500/50 pr-10 font-mono tracking-widest h-12 rounded-xl"
                             maxLength={19}
                             inputMode="numeric"
                             autoComplete="cc-number"
@@ -457,125 +559,142 @@ function CheckoutForm() {
                       {/* Expiry + CVV */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label htmlFor="cardExpiry" className="text-sm text-muted-foreground">Date d'expiration</Label>
+                          <Label htmlFor="expiry" className="text-sm text-muted-foreground font-medium">{ch.expiry}</Label>
                           <Input
-                            id="cardExpiry"
+                            id="expiry"
                             placeholder="MM/AA"
                             value={cardExpiry}
                             onChange={e => setCardExpiry(formatExpiry(e.target.value))}
                             onFocus={() => setFocusedField('expiry')}
                             onBlur={() => setFocusedField(null)}
-                            className="bg-card border-border/60 focus:border-indigo-500/50 font-mono text-center"
+                            className="bg-card border-border/60 focus:border-indigo-500/50 font-mono text-center h-12 rounded-xl"
                             maxLength={5}
                             inputMode="numeric"
                             autoComplete="cc-exp"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label htmlFor="cardCvv" className="text-sm text-muted-foreground">CVV / CVC</Label>
-                          <div className="relative">
-                            <Input
-                              id="cardCvv"
-                              placeholder="•••"
-                              type={showCvvBack ? 'text' : 'password'}
-                              value={cardCvv}
-                              onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                              onFocus={() => { setFocusedField('cvv'); setShowCvvBack(true) }}
-                              onBlur={() => { setFocusedField(null); setShowCvvBack(false) }}
-                              className="bg-card border-border/60 focus:border-indigo-500/50 font-mono text-center"
-                              maxLength={4}
-                              inputMode="numeric"
-                              autoComplete="cc-csc"
-                            />
-                          </div>
+                          <Label htmlFor="cvv" className="text-sm text-muted-foreground font-medium">{ch.cvv}</Label>
+                          <Input
+                            id="cvv"
+                            placeholder="•••"
+                            type={focusedField === 'cvv' ? 'text' : 'password'}
+                            value={cardCvv}
+                            onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            onFocus={() => setFocusedField('cvv')}
+                            onBlur={() => setFocusedField(null)}
+                            className="bg-card border-border/60 focus:border-indigo-500/50 font-mono text-center h-12 rounded-xl"
+                            maxLength={4}
+                            inputMode="numeric"
+                            autoComplete="cc-csc"
+                          />
                         </div>
                       </div>
 
+                      {/* Phone for card (optional) */}
+                      <div className="space-y-1.5">
+                        <Label className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5" />
+                          {ch.phone}
+                          <span className="text-xs text-muted-foreground/50 ml-1">(optional)</span>
+                        </Label>
+                        <PhoneInput
+                          country={country}
+                          value={phone}
+                          onChange={setPhone}
+                          placeholder={ch.phonePlaceholder}
+                          digits={ch.digits}
+                          valid={ch.valid}
+                        />
+                      </div>
+
                       {/* Cards accepted */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <p className="text-xs text-muted-foreground">Cartes acceptées :</p>
-                        {['VISA', 'MC', 'PREPAY'].map(c => (
-                          <span key={c} className="px-2 py-0.5 rounded bg-white/[0.06] border border-border/40 text-xs text-muted-foreground font-mono">
-                            {c === 'MC' ? 'Mastercard' : c === 'PREPAY' ? 'Prépayée' : c}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <p className="text-xs text-muted-foreground">{ch.accepted}</p>
+                        {(['VISA', 'Mastercard', 'Prépayée'] as const).map(c => (
+                          <span key={c} className="px-2 py-0.5 rounded-md bg-white/[0.05] border border-border/40 text-xs text-muted-foreground font-mono">
+                            {c}
                           </span>
                         ))}
                       </div>
                     </motion.div>
                   )}
 
-                  {/* MOBILE MONEY FORM */}
+                  {/* ── Mobile Money form ── */}
                   {paymentMethod === 'mobile_money' && country.hasMobileMoney && (
                     <motion.div
                       key="momo"
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.25 }}
                       className="space-y-4"
                     >
                       {/* Operator */}
                       <div className="space-y-2">
-                        <Label className="text-sm text-muted-foreground">Opérateur</Label>
-                        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(country.momoChannels.length, 2)}, 1fr)` }}>
-                          {country.momoChannels.map(ch => (
+                        <Label className="text-sm text-muted-foreground font-medium">{ch.operator}</Label>
+                        <div
+                          className="grid gap-2"
+                          style={{ gridTemplateColumns: `repeat(${Math.min(country.momoChannels.length, 2)}, 1fr)` }}
+                        >
+                          {country.momoChannels.map(chan => (
                             <button
-                              key={ch.id}
+                              key={chan.id}
                               type="button"
-                              onClick={() => setMomoChannel(ch.id)}
-                              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                                momoChannel === ch.id
-                                  ? 'border-indigo-500/40 text-foreground'
+                              onClick={() => setMomoChannel(chan.id)}
+                              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all relative overflow-hidden ${
+                                momoChannel === chan.id
+                                  ? 'border-indigo-500/40 text-foreground font-medium'
                                   : 'bg-card border-border/50 text-muted-foreground hover:bg-accent'
                               }`}
-                              style={momoChannel === ch.id ? { backgroundColor: `${ch.color}18` } : {}}
+                              style={momoChannel === chan.id ? { backgroundColor: `${chan.color}14` } : {}}
                             >
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ch.color }} />
-                              <span className="text-sm">{ch.name}</span>
+                              <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: chan.color, boxShadow: `0 0 8px ${chan.color}60` }} />
+                              <span className="text-sm">{chan.name}</span>
+                              {momoChannel === chan.id && (
+                                <CheckCircle2 className="ml-auto w-4 h-4 text-indigo-400 shrink-0" />
+                              )}
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      {/* Phone number */}
-                      <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-sm text-muted-foreground">Numéro de téléphone</Label>
-                        <div className="flex gap-2">
-                          <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card border border-border/60 text-foreground min-w-fit">
-                            <span>{country.flag}</span>
-                            <span className="text-sm text-muted-foreground">{country.dialCode}</span>
-                          </div>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            placeholder={'6' + '0'.repeat(country.phoneLength - 1)}
-                            value={phone}
-                            onChange={e => handlePhoneChange(e.target.value)}
-                            maxLength={country.phoneLength}
-                            className="bg-card border-border/60 focus:border-indigo-500/50 flex-1"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {phone.length}/{country.phoneLength} chiffres
-                          {phone.length === country.phoneLength && <span className="text-emerald-400 ml-2">✓ Valide</span>}
-                        </p>
+                      {/* Phone */}
+                      <div className="space-y-1.5">
+                        <Label className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5" />
+                          {ch.phone}
+                        </Label>
+                        <PhoneInput
+                          country={country}
+                          value={phone}
+                          onChange={setPhone}
+                          placeholder={ch.phonePlaceholder}
+                          digits={ch.digits}
+                          valid={ch.valid}
+                        />
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {/* Submit */}
+                {/* ── Submit ── */}
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition-all hover:scale-[1.01] mt-1"
+                  className="w-full h-12 relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition-all hover:scale-[1.01] hover:shadow-indigo-600/40 mt-1 group border-0"
                 >
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   {loading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Traitement en cours...</>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin relative z-10" /><span className="relative z-10">{ch.processing}</span></>
                   ) : (
-                    <><Lock className="mr-2 h-4 w-4" />
-                      {currentPlan.priceXAF === 0
-                        ? 'Activer gratuitement'
-                        : `Payer ${currentPlan.priceXAF.toLocaleString('fr-FR')} FCFA`
-                      }
+                    <><Lock className="mr-2 h-4 w-4 relative z-10" />
+                      <span className="relative z-10">
+                        {currentPlan.priceXAF === 0
+                          ? ch.submitFree
+                          : `${ch.submit} ${currentPlan.priceXAF.toLocaleString('fr-FR')} FCFA`
+                        }
+                      </span>
                     </>
                   )}
                 </Button>
@@ -585,12 +704,20 @@ function CheckoutForm() {
               <div className="flex items-center justify-center gap-4 pt-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Paiement sécurisé</span>
+                  <span>{ch.securePayment}</span>
                 </div>
                 <div className="w-px h-3 bg-border/60" />
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Chiffrement TLS</span>
+                  <span>{ch.tls}</span>
+                </div>
+              </div>
+
+              {/* NotchPay badge */}
+              <div className="flex justify-center pt-1">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-xs text-muted-foreground/60">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Secured by NotchPay
                 </div>
               </div>
             </CardContent>
@@ -601,11 +728,23 @@ function CheckoutForm() {
   )
 }
 
+/* ─── Helpers ────────────────────────────────────────────────────── */
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { supabase } = await import('@/lib/supabase/client')
+    const { data } = await supabase.auth.getSession()
+    return data.session?.access_token ?? null
+  } catch {
+    return null
+  }
+}
+
+/* ─── Export ─────────────────────────────────────────────────────── */
 export default function CheckoutPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-indigo-500/60 border-t-indigo-500 rounded-full animate-spin" />
       </div>
     }>
       <CheckoutForm />

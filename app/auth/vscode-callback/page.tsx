@@ -28,7 +28,8 @@ export default function VSCodeCallbackPage() {
         if (data.success) {
           setApiKey(data.token)
           try {
-            window.location.href = `vscode://nexora.auth-success?token=${data.token}&user=${encodeURIComponent(JSON.stringify(user))}`
+            // Deep link registered in the extension: publisher=Kemzang, extensionId=nexora
+            window.location.href = `vscode://Kemzang.nexora/auth?token=${encodeURIComponent(data.token)}`
           } catch {}
         }
       } catch (err) {

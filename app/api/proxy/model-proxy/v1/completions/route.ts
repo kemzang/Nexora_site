@@ -86,12 +86,20 @@ export async function POST(req: NextRequest) {
     const userPlan = await getUserPlan(userId)
     const limitReached = await checkFimLimit(userId, userPlan)
     if (limitReached) {
+      const now = new Date()
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      const retryAfter = Math.ceil((endOfMonth.getTime() - now.getTime()) / 1000)
+
       return NextResponse.json({
         error: `Limite de tokens mensuelle atteinte (${limitReached} tokens). Passez au plan supérieur pour continuer à utiliser Nexora.`,
         code: 'MONTHLY_LIMIT_REACHED',
         plan: userPlan,
         limit: Number(limitReached),
-      }, { status: 403 })
+        retry_after: retryAfter,
+      }, {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfter) },
+      })
     }
 
     const apiKey = process.env.DEEPSEEK_API_KEY
@@ -119,7 +127,15 @@ export async function POST(req: NextRequest) {
     })
 
     if (!aiResponse.ok) {
-      return NextResponse.json({ error: await aiResponse.text() }, { status: aiResponse.status })
+      const errorText = await aiResponse.text()
+      if (aiResponse.status === 429) {
+        const retryAfter = aiResponse.headers.get('retry-after') || '60'
+        return NextResponse.json(
+          { error: 'Upstream rate limit exceeded', retry_after: parseInt(retryAfter) },
+          { status: 429, headers: { 'Retry-After': retryAfter } }
+        )
+      }
+      return NextResponse.json({ error: errorText }, { status: aiResponse.status })
     }
 
     void supabase.from('usage_sessions').insert({

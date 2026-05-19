@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ToastProvider } from "@/components/ui/toast";
+import { I18nProvider } from "@/lib/i18n/context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexora - Extension VS Code IA Personnalisée",
-  description: "L'extension VS Code qui transforme votre code avec l'intelligence artificielle",
+  title: "Nexora — AI Extension for VS Code",
+  description: "Next-generation AI for VS Code. Access GPT-4o, Claude, Gemini, DeepSeek and more directly in your editor.",
+  keywords: ["AI", "VS Code", "extension", "GPT-4", "Claude", "code completion", "developer tools"],
 };
 
 export default function RootLayout({
@@ -30,11 +32,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );
