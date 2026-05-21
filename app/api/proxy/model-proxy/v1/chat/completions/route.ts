@@ -66,7 +66,8 @@ async function getUserPlan(userId: string): Promise<PlanId> {
 }
 
 const API_ROUTES: Record<string, { baseUrl: string; keyEnv: string; format: 'openai' | 'anthropic' | 'gemini' }> = {
-  'deepseek-chat': { baseUrl: 'https://api.deepseek.com/chat/completions', keyEnv: 'DEEPSEEK_API_KEY', format: 'openai' },
+  'deepseek-chat': { baseUrl: 'https://api.deepseek.com/v1/chat/completions', keyEnv: 'DEEPSEEK_API_KEY', format: 'openai' },
+  'deepseek-reasoner': { baseUrl: 'https://api.deepseek.com/v1/chat/completions', keyEnv: 'DEEPSEEK_API_KEY', format: 'openai' },
   'gemini-flash': { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', keyEnv: 'GEMINI_API_KEY', format: 'gemini' },
   'gemini-pro': { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', keyEnv: 'GEMINI_API_KEY', format: 'gemini' },
   'claude-haiku': { baseUrl: 'https://api.anthropic.com/v1/messages', keyEnv: 'ANTHROPIC_API_KEY', format: 'anthropic' },
@@ -207,16 +208,20 @@ export async function POST(req: NextRequest) {
       metadata: { plan: userPlan, model: selectedModel.id, preferred: preferredModel || null, complexity, downgraded },
     })
 
+    const contentType = aiResponse.headers.get('Content-Type') || 'text/event-stream'
     const headers = new Headers({
-      'Content-Type': aiResponse.headers.get('Content-Type') || 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Content-Type': contentType,
+      'Cache-Control': 'no-cache, no-store',
       'Connection': 'keep-alive',
-      'X-Model-Used': selectedModel.id,
-      'X-Model-Downgraded': String(downgraded),
-      'X-Complexity': String(complexity),
+      // Critical: prevents Vercel/nginx from buffering the SSE stream
+      'X-Accel-Buffering': 'no',
+      'Transfer-Encoding': 'chunked',
+      'X-Nexora-Model': selectedModel.id,
+      'X-Nexora-Downgraded': String(downgraded),
+      'X-Nexora-Complexity': String(complexity),
     })
 
-    return new NextResponse(aiResponse.body, { headers })
+    return new NextResponse(aiResponse.body, { status: aiResponse.status, headers })
   } catch (err) {
     console.error('model-proxy error:', err)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
