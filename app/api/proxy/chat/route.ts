@@ -1,159 +1,132 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Legacy chat proxy — kept for backward compatibility with older extension versions.
+ * New clients should use /api/proxy/model-proxy/v1/chat/completions which has richer
+ * plan-based routing, model selection, and usage tracking.
+ *
+ * This route mirrors the same auth + plan logic as the main proxy to stay consistent.
+ */
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyToken } from '@/lib/auth-verify'
+import { createClient } from '@supabase/supabase-js'
+import { PLANS, type PlanId } from '@/lib/models'
 
-export const runtime = 'edge';
+export const runtime = 'nodejs'
 
-// Ces variables doivent être configurées sur le tableau de bord Vercel
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+const planCache = new Map<string, { plan: PlanId; expiresAt: number }>()
+
+async function getUserPlan(userId: string): Promise<PlanId> {
+  const cached = planCache.get(userId)
+  if (cached && cached.expiresAt > Date.now()) return cached.plan
+
+  const { data } = await supabase
+    .from('user_subscriptions')
+    .select('subscription_plans!inner(slug)')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  const plan = ((data?.subscription_plans as { slug?: string } | null)?.slug ?? 'free') as PlanId
+  planCache.set(userId, { plan, expiresAt: Date.now() + 300_000 })
+  return plan
+}
+
+const PROVIDER_ROUTES: Record<string, { url: string; keyEnv: string }> = {
+  openai:   { url: 'https://api.openai.com/v1/chat/completions', keyEnv: 'OPENAI_API_KEY' },
+  deepseek: { url: 'https://api.deepseek.com/v1/chat/completions', keyEnv: 'DEEPSEEK_API_KEY' },
+}
+
+const PROVIDER_DEFAULT_MODELS: Record<string, string> = {
+  openai:   'gpt-4o',
+  deepseek: 'deepseek-chat',
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new NextResponse(JSON.stringify({ error: 'Unauthorized: Missing or invalid token' }), { 
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // ── Auth ────────────────────────────────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const token = authHeader.split(' ')[1];
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return new NextResponse(JSON.stringify({ error: 'Server configuration error: Supabase keys missing' }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const token = authHeader.split(' ')[1]
+    const userId = await verifyToken(token)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Initialiser Supabase avec la clé service pour vérifier l'utilisateur et son solde
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Vérifier l'utilisateur via le token fourni par l'extension
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new NextResponse(JSON.stringify({ error: 'Unauthorized: Invalid user' }), { 
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // ── Input validation ────────────────────────────────────────────────────
+    const body = await req.json()
+    const { messages, model, provider = 'openai' } = body
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: 'messages requis et doit être un tableau non vide' }, { status: 400 })
     }
 
-    // Vérifier le solde de tokens dans token_transactions
-    const { data: transactions, error: balanceError } = await supabase
-      .from('token_transactions')
-      .select('balance_after')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (balanceError) {
-       return new NextResponse(JSON.stringify({ error: 'Error checking balance' }), { 
-         status: 500,
-         headers: { 'Content-Type': 'application/json' }
-       });
+    if (!PROVIDER_ROUTES[provider]) {
+      return NextResponse.json(
+        { error: `Provider inconnu: "${provider}". Valeurs acceptées: ${Object.keys(PROVIDER_ROUTES).join(', ')}` },
+        { status: 400 }
+      )
     }
 
-    // Si l'utilisateur n'a pas de transactions, il a peut-être un solde par défaut via le plan free
-    // Pour l'instant on considère qu'une balance_after de 0 ou pas de transaction = pas de tokens
-    const currentBalance = transactions && transactions.length > 0 ? transactions[0].balance_after : 0;
-    
-    if (currentBalance <= 0) {
-      return new NextResponse(JSON.stringify({ error: 'Insufficient tokens. Please top up your account.' }), { 
-        status: 402,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // ── Plan check (free users are allowed — they have a monthly token quota) ──
+    const userPlan = await getUserPlan(userId)
+    const planConfig = PLANS[userPlan]
+
+    // Block only if the plan has 0 token allowance (edge case)
+    if (planConfig && planConfig.tokensPerMonth === 0) {
+      return NextResponse.json(
+        { error: 'Votre plan ne permet pas d\'utiliser le chat IA. Passez au plan Free ou supérieur.' },
+        { status: 403 }
+      )
     }
 
-    const body = await req.json();
-    const { messages, model, provider } = body;
-
-    if (!messages || !Array.isArray(messages)) {
-      return new NextResponse(JSON.stringify({ error: 'Messages are required' }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Configurer l'appel API vers le fournisseur
-    let apiUrl = '';
-    let apiKey = '';
-    let selectedModel = model;
-    
-    if (provider === 'openai') {
-      apiUrl = 'https://api.openai.com/v1/chat/completions';
-      apiKey = process.env.OPENAI_API_KEY!;
-      selectedModel = model || 'gpt-4o';
-    } else if (provider === 'deepseek') {
-      apiUrl = 'https://api.deepseek.com/chat/completions';
-      apiKey = process.env.DEEPSEEK_API_KEY!;
-      selectedModel = model || 'deepseek-chat';
-    } else {
-      // Par défaut OpenAI
-      apiUrl = 'https://api.openai.com/v1/chat/completions';
-      apiKey = process.env.OPENAI_API_KEY!;
-      selectedModel = model || 'gpt-4o';
-    }
-
+    // ── Call upstream ───────────────────────────────────────────────────────
+    const route = PROVIDER_ROUTES[provider]
+    const apiKey = process.env[route.keyEnv]
     if (!apiKey) {
-      return new NextResponse(JSON.stringify({ error: `API Key for ${provider || 'openai'} not configured on server` }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return NextResponse.json({ error: `Clé API ${provider} non configurée sur le serveur` }, { status: 500 })
     }
 
-    const aiResponse = await fetch(apiUrl, {
+    const selectedModel = model || PROVIDER_DEFAULT_MODELS[provider]
+
+    const aiResponse = await fetch(route.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages,
-        stream: true,
-      }),
-    });
+      body: JSON.stringify({ model: selectedModel, messages, stream: true }),
+    })
 
     if (!aiResponse.ok) {
-      const errorData = await aiResponse.json().catch(() => ({ error: 'AI Provider error' }));
-      return new NextResponse(JSON.stringify(errorData), { 
-        status: aiResponse.status,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const errorData = await aiResponse.json().catch(() => ({ error: 'Erreur fournisseur IA' }))
+      return NextResponse.json(errorData, { status: aiResponse.status })
     }
 
-    // Créer une entrée dans usage_sessions pour le suivi
-    // On l'insère avant de renvoyer le flux, on mettra à jour les tokens à la fin si possible
-    // (Note: Pour un vrai suivi précis en streaming, il faudrait intercepter le flux ou utiliser les callbacks du fournisseur)
-    const { data: usageSession } = await supabase
-      .from('usage_sessions')
-      .insert({
-        user_id: user.id,
-        session_type: 'chat_proxy',
-        model_id: null, // On pourrait mapper model_id vers l'UUID de la table ai_models
-        metadata: { 
-          model: selectedModel, 
-          provider: provider || 'openai',
-          messages_count: messages.length 
-        }
-      })
-      .select()
-      .single();
+    // Fire-and-forget usage tracking
+    void supabase.from('usage_sessions').insert({
+      user_id: userId,
+      session_type: 'chat_proxy_legacy',
+      model_id: null,
+      metadata: { model: selectedModel, provider, messages_count: messages.length, plan: userPlan },
+    })
 
-    // Transférer le flux de réponse directement
     return new NextResponse(aiResponse.body, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-store',
         'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
       },
-    });
-
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return new NextResponse(JSON.stringify({ error: 'Internal Server Error' }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    })
+  } catch (err) {
+    console.error('[legacy chat proxy] error:', err)
+    return NextResponse.json({ error: 'Erreur serveur interne' }, { status: 500 })
   }
 }

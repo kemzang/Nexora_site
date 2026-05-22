@@ -91,12 +91,19 @@ function callAPI(route: typeof API_ROUTES[string], apiKey: string, body: any, mo
     const msgs = body.messages.filter((m: any) => m.role !== 'system')
     return fetch(route.baseUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
       body: JSON.stringify({
         model: modelId,
-        max_tokens: 4096,
+        max_tokens: body.max_tokens ?? 4096,
         system: sys.length > 0 ? sys.map((m: any) => ({ type: 'text', text: m.content })) : undefined,
-        messages: msgs.map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+        messages: msgs.map((m: any) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: typeof m.content === 'string' ? m.content : m.content,
+        })),
         stream: body.stream,
       }),
     })
@@ -137,8 +144,33 @@ export async function POST(req: NextRequest) {
 
     const { messages, model: preferredModel, stream = true, ...rest } = body
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: 'Messages requis' }, { status: 400 })
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: 'messages requis et doit être un tableau non vide' }, { status: 400 })
+    }
+
+    // Validate structure and size to prevent abuse
+    const MAX_MESSAGES = 200
+    const MAX_CONTENT_CHARS = 200_000 // ~50k tokens
+    if (messages.length > MAX_MESSAGES) {
+      return NextResponse.json({ error: `Trop de messages (max ${MAX_MESSAGES})` }, { status: 400 })
+    }
+    let totalChars = 0
+    for (const msg of messages) {
+      if (typeof msg !== 'object' || msg === null) {
+        return NextResponse.json({ error: 'Chaque message doit être un objet' }, { status: 400 })
+      }
+      const role = msg.role
+      if (!['user', 'assistant', 'system', 'tool'].includes(role)) {
+        return NextResponse.json({ error: `Rôle invalide: "${role}"` }, { status: 400 })
+      }
+      const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content ?? '')
+      totalChars += content.length
+    }
+    if (totalChars > MAX_CONTENT_CHARS) {
+      return NextResponse.json(
+        { error: `Contenu trop volumineux (${totalChars} chars, max ${MAX_CONTENT_CHARS})` },
+        { status: 400 }
+      )
     }
 
     const userPlan = await getUserPlan(userId)

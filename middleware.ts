@@ -67,11 +67,12 @@ export function middleware(req: NextRequest) {
       )
     }
 
-    // Basic token format validation (full validation happens inside each route)
-    const looksValid = token.startsWith('nxr_') || token.length > 100
+    // Quick format pre-check before hitting the DB (full validation inside each route).
+    // Accept: nxr_ custom tokens OR Supabase JWTs (which always start with base64 "eyJ").
+    const looksValid = token.startsWith('nxr_') || token.startsWith('eyJ')
     if (!looksValid) {
       return NextResponse.json(
-        { error: 'Invalid token format' },
+        { error: 'Invalid token format', hint: 'Token must start with nxr_ or be a valid JWT' },
         { status: 401, headers: corsHeaders }
       )
     }
