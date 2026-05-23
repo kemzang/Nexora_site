@@ -24,21 +24,21 @@ interface SubscriptionData {
 
 const UPGRADE_PLANS = [
   {
-    slug: 'neo',
-    name: 'Neo',
-    price: '4€',
+    slug: 'starter',
+    name: 'Starter',
+    price: '5€',
     icon: Sparkles,
     color: 'text-sky-400',
     bg: 'from-sky-500/20 to-sky-500/5',
     border: 'hover:border-sky-500/40',
     activeBorder: 'border-sky-500/40',
     badgeColor: 'bg-sky-500/15 text-sky-400 border-sky-500/20',
-    features: ['15 000 tokens/mois', '150 requêtes/jour', 'DeepSeek, Gemini Flash', 'Gemini Pro', 'Auto-complétion VS Code'],
+    features: ['1 000 000 tokens/mois', '500 requêtes/jour', 'DeepSeek, Gemini Flash', 'Gemini 2.5 Pro', 'Auto-complétion VS Code'],
   },
   {
     slug: 'pro',
     name: 'Pro',
-    price: '9€',
+    price: '12€',
     icon: Zap,
     color: 'text-amber-400',
     bg: 'from-amber-500/20 to-amber-500/5',
@@ -46,35 +46,35 @@ const UPGRADE_PLANS = [
     activeBorder: 'border-amber-500/40',
     badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
     popular: true,
-    features: ['50 000 tokens/mois', '500 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
+    features: ['5 000 000 tokens/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
   },
   {
     slug: 'business',
     name: 'Business',
-    price: '17€',
+    price: '25€',
     icon: Star,
     color: 'text-emerald-400',
     bg: 'from-emerald-500/20 to-emerald-500/5',
     border: 'hover:border-emerald-500/40',
     activeBorder: 'border-emerald-500/40',
     badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    features: ['200 000 tokens/mois', '2 000 requêtes/jour', '+ Claude Sonnet', 'Mode équipe', 'Support prioritaire'],
+    features: ['20 000 000 tokens/mois', '5 000 requêtes/jour', '+ Claude Sonnet 4.6', 'Accès API direct', 'Support dédié'],
   },
   {
     slug: 'enterprise',
     name: 'Enterprise',
-    price: '100€',
+    price: '60€',
     icon: Crown,
     color: 'text-violet-400',
     bg: 'from-violet-500/20 to-violet-500/5',
     border: 'hover:border-violet-500/40',
     activeBorder: 'border-violet-500/40',
     badgeColor: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
-    features: ['1 000 000 tokens/mois', 'Requêtes illimitées', '+ Claude Opus, GPT-4', 'Tous les modèles', 'Support 24/7 + SSO'],
+    features: ['80 000 000 tokens/mois', 'Requêtes illimitées', '+ Claude Opus & GPT-5', 'Tous les modèles', 'Support 24/7 + SSO + SLA'],
   },
 ]
 
-const PLAN_ORDER = ['free', 'neo', 'pro', 'business', 'enterprise']
+const PLAN_ORDER = ['free', 'starter', 'pro', 'business', 'enterprise']
 
 export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: string) => void }) {
   const [sub, setSub] = useState<SubscriptionData | null>(null)

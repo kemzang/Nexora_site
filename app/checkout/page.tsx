@@ -21,11 +21,11 @@ import { countries, validatePhone, type Country } from '@/lib/countries'
 
 /* ─── Plan config ────────────────────────────────────────────────── */
 const planDetails: Record<string, { name: string; price: string; priceXAF: number; color: string }> = {
-  free:       { name: 'Free',       price: '0€',   priceXAF: 0,     color: '#6366f1' },
-  neo:        { name: 'Neo',        price: '4€',   priceXAF: 2620,  color: '#38bdf8' },
-  pro:        { name: 'Pro',        price: '9€',   priceXAF: 5900,  color: '#f59e0b' },
-  business:   { name: 'Business',   price: '17€',  priceXAF: 11150, color: '#10b981' },
-  enterprise: { name: 'Enterprise', price: '100€', priceXAF: 65550, color: '#8b5cf6' },
+  free:       { name: 'Free',       price: '0€',  priceXAF: 0,     color: '#6366f1' },
+  starter:    { name: 'Starter',    price: '5€',  priceXAF: 3280,  color: '#38bdf8' },
+  pro:        { name: 'Pro',        price: '12€', priceXAF: 7870,  color: '#f59e0b' },
+  business:   { name: 'Business',   price: '25€', priceXAF: 16390, color: '#10b981' },
+  enterprise: { name: 'Enterprise', price: '60€', priceXAF: 39330, color: '#8b5cf6' },
 }
 
 type PaymentMethod = 'card' | 'mobile_money'
@@ -245,7 +245,7 @@ function CheckoutForm() {
   const { showToast } = useToast()
   const { user } = useAuth()
   const { t } = useTranslation()
-  const plan = searchParams.get('plan') || 'neo'
+  const plan = searchParams.get('plan') || 'starter'
   const currentPlan = planDetails[plan] || planDetails.pro
   const ch = t.checkout
 

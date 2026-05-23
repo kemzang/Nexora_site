@@ -32,7 +32,7 @@ const FIM_PLAN_MIN: Record<FimModelId, PlanId> = {
   'gpt-5': 'enterprise',
 }
 
-const PLAN_ORDER: PlanId[] = ['free', 'neo', 'pro', 'business', 'enterprise']
+const PLAN_ORDER: PlanId[] = ['free', 'starter', 'pro', 'business', 'enterprise']
 
 function planGte(a: PlanId, b: PlanId): boolean {
   return PLAN_ORDER.indexOf(a) >= PLAN_ORDER.indexOf(b)

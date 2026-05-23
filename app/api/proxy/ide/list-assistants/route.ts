@@ -39,7 +39,7 @@ function buildModels(plan: PlanId, token: string) {
   const gpt5        = m('Nexora GPT-5',             'gpt-5',           'openai')
 
   switch (plan) {
-    case 'neo':
+    case 'starter':
       return { models: [deepseek, geminiFlash, geminiPro], autocomplete: deepseek }
     case 'pro':
       return { models: [deepseek, geminiFlash, geminiPro, haiku, grok], autocomplete: deepseek }

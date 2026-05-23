@@ -56,20 +56,20 @@ export default function AutocompleteQuickStartPage() {
 
       <h1 className="text-3xl font-bold tracking-tight mb-3">Auto-complétion — Démarrage rapide</h1>
       <p className="text-muted-foreground text-base mb-8 leading-relaxed">
-        L'auto-complétion Nexora utilise DeepSeek V3 en mode FIM (Fill-In-the-Middle) pour suggérer du code contextuel en temps réel. Elle s'active automatiquement pendant que vous tapez, disponible dès le plan <strong className="text-sky-400">Neo</strong>.
+        L'auto-complétion Nexora utilise DeepSeek V3 en mode FIM (Fill-In-the-Middle) pour suggérer du code contextuel en temps réel. Elle s'active automatiquement pendant que vous tapez, disponible dès le plan <strong className="text-sky-400">Starter</strong>.
       </p>
 
       <Callout type="warning">
-        L'auto-complétion nécessite le plan <strong>Neo ou supérieur</strong>. Sur le plan Free, seul le mode Chat est disponible.
+        L'auto-complétion nécessite le plan <strong>Starter ou supérieur</strong>. Sur le plan Free, seul le mode Chat est disponible.
       </Callout>
 
       <div className="h-px bg-border/50 mb-8" />
 
       <h2 className="text-xl font-bold mb-5">Activation</h2>
 
-      <Step n={1} title="Vérifier que vous êtes sur Neo ou supérieur">
+      <Step n={1} title="Vérifier que vous êtes sur Starter ou supérieur">
         <p>
-          Vérifiez votre plan dans le <a href="/dashboard" className="text-indigo-400 hover:underline">tableau de bord</a> → Abonnement. Si vous êtes sur Free, <a href="/checkout?plan=neo" className="text-indigo-400 hover:underline">passez au plan Neo</a>.
+          Vérifiez votre plan dans le <a href="/dashboard" className="text-indigo-400 hover:underline">tableau de bord</a> → Abonnement. Si vous êtes sur Free, <a href="/checkout?plan=starter" className="text-indigo-400 hover:underline">passez au plan Starter</a>.
         </p>
       </Step>
 

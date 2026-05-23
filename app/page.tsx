@@ -64,10 +64,10 @@ const featureColors = [
 /* ─── Plan config ────────────────────────────────────────────────── */
 const plans = [
   { key: 'free',       name: 'Free',       price: '0€',   href: '/checkout?plan=free',       popular: false },
-  { key: 'neo',        name: 'Neo',        price: '4€',   href: '/checkout?plan=neo',        popular: false },
-  { key: 'pro',        name: 'Pro',        price: '9€',   href: '/checkout?plan=pro',        popular: true  },
-  { key: 'business',   name: 'Business',   price: '17€',  href: '/checkout?plan=business',   popular: false },
-  { key: 'enterprise', name: 'Enterprise', price: '100€', href: '/checkout?plan=enterprise', popular: false },
+  { key: 'starter',    name: 'Starter',    price: '5€',   href: '/checkout?plan=starter',    popular: false },
+  { key: 'pro',        name: 'Pro',        price: '12€',  href: '/checkout?plan=pro',        popular: true  },
+  { key: 'business',   name: 'Business',   price: '25€',  href: '/checkout?plan=business',   popular: false },
+  { key: 'enterprise', name: 'Enterprise', price: '60€',  href: '/checkout?plan=enterprise', popular: false },
 ]
 
 /* ─── Code terminal mockup ───────────────────────────────────────── */

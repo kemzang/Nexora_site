@@ -19,7 +19,7 @@ export interface ModelRoute {
   minPlan: PlanId
 }
 
-const PLAN_ORDER: PlanId[] = ['free', 'neo', 'pro', 'business', 'enterprise']
+const PLAN_ORDER: PlanId[] = ['free', 'starter', 'pro', 'business', 'enterprise']
 
 export function planSatisfies(userPlan: PlanId, required: PlanId): boolean {
   return PLAN_ORDER.indexOf(userPlan) >= PLAN_ORDER.indexOf(required)
@@ -60,7 +60,7 @@ export const MODEL_ROUTES: Record<string, ModelRoute> = {
     keyEnv: 'GEMINI_API_KEY',
     format: 'gemini',
     upstreamModel: 'gemini-2.0-pro-exp',
-    minPlan: 'neo',
+    minPlan: 'starter',
   },
 
   // ── Anthropic Claude ─────────────────────────────────────────

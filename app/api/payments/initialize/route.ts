@@ -41,10 +41,10 @@ async function checkDuplicatePayment(userToken: string, userId: string, planSlug
   return !!(existing && existing.length > 0)
 }
 
-const VALID_PLANS = ['neo', 'pro', 'business', 'enterprise'] as const
+const VALID_PLANS = ['starter', 'pro', 'business', 'enterprise'] as const
 type PaidPlan = typeof VALID_PLANS[number]
 
-const PLAN_AMOUNTS: Record<PaidPlan, number> = { neo: 4, pro: 9, business: 17, enterprise: 100 }
+const PLAN_AMOUNTS: Record<PaidPlan, number> = { starter: 5, pro: 12, business: 25, enterprise: 60 }
 const VALID_CURRENCIES = ['XAF', 'EUR', 'USD', 'GBP'] as const
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
