@@ -1,6 +1,15 @@
+/**
+ * Returns the assistant config consumed by the Nexora extension's PlatformProfileLoader.
+ * The response shape MUST match what ControlPlaneClient.listAssistants() expects:
+ *
+ *   { configResult: { config: AssistantUnrolled; errors: [] }; ownerSlug; packageSlug; iconUrl; rawYaml }[]
+ *
+ * Any deviation from this shape causes the extension to silently load no cloud models.
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyToken } from '@/lib/auth-verify'
+import { type PlanId } from '@/lib/models'
 
 export const runtime = 'nodejs'
 
@@ -11,41 +20,35 @@ const supabase = createClient(
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nexora-mu-henna.vercel.app'
 
-// Modèles disponibles selon le plan
-function getModelsForPlan(plan: string, token: string) {
+// Each model entry becomes a ModelConfig (AssistantUnrolled.models[]).
+// provider: 'openai' covers all OpenAI-compatible APIs (DeepSeek, Grok, etc.).
+function buildModels(plan: PlanId, token: string) {
   const apiBase = `${BASE_URL}/api/proxy/model-proxy`
 
-  const miniModel = {
-    title: 'Nexora Mini',
-    provider: 'openai',
-    model: 'gpt-4o-mini',
-    apiBase,
-    apiKey: token,
+  function m(name: string, model: string, provider = 'openai') {
+    return { name, model, provider, apiBase, apiKey: token }
   }
 
-  const proModel = {
-    title: 'Nexora Pro (GPT-4o)',
-    provider: 'openai',
-    model: 'gpt-4o',
-    apiBase,
-    apiKey: token,
-  }
-
-  const deepseekModel = {
-    title: 'Nexora DeepSeek',
-    provider: 'openai', // Continue utilise le format OpenAI
-    model: 'deepseek-chat',
-    apiBase,
-    apiKey: token,
-  }
+  const deepseek    = m('Nexora DeepSeek V3',      'deepseek-chat')
+  const geminiFlash = m('Nexora Gemini Flash',      'gemini-flash',    'openai')
+  const geminiPro   = m('Nexora Gemini Pro',        'gemini-pro',      'openai')
+  const haiku       = m('Nexora Claude Haiku',      'claude-haiku',    'openai')
+  const grok        = m('Nexora Grok 2',            'grok-2',          'openai')
+  const sonnet      = m('Nexora Claude Sonnet',     'claude-sonnet',   'openai')
+  const opus        = m('Nexora Claude Opus',       'claude-opus',     'openai')
+  const gpt5        = m('Nexora GPT-5',             'gpt-5',           'openai')
 
   switch (plan) {
+    case 'starter':
+      return { models: [deepseek, geminiFlash, geminiPro], autocomplete: deepseek }
     case 'pro':
-      return { models: [proModel, deepseekModel, miniModel], autocomplete: deepseekModel }
+      return { models: [deepseek, geminiFlash, geminiPro, haiku, grok], autocomplete: deepseek }
+    case 'business':
+      return { models: [deepseek, geminiFlash, geminiPro, haiku, grok, sonnet], autocomplete: deepseek }
     case 'enterprise':
-      return { models: [proModel, deepseekModel, miniModel], autocomplete: deepseekModel }
+      return { models: [deepseek, geminiFlash, geminiPro, haiku, grok, sonnet, opus, gpt5], autocomplete: deepseek }
     default: // free
-      return { models: [deepseekModel, miniModel], autocomplete: deepseekModel }
+      return { models: [deepseek, geminiFlash], autocomplete: deepseek }
   }
 }
 
@@ -62,38 +65,51 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Récupérer le plan actif de l'utilisateur
     const { data: subscription } = await supabase
       .from('user_subscriptions')
-      .select('plan_id, status, subscription_plans(name)')
+      .select('subscription_plans!inner(slug)')
       .eq('user_id', userId)
       .eq('status', 'active')
-      .single()
+      .maybeSingle()
 
-    // Déterminer le plan (free par défaut)
-    const planName = (subscription?.subscription_plans as { name?: string } | null)?.name?.toLowerCase() || 'free'
-    const { models, autocomplete } = getModelsForPlan(planName, token)
+    const plan = ((subscription?.subscription_plans as { slug?: string } | null)?.slug ?? 'free') as PlanId
+    const { models, autocomplete } = buildModels(plan, token)
 
-    const assistants = [
+    // AssistantUnrolled shape expected by PlatformProfileLoader
+    const assistantConfig = {
+      name: 'Nexora AI',
+      version: '1.0.0',
+      schema: 'v1',
+      models,
+      tabAutocompleteModel: autocomplete,
+      context: [],
+    }
+
+    const rawYaml = [
+      `name: Nexora AI`,
+      `version: 1.0.0`,
+      `schema: v1`,
+      `models:`,
+      ...models.map(m =>
+        `  - name: ${m.name}\n    model: ${m.model}\n    provider: ${m.provider}\n    apiBase: ${m.apiBase}`
+      ),
+    ].join('\n')
+
+    // Return the shape that ControlPlaneClient.listAssistants() destructures
+    return NextResponse.json([
       {
-        id: 'nexora-assistant',
-        name: 'Nexora AI',
-        description: `Assistant IA Nexora - Plan ${planName}`,
-        slug: 'nexora/nexora-assistant',
-        iconUrl: null,
-        configJson: JSON.stringify({
-          name: 'Nexora AI',
-          models,
-          tabAutocompleteModel: autocomplete,
-        }),
-        ownerType: 'organization',
+        configResult: {
+          config: assistantConfig,
+          errors: [],
+        },
         ownerSlug: 'nexora',
-      }
-    ]
-
-    return NextResponse.json(assistants)
+        packageSlug: 'nexora-assistant',
+        iconUrl: null,
+        rawYaml,
+      },
+    ])
   } catch (err) {
-    console.error('list-assistants error:', err)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    console.error('[list-assistants] error:', err)
+    return NextResponse.json({ error: 'Erreur serveur interne' }, { status: 500 })
   }
 }
