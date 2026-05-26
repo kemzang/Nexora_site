@@ -10,6 +10,24 @@ const POLL_INTERVAL_MS = 800
 const PRESENCE_INTERVAL_MS = 5_000
 const PRESENCE_TIMEOUT_S = 30
 
+// ── Rate limiting (in-memory, per edge instance, sliding 60s window) ──────────
+
+const rateMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 10      // max SSE connections per userId per minute
+const RATE_WINDOW_MS = 60_000
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const entry = rateMap.get(userId) ?? { count: 0, resetAt: now + RATE_WINDOW_MS }
+  if (now > entry.resetAt) {
+    entry.count = 0
+    entry.resetAt = now + RATE_WINDOW_MS
+  }
+  entry.count++
+  rateMap.set(userId, entry)
+  return entry.count > RATE_LIMIT
+}
+
 // ── Auth légère (edge-compatible, pas d'import depuis auth-verify) ────────────
 
 async function sha256hex(text: string): Promise<string> {
@@ -87,7 +105,37 @@ export async function GET(
   const userId = await verifyTokenEdge(authHeader.slice(7), supabase)
   if (!userId) return new Response('Token invalide', { status: 401 })
 
+  if (isRateLimited(userId)) {
+    return new Response('Trop de connexions — réessaie dans 60s', { status: 429 })
+  }
+
   const { id: roomId } = await params
+
+  // ── Vérifier que le room existe et est actif ──────────────────────────────
+  const { data: room } = await supabase
+    .from('rooms')
+    .select('id, is_active')
+    .eq('id', roomId)
+    .single()
+
+  if (!room) {
+    return new Response(
+      JSON.stringify({ error: 'room_not_found' }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
+  if (!room.is_active) {
+    // Retourner un stream SSE avec event error pour que le client affiche un msg
+    const errChunk = new TextEncoder().encode(
+      `event: error\ndata: ${JSON.stringify({ code: 'room_inactive' })}\n\n`,
+    )
+    return new Response(new ReadableStream({
+      start(c) { c.enqueue(errChunk); c.close() },
+    }), {
+      headers: { 'Content-Type': 'text/event-stream; charset=utf-8' },
+    })
+  }
 
   // ── Vérifier que l'user est membre du room ────────────────────────────────
   const { data: member } = await supabase
