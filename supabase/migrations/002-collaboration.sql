@@ -101,6 +101,20 @@ CREATE POLICY "Members insert messages" ON collab_messages
     )
   );
 
--- Activer Supabase Realtime pour sync future (WebSocket)
-ALTER PUBLICATION supabase_realtime ADD TABLE collab_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE room_members;
+-- Activer Supabase Realtime (ignoré si déjà membre)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'collab_messages'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE collab_messages;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'room_members'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE room_members;
+  END IF;
+END $$;

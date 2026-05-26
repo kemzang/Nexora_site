@@ -7,6 +7,8 @@ export const runtime = 'edge'
 // Vercel Hobby → 25s max ; Pro → 90s. On ferme à 20s et le client reconnecte.
 const SSE_MAX_MS = 20_000
 const POLL_INTERVAL_MS = 800
+const PRESENCE_INTERVAL_MS = 5_000
+const PRESENCE_TIMEOUT_S = 30
 
 // ── Auth légère (edge-compatible, pas d'import depuis auth-verify) ────────────
 
@@ -140,10 +142,28 @@ export async function GET(
 
       const interval = setInterval(() => void poll(), POLL_INTERVAL_MS)
 
+      // Présence : qui est en ligne (last_seen_at dans les 30 dernières secondes)
+      const presencePoll = async () => {
+        if (closed) return
+        try {
+          const cutoff = new Date(Date.now() - PRESENCE_TIMEOUT_S * 1000).toISOString()
+          const { data: members } = await supabase
+            .from('room_members')
+            .select('user_id, display_name, last_seen_at')
+            .eq('room_id', roomId)
+            .gte('last_seen_at', cutoff)
+          enqueue(sseChunk('presence', members ?? []))
+        } catch {
+          // Erreur transitoire — on ignore
+        }
+      }
+      const presenceInterval = setInterval(() => void presencePoll(), PRESENCE_INTERVAL_MS)
+
       // Fermeture propre après SSE_MAX_MS → le client reconnecte avec `since`
       const maxTimer = setTimeout(() => {
         closed = true
         clearInterval(interval)
+        clearInterval(presenceInterval)
         enqueue(sseChunk('reconnect', { since }))
         controller.close()
       }, SSE_MAX_MS)
@@ -152,6 +172,7 @@ export async function GET(
       req.signal.addEventListener('abort', () => {
         closed = true
         clearInterval(interval)
+        clearInterval(presenceInterval)
         clearTimeout(maxTimer)
         try { controller.close() } catch { /* déjà fermé */ }
       })
