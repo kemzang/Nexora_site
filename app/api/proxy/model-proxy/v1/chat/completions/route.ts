@@ -16,7 +16,7 @@ const usageCache = new Map<string, { total: number; expiresAt: number }>()
 
 const MAX_TOKENS_PER_PLAN: Record<PlanId, number> = {
   free: 1024,
-  neo: 2048,
+  starter: 2048,
   pro: 4096,
   business: 8192,
   enterprise: 16384,
