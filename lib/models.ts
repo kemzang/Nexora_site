@@ -322,7 +322,11 @@ export function selectBestModel(
     const aEnough = a.capability >= complexity ? 0 : 1
     const bEnough = b.capability >= complexity ? 0 : 1
     if (aEnough !== bEnough) return aEnough - bEnough
-    return a.sortOrder - b.sortOrder
+    // Both capable: prefer cheapest (lowest sortOrder)
+    if (aEnough === 0) return a.sortOrder - b.sortOrder
+    // Both incapable: prefer most capable, then most powerful (highest sortOrder)
+    if (a.capability !== b.capability) return b.capability - a.capability
+    return b.sortOrder - a.sortOrder
   })
 
   return {
