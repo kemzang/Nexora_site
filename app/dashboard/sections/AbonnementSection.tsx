@@ -26,7 +26,7 @@ const UPGRADE_PLANS = [
   {
     slug: 'starter',
     name: 'Starter',
-    price: '5€',
+    price: '$5',
     icon: Sparkles,
     color: 'text-sky-400',
     bg: 'from-sky-500/20 to-sky-500/5',
@@ -38,7 +38,7 @@ const UPGRADE_PLANS = [
   {
     slug: 'pro',
     name: 'Pro',
-    price: '12€',
+    price: '$12',
     icon: Zap,
     color: 'text-amber-400',
     bg: 'from-amber-500/20 to-amber-500/5',
@@ -46,12 +46,12 @@ const UPGRADE_PLANS = [
     activeBorder: 'border-amber-500/40',
     badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
     popular: true,
-    features: ['5 000 000 tokens/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
+    features: ['3 000 000 tokens/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
   },
   {
     slug: 'business',
     name: 'Business',
-    price: '25€',
+    price: '$25',
     icon: Star,
     color: 'text-emerald-400',
     bg: 'from-emerald-500/20 to-emerald-500/5',
@@ -63,7 +63,7 @@ const UPGRADE_PLANS = [
   {
     slug: 'enterprise',
     name: 'Enterprise',
-    price: '60€',
+    price: '$60',
     icon: Crown,
     color: 'text-violet-400',
     bg: 'from-violet-500/20 to-violet-500/5',
@@ -89,38 +89,35 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user?.id) { setLoading(false); return }
 
-      const { data: subData } = await supabase
+      const { data } = await supabase
         .from('user_subscriptions')
-        .select('status, tokens_remaining, current_period_end, plan_id')
+        .select('status, tokens_remaining, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
         .eq('user_id', session.user.id)
         .eq('status', 'active')
-        .maybeSingle()
+        .maybeSingle() as any
 
-      const data = subData as any
-
-      if (data?.plan_id) {
-        const { data: planData } = await supabase.from('subscription_plans').select('name, slug, price, tokens_per_month, features').eq('id', data.plan_id).maybeSingle()
-        const plan = planData as any
+      if (data?.subscription_plans) {
+        const plan = data.subscription_plans
         setSub({
-          planName: plan?.name || 'Free',
-          planSlug: plan?.slug || 'free',
-          price: plan?.price || 0,
-          tokensPerMonth: plan?.tokens_per_month || 1000,
+          planName: plan.name || 'Free',
+          planSlug: plan.slug || 'free',
+          price: plan.price || 0,
+          tokensPerMonth: plan.tokens_per_month || 10000,
           tokensRemaining: data.tokens_remaining || 0,
           renewalDate: data.current_period_end,
           status: data.status,
-          features: Array.isArray(plan?.features) ? plan.features : [],
+          features: Array.isArray(plan.features) ? plan.features : [],
         })
       } else {
         setSub({
           planName: 'Free',
           planSlug: 'free',
           price: 0,
-          tokensPerMonth: 1000,
+          tokensPerMonth: 10000,
           tokensRemaining: 0,
           renewalDate: null,
           status: 'active',
-          features: ['1 000 tokens/mois', '20 requêtes/jour', 'DeepSeek, Gemini Flash'],
+          features: ['100K tokens le 1er mois, puis 10K/mois', '200 requêtes/jour', 'DeepSeek V3 & Gemini Flash'],
         })
       }
     } catch {
@@ -176,7 +173,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold">{sub.price === 0 ? 'Gratuit' : `${sub.price}€`}</p>
+                <p className="text-2xl font-bold">{sub.price === 0 ? 'Gratuit' : `$${sub.price}`}</p>
                 {sub.price > 0 && <p className="text-xs text-muted-foreground">/mois</p>}
               </div>
             </div>
