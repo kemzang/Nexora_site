@@ -131,15 +131,15 @@ export async function POST(req: NextRequest) {
       metadata: { plan: safePlan, country: String(country).slice(0, 2).toUpperCase() },
     })
 
-    if (result.code === 201 || result.status === 'Accepted') {
+    if (result.success) {
       return NextResponse.json({
         success: true,
-        reference: result.transaction.reference,
-        authorizationUrl: result.authorization_url,
+        reference: result.reference,
+        authorizationUrl: result.authorizationUrl,
       })
     }
 
-    return NextResponse.json({ error: result.message || 'Erreur initialisation' }, { status: 400 })
+    return NextResponse.json({ error: result.error || 'Erreur initialisation' }, { status: 400 })
   } catch (err) {
     console.error('Payment init error:', err)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })

@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
     const result = await processPayment(reference, channel, data)
 
     return NextResponse.json({
-      success: result.code === 202 || result.status === 'Accepted',
-      status: result.transaction?.status,
+      success: result.success,
+      status: result.status,
       message: result.message,
     })
   } catch (err) {
