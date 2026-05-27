@@ -11,6 +11,7 @@ import {
   AlertTriangle, Clock, Shield
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/ui/toast'
 
 interface ApiKeyRow {
@@ -51,6 +52,7 @@ function timeAgo(dateStr: string | null) {
 }
 
 export default function ApiKeysSection() {
+  const { user } = useAuth()
   const { showToast } = useToast()
   const [keys, setKeys] = useState<ApiKeyRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,30 +64,28 @@ export default function ApiKeysSection() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const fetchKeys = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user?.id) { setLoading(false); return }
+  const fetchKeys = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from('api_keys')
       .select('id, name, key_prefix, is_active, last_used_at, created_at, rate_limit_per_minute')
-      .eq('user_id', session.user.id)
+      .eq('user_id', userId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
     setKeys(data || [])
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchKeys() }, [fetchKeys])
+  useEffect(() => {
+    if (user?.id) fetchKeys(user.id)
+  }, [user?.id, fetchKeys])
 
   const handleCreate = async () => {
-    if (!newKeyName.trim()) return
+    if (!newKeyName.trim() || !user?.id) return
     setCreating(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.id) return
       const { fullKey, prefix, hash } = await generateApiKey()
       const { error } = await (supabase.from('api_keys') as any).insert({
-        user_id: session.user.id,
+        user_id: user.id,
         name: newKeyName.trim(),
         key_prefix: prefix,
         key_hash: hash,
@@ -97,7 +97,7 @@ export default function ApiKeysSection() {
       setCreatedKey(fullKey)
       setNewKeyName('')
       setShowCreate(false)
-      fetchKeys()
+      if (user?.id) fetchKeys(user.id)
     } catch {
       showToast('Erreur inattendue', 'error')
     } finally {

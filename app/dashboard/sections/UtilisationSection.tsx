@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart3, TrendingUp, TrendingDown, Zap, Activity, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 
 type Period = '7d' | '30d' | '3m' | '1y'
 
@@ -188,15 +189,14 @@ function AreaChart({ data, period }: AreaChartProps) {
 }
 
 export default function UtilisationSection() {
+  const { user } = useAuth()
   const [period, setPeriod] = useState<Period>('30d')
   const [data, setData] = useState<DayData[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchData = useCallback(async (p: Period) => {
+  const fetchData = useCallback(async (p: Period, userId: string) => {
     setLoading(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.id) { setLoading(false); return }
       const days = PERIODS.find(x => x.id === p)!.days
       const fromDate = new Date()
       fromDate.setDate(fromDate.getDate() - days + 1)
@@ -205,7 +205,7 @@ export default function UtilisationSection() {
       const { data: rows } = await supabase
         .from('daily_usage')
         .select('date, tokens_used, requests_count')
-        .eq('user_id', session.user.id)
+        .eq('user_id', userId)
         .gte('date', fromStr)
 
       const byDate: Record<string, { tokens: number; requests: number }> = {}
@@ -227,7 +227,7 @@ export default function UtilisationSection() {
     }
   }, [])
 
-  useEffect(() => { fetchData(period) }, [period, fetchData])
+  useEffect(() => { if (user?.id) fetchData(period, user.id) }, [period, user?.id, fetchData])
 
   const totalTokens = data.reduce((s, d) => s + d.tokens, 0)
   const totalRequests = data.reduce((s, d) => s + d.requests, 0)

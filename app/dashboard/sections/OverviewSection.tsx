@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Zap, Key, BarChart3, Star, ArrowRight, Bot, TrendingUp, Clock, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 
 interface OverviewSectionProps {
@@ -40,6 +41,7 @@ function StatSkeleton() {
 }
 
 export default function OverviewSection({ user, onNavigate }: OverviewSectionProps) {
+  const { user: authUser } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
     tokensRemaining: 0,
     tokensTotal: 1000,
@@ -53,14 +55,11 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchStats()
-  }, [])
+    if (authUser?.id) fetchStats(authUser.id)
+  }, [authUser?.id])
 
-  async function fetchStats() {
+  async function fetchStats(userId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.id) { setLoading(false); return }
-      const userId = session.user.id
 
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
 

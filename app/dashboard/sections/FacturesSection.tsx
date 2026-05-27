@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Download, X, Printer, CheckCircle2, Clock, XCircle, Eye } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 
 interface Invoice {
   id: string
@@ -155,30 +156,28 @@ function InvoiceModal({ invoice, user, onClose }: { invoice: Invoice; user: User
 }
 
 export default function FacturesSection() {
+  const { user } = useAuth()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [userInfo, setUserInfo] = useState<UserInfo>({ email: '', firstName: '', lastName: '' })
 
   useEffect(() => {
-    fetchInvoices()
-  }, [])
+    if (user?.id) fetchInvoices(user.id, user.email || '')
+  }, [user?.id])
 
-  async function fetchInvoices() {
+  async function fetchInvoices(userId: string, email: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.id) { setLoading(false); return }
-
       const [invResult, profileResult] = await Promise.all([
         supabase
           .from('invoices')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', userId)
           .order('created_at', { ascending: false }),
         supabase
           .from('user_profiles')
           .select('display_name')
-          .eq('id', session.user.id)
+          .eq('id', userId)
           .maybeSingle(),
       ])
 
@@ -187,7 +186,7 @@ export default function FacturesSection() {
       const displayName = profileData?.display_name || ''
       const parts = displayName.split(' ')
       setUserInfo({
-        email: session.user.email || '',
+        email,
         firstName: parts[0] || '',
         lastName: parts.slice(1).join(' ') || '',
       })

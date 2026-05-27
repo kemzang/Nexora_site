@@ -9,6 +9,7 @@ import {
   Calendar, RefreshCw, AlertCircle
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 
 interface SubscriptionData {
@@ -77,22 +78,21 @@ const UPGRADE_PLANS = [
 const PLAN_ORDER = ['free', 'starter', 'pro', 'business', 'enterprise']
 
 export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: string) => void }) {
+  const { user } = useAuth()
   const [sub, setSub] = useState<SubscriptionData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchSubscription()
-  }, [])
+    if (user?.id) fetchSubscription(user.id)
+  }, [user?.id])
 
-  async function fetchSubscription() {
+  async function fetchSubscription(userId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.id) { setLoading(false); return }
 
       const { data } = await supabase
         .from('user_subscriptions')
         .select('status, tokens_remaining, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
-        .eq('user_id', session.user.id)
+        .eq('user_id', userId)
         .eq('status', 'active')
         .maybeSingle() as any
 
