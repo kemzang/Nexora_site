@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
-import { selectBestModel, estimateTokens, PLANS, type ModelId, type PlanId } from '@/lib/models'
+import { selectBestModel, estimateTokens, PLANS, getEffectiveTokenLimit, type ModelId, type PlanId } from '@/lib/models'
 
 export const runtime = 'nodejs'
 
@@ -13,13 +13,14 @@ const supabase = createClient(
 // ── Caches ───────────────────────────────────────────────────────────────────
 const planCache = new Map<string, { plan: PlanId; expiresAt: number }>()
 const usageCache = new Map<string, { total: number; expiresAt: number }>()
+const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>()
 
 const MAX_TOKENS_PER_PLAN: Record<PlanId, number> = {
-  free: 1024,
-  starter: 2048,
-  pro: 4096,
-  business: 8192,
-  enterprise: 16384,
+  free: 2048,
+  starter: 4096,
+  pro: 8192,
+  business: 16384,
+  enterprise: 32768,
 }
 
 const API_ROUTES: Record<string, { baseUrl: string; keyEnv: string; format: 'openai' | 'anthropic' | 'gemini' }> = {
@@ -49,8 +50,18 @@ async function getUserPlan(userId: string): Promise<PlanId> {
   return plan
 }
 
+async function getUserCreatedAt(userId: string): Promise<string | undefined> {
+  const cached = createdAtCache.get(userId)
+  if (cached && cached.expiresAt > Date.now()) return cached.createdAt
+  const { data } = await supabase.auth.admin.getUserById(userId)
+  const createdAt = data?.user?.created_at
+  if (createdAt) createdAtCache.set(userId, { createdAt, expiresAt: Date.now() + 3_600_000 })
+  return createdAt
+}
+
 async function checkMonthlyLimit(userId: string, plan: PlanId): Promise<string | null> {
-  const planLimit = PLANS[plan]?.tokensPerMonth ?? 1000
+  const createdAt = await getUserCreatedAt(userId)
+  const planLimit = getEffectiveTokenLimit(plan, createdAt)
   if (planLimit <= 0) return null
   const cached = usageCache.get(userId)
   if (cached && cached.expiresAt > Date.now()) {

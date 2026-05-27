@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { initializePayment } from '@/lib/notchpay'
+import { initializePayment } from '@/lib/payment'
 import { createClient } from '@supabase/supabase-js'
 
 function makeClient(userToken?: string) {
@@ -45,7 +45,7 @@ const VALID_PLANS = ['starter', 'pro', 'business', 'enterprise'] as const
 type PaidPlan = typeof VALID_PLANS[number]
 
 const PLAN_AMOUNTS: Record<PaidPlan, number> = { starter: 5, pro: 12, business: 25, enterprise: 60 }
-const VALID_CURRENCIES = ['XAF', 'EUR', 'USD', 'GBP'] as const
+const VALID_CURRENCIES = ['XAF', 'USD', 'EUR', 'GBP'] as const
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: NextRequest) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyPayment } from '@/lib/notchpay'
+import { verifyPayment } from '@/lib/payment'
 
 export async function GET(req: NextRequest) {
   try {

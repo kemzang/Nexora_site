@@ -22,6 +22,7 @@ export interface Plan {
   price: number
   priceLabel: string
   tokensPerMonth: number
+  firstMonthTokens?: number
   maxRequestsPerDay: number
   models: ModelId[]
   modelsLabel?: string
@@ -144,12 +145,13 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Free',
     nameFr: 'Découverte',
     price: 0,
-    priceLabel: '0€',
-    tokensPerMonth: 100000,
+    priceLabel: '$0',
+    tokensPerMonth: 10000,
+    firstMonthTokens: 100000,
     maxRequestsPerDay: 200,
     models: ['deepseek-chat', 'gemini-flash'],
     features: [
-      '100K tokens/mois',
+      '100K tokens le 1er mois, puis 10K/mois',
       '200 requêtes/jour',
       'DeepSeek V3 & Gemini Flash',
       'Chat IA + Autocomplétion',
@@ -161,7 +163,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Starter',
     nameFr: 'Starter',
     price: 5,
-    priceLabel: '5€',
+    priceLabel: '$5',
     tokensPerMonth: 1000000,
     maxRequestsPerDay: 500,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro'],
@@ -178,13 +180,13 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Pro',
     nameFr: 'Pro',
     price: 12,
-    priceLabel: '12€',
-    tokensPerMonth: 5000000,
+    priceLabel: '$12',
+    tokensPerMonth: 3000000,
     maxRequestsPerDay: 2000,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2'],
     modelsLabel: 'DeepSeek, Gemini, Claude Haiku, Grok',
     features: [
-      '5M tokens/mois',
+      '3M tokens/mois',
       '2 000 requêtes/jour',
       '+ Claude Haiku & Grok',
       'Indexing codebase complet',
@@ -197,7 +199,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Business',
     nameFr: 'Business',
     price: 25,
-    priceLabel: '25€',
+    priceLabel: '$25',
     tokensPerMonth: 20000000,
     maxRequestsPerDay: 5000,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet'],
@@ -214,7 +216,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Enterprise',
     nameFr: 'Enterprise',
     price: 60,
-    priceLabel: '60€',
+    priceLabel: '$60',
     tokensPerMonth: 80000000,
     maxRequestsPerDay: 99999,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet', 'gpt-5', 'claude-opus'],
@@ -230,6 +232,16 @@ export const PLANS: Record<PlanId, Plan> = {
 
 export function getModelsForPlan(planId: PlanId): ModelId[] {
   return PLANS[planId].models
+}
+
+// Retourne la limite mensuelle effective : 100K le 1er mois pour free, 10K ensuite
+export function getEffectiveTokenLimit(planId: PlanId, userCreatedAt?: string): number {
+  const plan = PLANS[planId]
+  if (planId === 'free' && plan.firstMonthTokens && userCreatedAt) {
+    const ageInDays = (Date.now() - new Date(userCreatedAt).getTime()) / 86_400_000
+    if (ageInDays <= 30) return plan.firstMonthTokens
+  }
+  return plan.tokensPerMonth
 }
 
 function getLastMessage(messages: ComplexMessage[]): string {

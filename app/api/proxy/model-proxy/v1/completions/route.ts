@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
-import { PLANS, type PlanId } from '@/lib/models'
+import { getEffectiveTokenLimit, type PlanId } from '@/lib/models'
 import type { FimModelId } from '@/lib/modelRouter'
 
 export const runtime = 'nodejs'
@@ -13,6 +13,7 @@ const supabase = createClient(
 
 const planCache = new Map<string, { plan: PlanId; expiresAt: number }>()
 const usageCache = new Map<string, { total: number; expiresAt: number }>()
+const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>()
 
 // DeepSeek supports /completions (FIM) only via beta endpoint
 // Other models (Gemini, GPT) also support FIM in various forms
@@ -52,8 +53,18 @@ async function getUserPlan(userId: string): Promise<PlanId> {
   return plan
 }
 
+async function getUserCreatedAt(userId: string): Promise<string | undefined> {
+  const cached = createdAtCache.get(userId)
+  if (cached && cached.expiresAt > Date.now()) return cached.createdAt
+  const { data } = await supabase.auth.admin.getUserById(userId)
+  const createdAt = data?.user?.created_at
+  if (createdAt) createdAtCache.set(userId, { createdAt, expiresAt: Date.now() + 3_600_000 })
+  return createdAt
+}
+
 async function checkMonthlyLimit(userId: string, plan: PlanId): Promise<string | null> {
-  const planLimit = PLANS[plan]?.tokensPerMonth ?? 1000
+  const createdAt = await getUserCreatedAt(userId)
+  const planLimit = getEffectiveTokenLimit(plan, createdAt)
   if (planLimit <= 0) return null
   const cached = usageCache.get(userId)
   if (cached && cached.expiresAt > Date.now()) {

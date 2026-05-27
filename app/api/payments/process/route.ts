@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { processPayment } from '@/lib/notchpay'
+import { processPayment } from '@/lib/payment'
 
 export async function POST(req: NextRequest) {
   try {
