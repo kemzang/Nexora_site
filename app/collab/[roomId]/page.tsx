@@ -99,7 +99,7 @@ export default function CollabRoomPage() {
 
   // Pré-remplir le displayName depuis le profil Supabase
   useEffect(() => {
-    if (user?.display_name) setDisplayName(user.display_name)
+    if (user?.firstName) setDisplayName(user.firstName)
     else if (user?.email) setDisplayName(user.email.split('@')[0])
   }, [user])
 

@@ -67,16 +67,15 @@ export default function ApiKeysSection() {
   const [deleting, setDeleting] = useState(false)
 
   const fetchKeys = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('api_keys')
+    const { data } = await (supabase.from('api_keys') as any)
       .select('id, name, key_prefix, is_active, last_used_at, created_at, rate_limit_per_minute, expires_at, permissions')
       .eq('user_id', userId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 
     const now = new Date()
-    // Filter out: temporary auth codes (permissions.temporary=true) AND expired codes
-    const realKeys = (data || []).filter(k => {
+    // Filter out temporary auth codes and expired keys
+    const realKeys = ((data as ApiKeyRow[]) || []).filter(k => {
       const perms = k.permissions as Record<string, unknown> | null
       if (perms?.temporary || perms?.auth_code) return false
       if (k.expires_at && new Date(k.expires_at) < now) return false
