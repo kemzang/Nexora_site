@@ -224,20 +224,23 @@ export default function DashboardPage() {
 
         {/* Page content — sections stay mounted (no re-fetch on tab switch) */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-          {sidebarLinks.map(link => (
-            <div
-              key={link.section}
-              style={{ display: activeSection === link.section ? 'block' : 'none' }}
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18 }}
+          {sidebarLinks.map(link => {
+            const Section = sections[link.section]
+            return (
+              <div
+                key={link.section}
+                style={{ display: activeSection === link.section ? 'block' : 'none' }}
               >
-                {sections[link.section]?.({ user, onNavigate: handleNavigate })}
-              </motion.div>
-            </div>
-          ))}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  {Section && <Section user={user} onNavigate={handleNavigate} />}
+                </motion.div>
+              </div>
+            )
+          })}
         </main>
       </div>
     </div>
