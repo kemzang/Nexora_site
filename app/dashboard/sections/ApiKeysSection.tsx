@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Key, Plus, Copy, Trash2, Eye, EyeOff, CheckCircle2, Loader2,
+  Key, Plus, Copy, Trash2, CheckCircle2, Loader2,
   AlertTriangle, Clock, Shield
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
@@ -67,11 +67,20 @@ export default function ApiKeysSection() {
     if (!session?.user?.id) { setLoading(false); return }
     const { data } = await supabase
       .from('api_keys')
-      .select('id, name, key_prefix, is_active, last_used_at, created_at, rate_limit_per_minute')
+      .select('id, name, key_prefix, is_active, last_used_at, created_at, rate_limit_per_minute, expires_at, permissions')
       .eq('user_id', session.user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
-    setKeys(data || [])
+
+    const now = new Date()
+    // Filter out: temporary auth codes (permissions.temporary=true) AND expired codes
+    const realKeys = (data || []).filter(k => {
+      const perms = k.permissions as Record<string, unknown> | null
+      if (perms?.temporary || perms?.auth_code) return false
+      if (k.expires_at && new Date(k.expires_at) < now) return false
+      return true
+    })
+    setKeys(realKeys)
     setLoading(false)
   }, [])
 

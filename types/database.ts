@@ -712,3 +712,34 @@ export type SystemLogUpdate = Database['public']['Tables']['system_logs']['Updat
 export type Invoice = Database['public']['Tables']['invoices']['Row']
 export type InvoiceInsert = Database['public']['Tables']['invoices']['Insert']
 export type InvoiceUpdate = Database['public']['Tables']['invoices']['Update']
+
+// ── Collaboration ──────────────────────────────────────────────────────────────
+export interface CollabRoom {
+  id: string
+  name: string
+  owner_id: string
+  invite_token: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CollabMember {
+  id: string
+  room_id: string
+  user_id: string
+  display_name: string
+  last_seen_at: string
+  joined_at: string
+}
+
+export interface CollabMessage {
+  id: string
+  room_id: string
+  sender_id: string
+  sender_name: string
+  role: 'user' | 'assistant'
+  content: string
+  model_id: string | null
+  created_at: string
+}
