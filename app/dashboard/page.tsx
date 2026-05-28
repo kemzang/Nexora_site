@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -222,19 +222,22 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Page content */}
+        {/* Page content — sections stay mounted (no re-fetch on tab switch) */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
+          {sidebarLinks.map(link => (
+            <div
+              key={link.section}
+              style={{ display: activeSection === link.section ? 'block' : 'none' }}
             >
-              <ActiveComponent user={user} onNavigate={handleNavigate} />
-            </motion.div>
-          </AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                {sections[link.section]?.({ user, onNavigate: handleNavigate })}
+              </motion.div>
+            </div>
+          ))}
         </main>
       </div>
     </div>

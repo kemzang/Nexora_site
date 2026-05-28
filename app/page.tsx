@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { useTranslation } from '@/lib/i18n/context'
+import { useAuth } from '@/hooks/use-auth'
+import { LayoutDashboard } from 'lucide-react'
 import {
   Sparkles, Zap, Code, TrendingUp, CheckCircle, ArrowRight,
   Rocket, Shield, Globe, Terminal, Cpu, Brain, Star, ChevronRight,
@@ -132,6 +134,7 @@ function TerminalMockup() {
 /* ─── Page ───────────────────────────────────────────────────────── */
 export default function HomePage() {
   const { t } = useTranslation()
+  const { user, loading: authLoading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -160,14 +163,27 @@ export default function HomePage() {
               ))}
               <div className="flex items-center gap-2 pl-4 border-l border-white/[0.08]">
                 <LanguageSwitcher />
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">{t.nav.login}</Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-500/30">
-                    {t.nav.start}
-                  </Button>
-                </Link>
+                {!authLoading && (
+                  user ? (
+                    <Link href="/dashboard">
+                      <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-500/30 gap-2">
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/auth/login">
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">{t.nav.login}</Button>
+                      </Link>
+                      <Link href="/auth/register">
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 border border-indigo-500/30">
+                          {t.nav.start}
+                        </Button>
+                      </Link>
+                    </>
+                  )
+                )}
               </div>
             </div>
 
@@ -191,8 +207,18 @@ export default function HomePage() {
                 <a key={href} href={href} onClick={() => setMenuOpen(false)} className="block px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</a>
               ))}
               <div className="flex gap-2 pt-2">
-                <Link href="/auth/login" className="flex-1"><Button variant="outline" className="w-full" size="sm">{t.nav.login}</Button></Link>
-                <Link href="/auth/register" className="flex-1"><Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white" size="sm">{t.nav.start}</Button></Link>
+                {user ? (
+                  <Link href="/dashboard" className="flex-1">
+                    <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white gap-2" size="sm">
+                      <LayoutDashboard className="w-3.5 h-3.5" />Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/auth/login" className="flex-1"><Button variant="outline" className="w-full" size="sm">{t.nav.login}</Button></Link>
+                    <Link href="/auth/register" className="flex-1"><Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white" size="sm">{t.nav.start}</Button></Link>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
