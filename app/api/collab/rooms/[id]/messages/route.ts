@@ -1,74 +1,101 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { verifyToken } from '@/lib/auth-verify'
-import { getRoom, insertMessage, getMessagesSince } from '@/lib/collab-db'
 
-export const runtime = 'nodejs'
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
-/**
- * Résout l'identité de l'appelant.
- * Accepte :
- *  - Bearer nxr_xxx  → API key (extension VS Code)
- *  - Bearer <jwt>    → Supabase JWT
- *  - ?inviteToken=xx → client web (invite token valide)
- * Retourne { userId, isWebGuest } ou null si non autorisé.
- */
-async function resolveIdentity(
-  req: NextRequest,
-  room: { id: string; invite_token: string }
-): Promise<{ userId: string; isWebGuest: boolean } | null> {
+async function assertMember(roomId: string, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('room_members')
+    .select('id')
+    .eq('room_id', roomId)
+    .eq('user_id', userId)
+    .single()
+  return !!data
+}
+
+async function resolveUser(req: NextRequest): Promise<string | null> {
   const auth = req.headers.get('Authorization')
-  if (auth?.startsWith('Bearer ')) {
-    const userId = await verifyToken(auth.split(' ')[1])
-    if (userId) return { userId, isWebGuest: false }
-  }
-  // Invite token (client web sans compte)
-  const inviteToken = req.nextUrl.searchParams.get('inviteToken') ?? (await req.clone().json().catch(() => ({}))).inviteToken
-  if (inviteToken && inviteToken === room.invite_token) {
-    return { userId: `web_${room.id}`, isWebGuest: true }
-  }
+  if (auth?.startsWith('Bearer ')) return verifyToken(auth.split(' ')[1])
   return null
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id: roomId } = await params
-  const room = await getRoom(roomId)
-  if (!room) return NextResponse.json({ error: 'Room introuvable' }, { status: 404 })
-
-  const identity = await resolveIdentity(req, room)
-  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const body = await req.json().catch(() => ({}))
-  const { content, role = 'user', senderName = 'Utilisateur', modelId, inviteToken: _it } = body as {
-    content?: string
-    role?: 'user' | 'assistant'
-    senderName?: string
-    modelId?: string
-    inviteToken?: string
-  }
-
-  if (!content?.trim()) {
-    return NextResponse.json({ error: 'content requis' }, { status: 400 })
-  }
-
-  const msg = await insertMessage(roomId, identity.userId, senderName, role, content.trim(), modelId)
-  return NextResponse.json({ message: msg })
-}
-
+/**
+ * GET /api/collab/rooms/[id]/messages?since=<ISO8601>
+ * Retourne les messages depuis un timestamp donné (polling côté extension)
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: roomId } = await params
-  const room = await getRoom(roomId)
-  if (!room) return NextResponse.json({ error: 'Room introuvable' }, { status: 404 })
+  try {
+    const userId = await resolveUser(req)
+    if (!userId) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-  const identity = await resolveIdentity(req, room)
-  if (!identity) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { id: roomId } = await params
+    if (!(await assertMember(roomId, userId))) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    }
 
-  const since = req.nextUrl.searchParams.get('since') ?? new Date(0).toISOString()
-  const messages = await getMessagesSince(roomId, since)
-  return NextResponse.json({ messages })
+    const since = req.nextUrl.searchParams.get('since')
+    let query = supabase
+      .from('collab_messages')
+      .select('id, sender_id, sender_name, role, content, model_id, created_at')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true })
+      .limit(50)
+
+    if (since) query = query.gt('created_at', since)
+
+    const { data: messages, error } = await query
+    if (error) return NextResponse.json({ error: 'Erreur lecture messages' }, { status: 500 })
+
+    return NextResponse.json({ messages: messages ?? [] })
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}
+
+/**
+ * POST /api/collab/rooms/[id]/messages
+ * Envoyer un message dans le room
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const userId = await resolveUser(req)
+    if (!userId) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+    const { id: roomId } = await params
+    if (!(await assertMember(roomId, userId))) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    }
+
+    const { content, role, senderName, modelId } = await req.json()
+    if (!content?.trim()) return NextResponse.json({ error: 'Contenu requis' }, { status: 400 })
+
+    const { data: message, error } = await supabase
+      .from('collab_messages')
+      .insert({
+        room_id: roomId,
+        sender_id: userId,
+        sender_name: senderName?.trim() || 'Développeur',
+        role: role || 'user',
+        content: content.trim(),
+        model_id: modelId || null,
+      })
+      .select()
+      .single()
+
+    if (error || !message) return NextResponse.json({ error: 'Erreur envoi message' }, { status: 500 })
+
+    return NextResponse.json({ message }, { status: 201 })
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
 }

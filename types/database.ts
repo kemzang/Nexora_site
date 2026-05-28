@@ -714,17 +714,18 @@ export type InvoiceInsert = Database['public']['Tables']['invoices']['Insert']
 export type InvoiceUpdate = Database['public']['Tables']['invoices']['Update']
 
 // ── Collaboration ──────────────────────────────────────────────────────────────
-export interface CollabRoom {
+export interface CollaborationRoom {
   id: string
   name: string
   owner_id: string
   invite_token: string
   is_active: boolean
+  max_members: number
   created_at: string
   updated_at: string
 }
 
-export interface CollabMember {
+export interface RoomMember {
   id: string
   room_id: string
   user_id: string

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { initializePayment } from '@/lib/notchpay'
+import { initializePayment } from '@/lib/payment'
 import { createClient } from '@supabase/supabase-js'
 
 function makeClient(userToken?: string) {
@@ -45,7 +45,7 @@ const VALID_PLANS = ['starter', 'pro', 'business', 'enterprise'] as const
 type PaidPlan = typeof VALID_PLANS[number]
 
 const PLAN_AMOUNTS: Record<PaidPlan, number> = { starter: 5, pro: 12, business: 25, enterprise: 60 }
-const VALID_CURRENCIES = ['XAF', 'EUR', 'USD', 'GBP'] as const
+const VALID_CURRENCIES = ['XAF', 'USD', 'EUR', 'GBP'] as const
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: NextRequest) {
@@ -131,15 +131,15 @@ export async function POST(req: NextRequest) {
       metadata: { plan: safePlan, country: String(country).slice(0, 2).toUpperCase() },
     })
 
-    if (result.code === 201 || result.status === 'Accepted') {
+    if (result.success) {
       return NextResponse.json({
         success: true,
-        reference: result.transaction.reference,
-        authorizationUrl: result.authorization_url,
+        reference: result.reference,
+        authorizationUrl: result.authorizationUrl,
       })
     }
 
-    return NextResponse.json({ error: result.message || 'Erreur initialisation' }, { status: 400 })
+    return NextResponse.json({ error: result.error || 'Erreur initialisation' }, { status: 400 })
   } catch (err) {
     console.error('Payment init error:', err)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })

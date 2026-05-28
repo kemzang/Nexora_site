@@ -1,107 +1,214 @@
-/**
- * SSE stream pour la collaboration en temps réel.
- *
- * L'extension et le client web se connectent ici avec ?since=<ISO>.
- * On poll Supabase toutes les 2s et on envoie les nouveaux messages + membres.
- * Après 25s on envoie `event: reconnect` et on ferme — le client reconnecte aussitôt.
- * (Vercel functions timeout à 30s en serverless, 60s en Edge — on reste largement dans les clous)
- */
 import { NextRequest } from 'next/server'
-import { verifyToken } from '@/lib/auth-verify'
-import { getRoom, getMessagesSince, getOnlineMembers } from '@/lib/collab-db'
+import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'nodejs'
+// Edge runtime : pas de timeout Node.js, compatible streaming long
+export const runtime = 'edge'
 
-const POLL_INTERVAL_MS = 2_000
-const MAX_OPEN_MS = 25_000
+// Vercel Hobby → 25s max ; Pro → 90s. On ferme à 20s et le client reconnecte.
+const SSE_MAX_MS = 20_000
+const POLL_INTERVAL_MS = 800
+const PRESENCE_INTERVAL_MS = 5_000
+const PRESENCE_TIMEOUT_S = 30
 
-function sseEvent(event: string, data: unknown): string {
-  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
+// ── Rate limiting (in-memory, par edge instance, fenêtre glissante 60s) ──────
+
+const rateMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 10
+const RATE_WINDOW_MS = 60_000
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const entry = rateMap.get(userId) ?? { count: 0, resetAt: now + RATE_WINDOW_MS }
+  if (now > entry.resetAt) {
+    entry.count = 0
+    entry.resetAt = now + RATE_WINDOW_MS
+  }
+  entry.count++
+  rateMap.set(userId, entry)
+  return entry.count > RATE_LIMIT
 }
 
+// ── Auth edge-compatible ───────────────────────────────────────────────────────
+
+async function sha256hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function verifyTokenEdge(token: string, supabase: any): Promise<string | null> {
+  if (token.startsWith('nxr_')) {
+    const hash = await sha256hex(token)
+    const { data } = await supabase
+      .from('api_keys')
+      .select('user_id, expires_at, is_active')
+      .eq('key_hash', hash)
+      .eq('is_active', true)
+      .single()
+    const row = data as { user_id: string; expires_at: string | null; is_active: boolean } | null
+    if (!row) return null
+    if (row.expires_at && new Date(row.expires_at) < new Date()) return null
+    return row.user_id
+  }
+  const { data: { user } } = await supabase.auth.getUser(token)
+  return (user as { id: string } | null)?.id ?? null
+}
+
+// ── SSE helpers ───────────────────────────────────────────────────────────────
+
+function sseChunk(event: string, data: unknown): Uint8Array {
+  return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+}
+
+function sseComment(text: string): Uint8Array {
+  return new TextEncoder().encode(`: ${text}\n\n`)
+}
+
+// ── Route principale ──────────────────────────────────────────────────────────
+
+/**
+ * GET /api/collab/rooms/[id]/stream?since=<ISO8601>
+ *
+ * Flux SSE qui pousse les nouveaux messages en temps quasi-réel.
+ * La connexion se ferme après SSE_MAX_MS et envoie `event: reconnect`
+ * avec le curseur `since` mis à jour pour que le client reconnecte
+ * sans perdre de messages.
+ */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response('Non autorisé', { status: 401 })
+  }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+
+  const userId = await verifyTokenEdge(authHeader.slice(7), supabase)
+  if (!userId) return new Response('Token invalide', { status: 401 })
+
+  if (isRateLimited(userId)) {
+    return new Response('Trop de connexions — réessaie dans 60s', { status: 429 })
+  }
+
   const { id: roomId } = await params
 
-  // Auth — Accept aussi un ?token= pour le client web (invite token)
-  const auth = req.headers.get('Authorization')
-  let userId: string | null = null
+  // Vérifier que le room existe et est actif
+  const { data: room } = await supabase
+    .from('collaboration_rooms')
+    .select('id, is_active')
+    .eq('id', roomId)
+    .single()
 
-  if (auth?.startsWith('Bearer ')) {
-    userId = await verifyToken(auth.split(' ')[1])
-  }
-  // Fallback : token d'invitation dans la query (client web sans compte)
-  const inviteToken = req.nextUrl.searchParams.get('inviteToken')
-  if (!userId && inviteToken) {
-    const room = await getRoom(roomId)
-    if (room?.invite_token === inviteToken) {
-      userId = `web_${roomId}` // accès lecture seule autorisé
-    }
+  if (!room) {
+    return new Response(JSON.stringify({ error: 'room_not_found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 
-  if (!userId) {
-    return new Response('Unauthorized', { status: 401 })
+  if (!room.is_active) {
+    const errChunk = new TextEncoder().encode(
+      `event: error\ndata: ${JSON.stringify({ code: 'room_inactive' })}\n\n`,
+    )
+    return new Response(
+      new ReadableStream({ start(c) { c.enqueue(errChunk); c.close() } }),
+      { headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } },
+    )
   }
 
-  const since = req.nextUrl.searchParams.get('since') ?? new Date(Date.now() - 5_000).toISOString()
-  let cursor = since
+  // Vérifier que l'user est membre du room
+  const { data: member } = await supabase
+    .from('room_members')
+    .select('id')
+    .eq('room_id', roomId)
+    .eq('user_id', userId)
+    .single()
 
-  const encoder = new TextEncoder()
+  if (!member) return new Response('Accès refusé', { status: 403 })
 
+  let since =
+    req.nextUrl.searchParams.get('since') ??
+    new Date(Date.now() - 5_000).toISOString()
+
+  // ── Flux SSE ──────────────────────────────────────────────────────────────
   const stream = new ReadableStream({
     async start(controller) {
-      const opened = Date.now()
+      let closed = false
 
-      // Ping initial pour confirmer la connexion
-      controller.enqueue(encoder.encode(': connected\n\n'))
+      const enqueue = (chunk: Uint8Array) => {
+        if (!closed) controller.enqueue(chunk)
+      }
 
-      const poll = setInterval(async () => {
-        if (req.signal.aborted) {
-          clearInterval(poll)
-          controller.close()
-          return
-        }
+      enqueue(sseComment('stream connected'))
+      enqueue(new TextEncoder().encode('retry: 3000\n\n'))
 
+      const poll = async () => {
+        if (closed) return
         try {
-          const [messages, members] = await Promise.all([
-            getMessagesSince(roomId, cursor),
-            getOnlineMembers(roomId),
-          ])
+          const { data: messages } = await supabase
+            .from('collab_messages')
+            .select('id, sender_id, sender_name, role, content, model_id, created_at')
+            .eq('room_id', roomId)
+            .gt('created_at', since)
+            .order('created_at', { ascending: true })
+            .limit(20)
 
-          if (messages.length > 0) {
-            cursor = messages[messages.length - 1].created_at
-            controller.enqueue(encoder.encode(sseEvent('messages', messages)))
-          }
-
-          // Toujours envoyer la liste des membres (présence)
-          controller.enqueue(encoder.encode(sseEvent('members', members)))
-
-          // Fermer proprement après MAX_OPEN_MS → le client reconnecte
-          if (Date.now() - opened >= MAX_OPEN_MS) {
-            clearInterval(poll)
-            controller.enqueue(encoder.encode(sseEvent('reconnect', { since: cursor })))
-            controller.close()
+          if (messages?.length) {
+            since = messages[messages.length - 1].created_at
+            enqueue(sseChunk('messages', messages))
           }
         } catch {
-          // Erreur Supabase transitoire — on continue à poller
+          // Erreur Supabase transitoire — on continue
         }
-      }, POLL_INTERVAL_MS)
+      }
+
+      const presencePoll = async () => {
+        if (closed) return
+        try {
+          const cutoff = new Date(Date.now() - PRESENCE_TIMEOUT_S * 1000).toISOString()
+          const { data: members } = await supabase
+            .from('room_members')
+            .select('user_id, display_name, last_seen_at')
+            .eq('room_id', roomId)
+            .gte('last_seen_at', cutoff)
+          enqueue(sseChunk('presence', members ?? []))
+        } catch {
+          // Erreur transitoire — on ignore
+        }
+      }
+
+      const interval = setInterval(() => void poll(), POLL_INTERVAL_MS)
+      const presenceInterval = setInterval(() => void presencePoll(), PRESENCE_INTERVAL_MS)
+
+      const maxTimer = setTimeout(() => {
+        closed = true
+        clearInterval(interval)
+        clearInterval(presenceInterval)
+        enqueue(sseChunk('reconnect', { since }))
+        controller.close()
+      }, SSE_MAX_MS)
 
       req.signal.addEventListener('abort', () => {
-        clearInterval(poll)
-        try { controller.close() } catch { /* already closed */ }
+        closed = true
+        clearInterval(interval)
+        clearInterval(presenceInterval)
+        clearTimeout(maxTimer)
+        try { controller.close() } catch { /* déjà fermé */ }
       })
     },
   })
 
   return new Response(stream, {
     headers: {
-      'Content-Type': 'text/event-stream',
+      'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
       'X-Accel-Buffering': 'no',
-      Connection: 'keep-alive',
     },
   })
 }

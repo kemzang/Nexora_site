@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Zap, Key, BarChart3, Star, ArrowRight, Bot, TrendingUp, Clock, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import Link from 'next/link'
 
 interface OverviewSectionProps {
@@ -40,6 +41,7 @@ function StatSkeleton() {
 }
 
 export default function OverviewSection({ user, onNavigate }: OverviewSectionProps) {
+  const { user: authUser } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
     tokensRemaining: 0,
     tokensTotal: 1000,
@@ -53,34 +55,29 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchStats()
-  }, [])
+    if (authUser?.id) fetchStats(authUser.id)
+  }, [authUser?.id])
 
-  async function fetchStats() {
+  async function fetchStats(userId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user?.id) { setLoading(false); return }
-      const userId = session.user.id
 
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
 
       const [subResult, keysResult, usageResult] = await Promise.all([
-        supabase.from('user_subscriptions').select('tokens_remaining, current_period_end, plan_id').eq('user_id', userId).eq('status', 'active').maybeSingle(),
+        supabase.from('user_subscriptions').select('tokens_remaining, current_period_end, subscription_plans(name, slug, tokens_per_month)').eq('user_id', userId).eq('status', 'active').maybeSingle(),
         supabase.from('api_keys').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true),
         supabase.from('daily_usage').select('tokens_used, requests_count').eq('user_id', userId).gte('date', startOfMonth),
       ])
 
       const sub = subResult.data as any
+      const plan = sub?.subscription_plans as any
       const usageRows = (usageResult.data || []) as any[]
       const monthlyTokens = usageRows.reduce((s: number, u: any) => s + (u.tokens_used || 0), 0)
       const monthlyRequests = usageRows.reduce((s: number, u: any) => s + (u.requests_count || 0), 0)
 
-      let planName = 'Free', planSlug = 'free', tokensPerMonth = 1000
-      if (sub?.plan_id) {
-        const { data: planData } = await supabase.from('subscription_plans').select('name, slug, tokens_per_month').eq('id', sub.plan_id).maybeSingle()
-        const p = planData as any
-        if (p) { planName = p.name; planSlug = p.slug; tokensPerMonth = p.tokens_per_month }
-      }
+      const planName = plan?.name || 'Free'
+      const planSlug = plan?.slug || 'free'
+      const tokensPerMonth = plan?.tokens_per_month || 10000
 
       setStats({
         tokensRemaining: sub?.tokens_remaining ?? 0,
