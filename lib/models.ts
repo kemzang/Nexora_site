@@ -13,6 +13,7 @@ export interface AIModel {
   contextWindow: number
   capability: number
   sortOrder: number
+  supportsVision: boolean
 }
 
 export interface Plan {
@@ -52,6 +53,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 64000,
     capability: 3,
     sortOrder: 1,
+    supportsVision: false,
   },
   'gemini-flash': {
     id: 'gemini-flash',
@@ -64,6 +66,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 32000,
     capability: 2,
     sortOrder: 2,
+    supportsVision: true,
   },
   'gemini-pro': {
     id: 'gemini-pro',
@@ -76,6 +79,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 32000,
     capability: 3,
     sortOrder: 3,
+    supportsVision: true,
   },
   'claude-haiku': {
     id: 'claude-haiku',
@@ -88,6 +92,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 200000,
     capability: 3,
     sortOrder: 4,
+    supportsVision: true,
   },
   'grok-2': {
     id: 'grok-2',
@@ -100,6 +105,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 32000,
     capability: 3,
     sortOrder: 5,
+    supportsVision: true,
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
@@ -112,6 +118,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 200000,
     capability: 4,
     sortOrder: 6,
+    supportsVision: true,
   },
   'gpt-5': {
     id: 'gpt-5',
@@ -124,6 +131,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 128000,
     capability: 5,
     sortOrder: 7,
+    supportsVision: true,
   },
   'claude-opus': {
     id: 'claude-opus',
@@ -136,6 +144,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 200000,
     capability: 5,
     sortOrder: 8,
+    supportsVision: true,
   },
 }
 
@@ -314,6 +323,25 @@ export function analyzeComplexity(messages: ComplexMessage[]): number {
   return Math.max(1, Math.min(5, score))
 }
 
+/** Détecte si une liste de messages contient des images (data URL ou image_url) */
+export function hasImageContent(messages: any[]): boolean {
+  return messages.some((msg) => {
+    if (!msg.content) return false
+    if (typeof msg.content === 'string') {
+      return msg.content.includes('data:image/')
+    }
+    if (Array.isArray(msg.content)) {
+      return msg.content.some(
+        (part: any) =>
+          part.type === 'image_url' ||
+          part.type === 'image' ||
+          (part.type === 'text' && typeof part.text === 'string' && part.text.includes('data:image/'))
+      )
+    }
+    return false
+  })
+}
+
 export function selectBestModel(
   userPlan: PlanId,
   preferredModel?: ModelId,
@@ -322,21 +350,25 @@ export function selectBestModel(
   const availableModels = getModelsForPlan(userPlan)
   const available = availableModels.map(id => MODELS[id])
   const complexity = analyzeComplexity(messages)
+  const needsVision = hasImageContent(messages as any[])
 
+  // Si le modèle préféré est disponible dans ce plan et supporte la vision si nécessaire
   if (preferredModel && availableModels.includes(preferredModel)) {
     const chosen = MODELS[preferredModel]
-    if (chosen.capability >= complexity) {
+    if (chosen.capability >= complexity && (!needsVision || chosen.supportsVision)) {
       return { model: chosen, complexity, downgraded: false }
     }
   }
 
   const sorted = [...available].sort((a, b) => {
+    // Si images : les modèles sans vision passent en dernier
+    if (needsVision) {
+      if (a.supportsVision !== b.supportsVision) return a.supportsVision ? -1 : 1
+    }
     const aEnough = a.capability >= complexity ? 0 : 1
     const bEnough = b.capability >= complexity ? 0 : 1
     if (aEnough !== bEnough) return aEnough - bEnough
-    // Both capable: prefer cheapest (lowest sortOrder)
     if (aEnough === 0) return a.sortOrder - b.sortOrder
-    // Both incapable: prefer most capable, then most powerful (highest sortOrder)
     if (a.capability !== b.capability) return b.capability - a.capability
     return b.sortOrder - a.sortOrder
   })

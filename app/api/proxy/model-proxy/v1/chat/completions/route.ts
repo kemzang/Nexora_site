@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
-import { selectBestModel, estimateTokens, PLANS, getEffectiveTokenLimit, type ModelId, type PlanId } from '@/lib/models'
+import { selectBestModel, hasImageContent, estimateTokens, getEffectiveTokenLimit, type ModelId, type PlanId } from '@/lib/models'
 
 export const runtime = 'nodejs'
 
@@ -453,6 +453,18 @@ export async function POST(req: NextRequest) {
     const route = API_ROUTES[selectedModel.id]
     if (!route) return NextResponse.json({ error: `Model ${selectedModel.id} not configured` }, { status: 500 })
 
+    // Si le modèle retenu ne supporte pas la vision mais que les messages contiennent des images,
+    // on strip les parties image pour éviter une erreur 400 côté provider.
+    // Si le modèle retenu ne supporte pas la vision, stripper les images pour éviter une erreur 400.
+    const effectiveMessages = (hasImageContent(messages) && !selectedModel.supportsVision)
+      ? (messages as any[]).map((msg: any) => {
+          if (!Array.isArray(msg.content)) return msg
+          const textParts = msg.content.filter((p: any) => p.type !== 'image_url' && p.type !== 'image')
+          const text = textParts.map((p: any) => p.text ?? '').join(' ').trim()
+          return { ...msg, content: text || '[Image non supportée par ce modèle]' }
+        })
+      : messages
+
     const apiKey = process.env[route.keyEnv]
     if (!apiKey) return NextResponse.json({ error: 'Server API key not configured' }, { status: 500 })
 
@@ -465,10 +477,10 @@ export async function POST(req: NextRequest) {
       upstreamResp = await fetch(route.baseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...rest, model: selectedModel.apiIdentifier, messages, stream, max_tokens: maxTokens }),
+        body: JSON.stringify({ ...rest, model: selectedModel.apiIdentifier, messages: effectiveMessages, stream, max_tokens: maxTokens }),
       })
     } else if (route.format === 'anthropic') {
-      const anthropicBody = buildAnthropicBody({ ...rest, messages, stream, max_tokens: maxTokens }, selectedModel.apiIdentifier)
+      const anthropicBody = buildAnthropicBody({ ...rest, messages: effectiveMessages, stream, max_tokens: maxTokens }, selectedModel.apiIdentifier)
       upstreamResp = await fetch(route.baseUrl, {
         method: 'POST',
         headers: {
@@ -480,7 +492,7 @@ export async function POST(req: NextRequest) {
       })
     } else {
       // Gemini
-      const geminiBody = buildGeminiBody({ ...rest, messages, max_tokens: maxTokens })
+      const geminiBody = buildGeminiBody({ ...rest, messages: effectiveMessages, max_tokens: maxTokens })
       const modelPath = selectedModel.apiIdentifier
       const endpoint = stream
         ? `${route.baseUrl}/models/${modelPath}:streamGenerateContent?alt=sse`
