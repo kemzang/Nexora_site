@@ -4,7 +4,7 @@ import { verifyToken } from '@/lib/auth-verify'
 export const runtime = 'nodejs'
 
 /**
- * Reranking endpoint — used by Continue IDE for codebase search context.
+ * Reranking endpoint — used by Nexora IDE for codebase search context.
  * Routes to Cohere or falls back to a simple BM25-style score if no key is configured.
  */
 export async function POST(req: NextRequest) {
