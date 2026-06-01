@@ -61,25 +61,20 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
   async function fetchStats(userId: string) {
     try {
 
-      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
-      const startOfMonthIso = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-
-      const [subResult, keysResult, usageResult, sessionsResult] = await Promise.all([
+      const [subResult, keysResult, sessionsResult] = await Promise.all([
         supabase.from('user_subscriptions').select('current_period_end, subscription_plans(name, slug, tokens_per_month)').eq('user_id', userId).eq('status', 'active').maybeSingle(),
         supabase.from('api_keys').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true),
-        supabase.from('daily_usage').select('tokens_used, requests_count').eq('user_id', userId).gte('date', startOfMonth),
-        supabase.from('usage_sessions').select('tokens_total, tokens_input').eq('user_id', userId).gte('started_at', startOfMonthIso),
+        supabase.from('usage_sessions').select('tokens_total, tokens_input, started_at').eq('user_id', userId).gte('started_at', startOfMonth),
       ])
 
       const sub = subResult.data as any
       const plan = sub?.subscription_plans as any
-      const usageRows = (usageResult.data || []) as any[]
-      const monthlyTokens = usageRows.reduce((s: number, u: any) => s + (u.tokens_used || 0), 0)
-      const monthlyRequests = usageRows.reduce((s: number, u: any) => s + (u.requests_count || 0), 0)
-
-      const sessions = (sessionsResult.data ?? []) as { tokens_total: number | null; tokens_input: number | null }[]
+      const sessions = (sessionsResult.data ?? []) as { tokens_total: number | null; tokens_input: number | null; started_at: string }[]
       const tokensUsed = sessions.reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
+      const monthlyTokens = tokensUsed
+      const monthlyRequests = sessions.length
 
       const planName = plan?.name || 'Free'
       const planSlug = plan?.slug || 'free'
