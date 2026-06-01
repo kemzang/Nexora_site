@@ -88,22 +88,36 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
 
   async function fetchSubscription(userId: string) {
     try {
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-      const { data } = await supabase
-        .from('user_subscriptions')
-        .select('status, tokens_remaining, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .maybeSingle() as any
+      const [subResult, sessionsResult] = await Promise.all([
+        supabase
+          .from('user_subscriptions')
+          .select('status, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .maybeSingle() as any,
+        supabase
+          .from('usage_sessions')
+          .select('tokens_total, tokens_input')
+          .eq('user_id', userId)
+          .gte('started_at', startOfMonth),
+      ])
+
+      const data = subResult.data
+      const sessions = (sessionsResult.data ?? []) as { tokens_total: number | null; tokens_input: number | null }[]
+      const tokensUsed = sessions.reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
 
       if (data?.subscription_plans) {
         const plan = data.subscription_plans
+        const tokensPerMonth: number = plan.tokens_per_month || 10000
         setSub({
           planName: plan.name || 'Free',
           planSlug: plan.slug || 'free',
           price: plan.price || 0,
-          tokensPerMonth: plan.tokens_per_month || 10000,
-          tokensRemaining: data.tokens_remaining || 0,
+          tokensPerMonth,
+          tokensRemaining: Math.max(0, tokensPerMonth - tokensUsed),
           renewalDate: data.current_period_end,
           status: data.status,
           features: Array.isArray(plan.features) ? plan.features : [],
@@ -114,7 +128,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
           planSlug: 'free',
           price: 0,
           tokensPerMonth: 10000,
-          tokensRemaining: 0,
+          tokensRemaining: Math.max(0, 10000 - tokensUsed),
           renewalDate: null,
           status: 'active',
           features: ['100K tokens le 1er mois, puis 10K/mois', '200 requêtes/jour', 'DeepSeek V3 & Gemini Flash'],
