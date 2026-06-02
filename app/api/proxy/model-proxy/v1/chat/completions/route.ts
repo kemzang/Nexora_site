@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
-import { selectBestModel, hasImageContent, estimateTokens, getEffectiveTokenLimit, type ModelId, type PlanId } from '@/lib/models'
+import { selectBestModel, hasImageContent, estimateTokens, getEffectiveTokenLimit, computeCreditsConsumed, type ModelId, type PlanId } from '@/lib/models'
 
 export const runtime = 'nodejs'
 
@@ -33,6 +33,83 @@ const API_ROUTES: Record<string, { baseUrl: string; keyEnv: string; format: 'ope
   'claude-sonnet':    { baseUrl: 'https://api.anthropic.com/v1/messages',                     keyEnv: 'ANTHROPIC_API_KEY',  format: 'anthropic' },
   'gpt-5':            { baseUrl: 'https://api.openai.com/v1/chat/completions',                keyEnv: 'OPENAI_API_KEY',     format: 'openai'    },
   'claude-opus':      { baseUrl: 'https://api.anthropic.com/v1/messages',                     keyEnv: 'ANTHROPIC_API_KEY',  format: 'anthropic' },
+}
+
+// ── Usage tracking ───────────────────────────────────────────────────────────
+
+interface UsageContext {
+  userId: string
+  plan: PlanId
+  modelId: string
+  inputTokens: number
+  preferred: string | null
+  complexity: number
+  downgraded: boolean
+}
+
+/** Enregistre la consommation finale (entrée + sortie, pondérée par le crédit du modèle). */
+async function recordUsage(ctx: UsageContext, outputTokens: number): Promise<void> {
+  const credits = computeCreditsConsumed(ctx.modelId, ctx.inputTokens, outputTokens)
+  try {
+    await supabase.from('usage_sessions').insert({
+      user_id: ctx.userId,
+      session_type: 'chat_proxy',
+      model_id: ctx.modelId,
+      tokens_input: ctx.inputTokens,
+      tokens_output: outputTokens,
+      tokens_total: credits, // crédits pondérés — c'est ce qui décompte le quota
+      metadata: {
+        plan: ctx.plan,
+        model: ctx.modelId,
+        preferred: ctx.preferred,
+        complexity: ctx.complexity,
+        downgraded: ctx.downgraded,
+        creditMultiplier: credits / Math.max(1, ctx.inputTokens + outputTokens),
+      },
+    })
+  } catch {
+    // tracking best-effort — ne jamais casser la réponse
+  }
+}
+
+/**
+ * Wrappe un flux SSE OpenAI : laisse passer les chunks tels quels vers le client
+ * tout en comptant le texte de sortie (delta.content), puis enregistre la conso.
+ */
+function trackOutputStream(
+  body: ReadableStream<Uint8Array>,
+  ctx: UsageContext,
+): ReadableStream<Uint8Array> {
+  let outputChars = 0
+  const decoder = new TextDecoder()
+  const transform = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      try {
+        const text = decoder.decode(chunk, { stream: true })
+        for (const line of text.split('\n')) {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('data:')) continue
+          const payload = trimmed.slice(5).trim()
+          if (!payload || payload === '[DONE]') continue
+          try {
+            const json = JSON.parse(payload)
+            const delta = json?.choices?.[0]?.delta?.content
+            if (typeof delta === 'string') outputChars += delta.length
+          } catch {
+            /* ligne SSE partielle — ignorée */
+          }
+        }
+      } catch {
+        /* ignore decode errors */
+      }
+      controller.enqueue(chunk)
+    },
+    flush() {
+      const outputTokens = Math.ceil(outputChars / 4)
+      void recordUsage(ctx, outputTokens)
+    },
+  })
+  return body.pipeThrough(transform)
 }
 
 // ── Plan helpers ─────────────────────────────────────────────────────────────
@@ -516,14 +593,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: errorText }, { status: upstreamResp.status })
     }
 
-    // Track usage (fire and forget)
-    void supabase.from('usage_sessions').insert({
-      user_id: userId,
-      session_type: 'chat_proxy',
-      model_id: null,
-      tokens_input: estimateTokens(messages),
-      metadata: { plan: userPlan, model: selectedModel.id, preferred: preferredModel || null, complexity, downgraded },
-    })
+    // Usage tracking context — credits are weighted by the model's cost multiplier
+    const inputTokens = estimateTokens(messages)
+    const usageCtx: UsageContext = {
+      userId,
+      plan: userPlan,
+      modelId: selectedModel.id,
+      inputTokens,
+      preferred: (preferredModel as string) || null,
+      complexity,
+      downgraded,
+    }
 
     const responseHeaders: Record<string, string> = {
       'Content-Type': 'text/event-stream',
@@ -535,19 +615,35 @@ export async function POST(req: NextRequest) {
       'X-Nexora-Complexity': String(complexity),
     }
 
-    // For OpenAI format: pass through as-is
+    // Helper: estimate output tokens from a non-streamed OpenAI-format completion
+    const recordFromJson = (json: any) => {
+      const content = json?.choices?.[0]?.message?.content
+      const outTokens =
+        typeof json?.usage?.completion_tokens === 'number'
+          ? json.usage.completion_tokens
+          : Math.ceil((typeof content === 'string' ? content.length : 0) / 4)
+      void recordUsage(usageCtx, outTokens)
+    }
+
+    // For OpenAI format: pass through, counting output
     if (route.format === 'openai') {
-      return new NextResponse(upstreamResp.body, { status: 200, headers: responseHeaders })
+      if (stream && upstreamResp.body) {
+        return new NextResponse(trackOutputStream(upstreamResp.body, usageCtx), { status: 200, headers: responseHeaders })
+      }
+      const json = await upstreamResp.json()
+      recordFromJson(json)
+      return NextResponse.json(json, { headers: { 'X-Nexora-Model': selectedModel.id } })
     }
 
     // For Anthropic: convert SSE or JSON to OpenAI format
     if (route.format === 'anthropic') {
       if (stream) {
         const converted = anthropicStreamToOpenAI(upstreamResp.body!, selectedModel.id)
-        return new NextResponse(converted, { status: 200, headers: responseHeaders })
+        return new NextResponse(trackOutputStream(converted, usageCtx), { status: 200, headers: responseHeaders })
       } else {
         const json = await upstreamResp.json()
         const converted = anthropicNonStreamingToOpenAI(json, selectedModel.id)
+        recordFromJson(converted)
         return NextResponse.json(converted, { headers: { 'X-Nexora-Model': selectedModel.id } })
       }
     }
@@ -555,10 +651,11 @@ export async function POST(req: NextRequest) {
     // For Gemini: convert SSE or JSON to OpenAI format
     if (stream) {
       const converted = geminiStreamToOpenAI(upstreamResp.body!, selectedModel.id)
-      return new NextResponse(converted, { status: 200, headers: responseHeaders })
+      return new NextResponse(trackOutputStream(converted, usageCtx), { status: 200, headers: responseHeaders })
     } else {
       const json = await upstreamResp.json()
       const converted = geminiNonStreamingToOpenAI(json, selectedModel.id)
+      recordFromJson(converted)
       return NextResponse.json(converted, { headers: { 'X-Nexora-Model': selectedModel.id } })
     }
   } catch (err) {

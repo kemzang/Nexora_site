@@ -14,6 +14,8 @@ export interface AIModel {
   capability: number
   sortOrder: number
   supportsVision: boolean
+  /** Coût relatif en crédits (1x = référence). Pondère la consommation par modèle. */
+  creditMultiplier: number
 }
 
 export interface Plan {
@@ -54,6 +56,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 1,
     supportsVision: false,
+    creditMultiplier: 0.25,
   },
   'gemini-flash': {
     id: 'gemini-flash',
@@ -67,6 +70,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 2,
     sortOrder: 2,
     supportsVision: true,
+    creditMultiplier: 0.3,
   },
   'gemini-pro': {
     id: 'gemini-pro',
@@ -80,6 +84,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 3,
     supportsVision: true,
+    creditMultiplier: 1.0,
   },
   'claude-haiku': {
     id: 'claude-haiku',
@@ -93,6 +98,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 4,
     supportsVision: true,
+    creditMultiplier: 0.4,
   },
   'grok-2': {
     id: 'grok-2',
@@ -106,6 +112,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 5,
     supportsVision: true,
+    creditMultiplier: 1.0,
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
@@ -119,6 +126,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 4,
     sortOrder: 6,
     supportsVision: true,
+    creditMultiplier: 1.3,
   },
   'gpt-5': {
     id: 'gpt-5',
@@ -132,6 +140,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 5,
     sortOrder: 7,
     supportsVision: true,
+    creditMultiplier: 2.5,
   },
   'claude-opus': {
     id: 'claude-opus',
@@ -145,6 +154,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 5,
     sortOrder: 8,
     supportsVision: true,
+    creditMultiplier: 5.0,
   },
 }
 
@@ -241,6 +251,25 @@ export const PLANS: Record<PlanId, Plan> = {
 
 export function getModelsForPlan(planId: PlanId): ModelId[] {
   return PLANS[planId].models
+}
+
+/** Multiplicateur de crédit d'un modèle (défaut 1x si inconnu). */
+export function getCreditMultiplier(modelId: string): number {
+  return MODELS[modelId as ModelId]?.creditMultiplier ?? 1
+}
+
+/**
+ * Calcule les crédits (= tokens pondérés) consommés par une requête.
+ * On pondère les tokens réels par le coût relatif du modèle, de sorte qu'un
+ * modèle cher (Opus 5x) consomme bien plus du quota qu'un modèle bon marché (DeepSeek 0.25x).
+ */
+export function computeCreditsConsumed(
+  modelId: string,
+  inputTokens: number,
+  outputTokens: number,
+): number {
+  const totalTokens = inputTokens + outputTokens
+  return Math.ceil(totalTokens * getCreditMultiplier(modelId))
 }
 
 // Retourne la limite mensuelle effective : 100K le 1er mois pour free, 10K ensuite
