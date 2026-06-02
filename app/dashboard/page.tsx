@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import {
   Settings, LogOut, LayoutDashboard, Key, FileText, HelpCircle, ChevronRight,
-  Bell, Menu, X, Activity, Wallet
+  Bell, Menu, X, Activity, Wallet, Users
 } from 'lucide-react'
 import Link from 'next/link'
 import { Modal } from '@/components/ui/modal'
@@ -17,10 +17,12 @@ import UtilisationSection from '@/app/dashboard/sections/UtilisationSection'
 import AbonnementSection from '@/app/dashboard/sections/AbonnementSection'
 import FacturesSection from '@/app/dashboard/sections/FacturesSection'
 import AideSection from '@/app/dashboard/sections/AideSection'
+import CollaborationsSection from '@/app/dashboard/sections/CollaborationsSection'
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: 'Vue d\'ensemble', section: 'dashboard' },
   { icon: Key, label: 'Clés API', section: 'api-keys' },
+  { icon: Users, label: 'Collaborations', section: 'collaborations' },
   { icon: Activity, label: 'Utilisation', section: 'utilisation' },
   { icon: Wallet, label: 'Abonnement', section: 'abonnement' },
   { icon: FileText, label: 'Factures', section: 'factures' },
@@ -30,6 +32,7 @@ const sidebarLinks = [
 const sections: Record<string, React.FC<{ user: any; onNavigate: (s: string) => void }>> = {
   dashboard: ({ user, onNavigate }) => <OverviewSection user={user} onNavigate={onNavigate} />,
   'api-keys': ({ user }) => <ApiKeysSection />,
+  collaborations: () => <CollaborationsSection />,
   utilisation: () => <UtilisationSection />,
   abonnement: ({ onNavigate }) => <AbonnementSection onNavigate={onNavigate} />,
   factures: () => <FacturesSection />,
