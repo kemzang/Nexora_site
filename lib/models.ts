@@ -56,7 +56,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 1,
     supportsVision: false,
-    creditMultiplier: 0.25,
+    creditMultiplier: 1,
   },
   'gemini-flash': {
     id: 'gemini-flash',
@@ -70,7 +70,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 2,
     sortOrder: 2,
     supportsVision: true,
-    creditMultiplier: 0.3,
+    creditMultiplier: 2.5,
   },
   'gemini-pro': {
     id: 'gemini-pro',
@@ -84,7 +84,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 3,
     supportsVision: true,
-    creditMultiplier: 1.0,
+    creditMultiplier: 10,
   },
   'claude-haiku': {
     id: 'claude-haiku',
@@ -98,7 +98,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 4,
     supportsVision: true,
-    creditMultiplier: 0.4,
+    creditMultiplier: 20,
   },
   'grok-2': {
     id: 'grok-2',
@@ -112,7 +112,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 3,
     sortOrder: 5,
     supportsVision: true,
-    creditMultiplier: 1.0,
+    creditMultiplier: 50,
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
@@ -126,7 +126,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 4,
     sortOrder: 6,
     supportsVision: true,
-    creditMultiplier: 1.3,
+    creditMultiplier: 75,
   },
   'gpt-5': {
     id: 'gpt-5',
@@ -140,7 +140,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 5,
     sortOrder: 7,
     supportsVision: true,
-    creditMultiplier: 2.5,
+    creditMultiplier: 200,
   },
   'claude-opus': {
     id: 'claude-opus',
@@ -154,7 +154,7 @@ export const MODELS: Record<ModelId, AIModel> = {
     capability: 5,
     sortOrder: 8,
     supportsVision: true,
-    creditMultiplier: 5.0,
+    creditMultiplier: 375,
   },
 }
 
@@ -170,7 +170,7 @@ export const PLANS: Record<PlanId, Plan> = {
     maxRequestsPerDay: 200,
     models: ['deepseek-chat', 'gemini-flash'],
     features: [
-      '100K tokens le 1er mois, puis 10K/mois',
+      '100K crédits le 1er mois, puis 10K/mois',
       '200 requêtes/jour',
       'DeepSeek V3 & Gemini Flash',
       'Chat IA + Autocomplétion',
@@ -183,11 +183,11 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Starter',
     price: 5,
     priceLabel: '$5',
-    tokensPerMonth: 1000000,
+    tokensPerMonth: 8000000,
     maxRequestsPerDay: 500,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro'],
     features: [
-      '1M tokens/mois',
+      '8M crédits/mois',
       '500 requêtes/jour',
       '+ Gemini 2.5 Pro',
       'Autocomplétion avancée',
@@ -200,12 +200,12 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Pro',
     price: 12,
     priceLabel: '$12',
-    tokensPerMonth: 3000000,
+    tokensPerMonth: 20000000,
     maxRequestsPerDay: 2000,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2'],
     modelsLabel: 'DeepSeek, Gemini, Claude Haiku, Grok',
     features: [
-      '3M tokens/mois',
+      '20M crédits/mois',
       '2 000 requêtes/jour',
       '+ Claude Haiku & Grok',
       'Indexing codebase complet',
@@ -219,11 +219,11 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Business',
     price: 25,
     priceLabel: '$25',
-    tokensPerMonth: 20000000,
+    tokensPerMonth: 40000000,
     maxRequestsPerDay: 5000,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet'],
     features: [
-      '20M tokens/mois',
+      '40M crédits/mois',
       '5 000 requêtes/jour',
       '+ Claude Sonnet 4.6',
       'Accès API direct',
@@ -236,11 +236,11 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Enterprise',
     price: 60,
     priceLabel: '$60',
-    tokensPerMonth: 80000000,
+    tokensPerMonth: 100000000,
     maxRequestsPerDay: 99999,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet', 'gpt-5', 'claude-opus'],
     features: [
-      '80M tokens/mois',
+      '100M crédits/mois',
       'Requêtes illimitées',
       '+ Claude Opus & GPT-5',
       'Tous les modèles disponibles',

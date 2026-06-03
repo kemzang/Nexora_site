@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { PlatformsSection } from '@/components/platforms-section'
 import { useTranslation } from '@/lib/i18n/context'
 import { useAuth } from '@/hooks/use-auth'
 import { LayoutDashboard } from 'lucide-react'
@@ -133,7 +134,7 @@ function TerminalMockup() {
 
 /* ─── Page ───────────────────────────────────────────────────────── */
 export default function HomePage() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const { user, loading: authLoading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -388,6 +389,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Platforms (VS Code / JetBrains / CLI) ─────────────── */}
+      <PlatformsSection lang={lang} />
 
       {/* ── Stats ─────────────────────────────────────────────── */}
       <section className="relative py-20 border-y border-white/[0.06] overflow-hidden">
