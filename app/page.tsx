@@ -69,8 +69,8 @@ const plans = [
   { key: 'free',       name: 'Free',       price: '0€',   href: '/checkout?plan=free',       popular: false },
   { key: 'starter',    name: 'Starter',    price: '5€',   href: '/checkout?plan=starter',    popular: false },
   { key: 'pro',        name: 'Pro',        price: '12€',  href: '/checkout?plan=pro',        popular: true  },
-  { key: 'business',   name: 'Business',   price: '25€',  href: '/checkout?plan=business',   popular: false },
-  { key: 'enterprise', name: 'Enterprise', price: '60€',  href: '/checkout?plan=enterprise', popular: false },
+  { key: 'business',   name: 'Business',   price: '30€',  href: '/checkout?plan=business',   popular: false },
+  { key: 'enterprise', name: 'Enterprise', price: '80€',  href: '/checkout?plan=enterprise', popular: false },
 ]
 
 /* ─── Code terminal mockup ───────────────────────────────────────── */

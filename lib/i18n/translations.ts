@@ -153,8 +153,8 @@ const fr: Translations = {
     },
     planFeatures: {
       free: ['100K crédits le 1er mois, puis 10K/mois', '200 requêtes/jour', 'DeepSeek, Gemini Flash'],
-      starter: ['8M crédits/mois', '500 requêtes/jour', '+ Gemini Pro', 'Autocomplétion avancée'],
-      pro: ['20M crédits/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent', 'Support prioritaire'],
+      starter: ['4M crédits/mois', '500 requêtes/jour', '+ Gemini Pro', 'Autocomplétion illimitée'],
+      pro: ['15M crédits/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent', 'Support prioritaire'],
       business: ['40M crédits/mois', '5 000 requêtes/jour', '+ Claude Sonnet', 'Mode équipe', 'Support prioritaire'],
       enterprise: ['100M crédits/mois', 'Requêtes illimitées', '+ Claude Opus, GPT-5', 'Tous les modèles', 'SSO + Support 24/7'],
     },
@@ -279,8 +279,8 @@ const en: Translations = {
     },
     planFeatures: {
       free: ['100K credits first month, then 10K/mo', '200 requests/day', 'DeepSeek, Gemini Flash'],
-      starter: ['8M credits/mo', '500 requests/day', '+ Gemini Pro', 'Advanced autocomplete'],
-      pro: ['20M credits/mo', '2,000 requests/day', '+ Grok, Claude Haiku', 'Agent Mode', 'Priority support'],
+      starter: ['4M credits/mo', '500 requests/day', '+ Gemini Pro', 'Unlimited autocomplete'],
+      pro: ['15M credits/mo', '2,000 requests/day', '+ Grok, Claude Haiku', 'Agent Mode', 'Priority support'],
       business: ['40M credits/mo', '5,000 requests/day', '+ Claude Sonnet', 'Team mode', 'Priority support'],
       enterprise: ['100M credits/mo', 'Unlimited requests', '+ Claude Opus, GPT-5', 'All models', 'SSO + 24/7 support'],
     },
@@ -405,8 +405,8 @@ const es: Translations = {
     },
     planFeatures: {
       free: ['100K créditos primer mes, luego 10K/mes', '200 solicitudes/día', 'DeepSeek, Gemini Flash'],
-      starter: ['8M créditos/mes', '500 solicitudes/día', '+ Gemini Pro', 'Autocompletado avanzado'],
-      pro: ['20M créditos/mes', '2.000 solicitudes/día', '+ Grok, Claude Haiku', 'Modo Agente', 'Soporte prioritario'],
+      starter: ['4M créditos/mes', '500 solicitudes/día', '+ Gemini Pro', 'Autocompletado ilimitado'],
+      pro: ['15M créditos/mes', '2.000 solicitudes/día', '+ Grok, Claude Haiku', 'Modo Agente', 'Soporte prioritario'],
       business: ['40M créditos/mes', '5.000 solicitudes/día', '+ Claude Sonnet', 'Modo equipo', 'Soporte prioritario'],
       enterprise: ['100M créditos/mes', 'Solicitudes ilimitadas', '+ Claude Opus, GPT-5', 'Todos los modelos', 'SSO + Soporte 24/7'],
     },
@@ -531,8 +531,8 @@ const pt: Translations = {
     },
     planFeatures: {
       free: ['100K créditos no 1º mês, depois 10K/mês', '200 requisições/dia', 'DeepSeek, Gemini Flash'],
-      starter: ['8M créditos/mês', '500 requisições/dia', '+ Gemini Pro', 'Autocompletar avançado'],
-      pro: ['20M créditos/mês', '2.000 requisições/dia', '+ Grok, Claude Haiku', 'Modo Agente', 'Suporte prioritário'],
+      starter: ['4M créditos/mês', '500 requisições/dia', '+ Gemini Pro', 'Autocompletar ilimitado'],
+      pro: ['15M créditos/mês', '2.000 requisições/dia', '+ Grok, Claude Haiku', 'Modo Agente', 'Suporte prioritário'],
       business: ['40M créditos/mês', '5.000 requisições/dia', '+ Claude Sonnet', 'Modo equipe', 'Suporte prioritário'],
       enterprise: ['100M créditos/mês', 'Requisições ilimitadas', '+ Claude Opus, GPT-5', 'Todos os modelos', 'SSO + Suporte 24/7'],
     },

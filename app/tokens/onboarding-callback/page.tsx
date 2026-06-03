@@ -41,7 +41,7 @@ function OnboardingCallbackContent() {
         setStatus('success')
 
         // Try to pass token back to VS Code
-        const vscodeUrl = `vscode://nexora.nexora/onboarding?token=${encodeURIComponent(data.access_token)}`
+        const vscodeUrl = `vscode://Nexora.nexora/onboarding?token=${encodeURIComponent(data.access_token)}`
         setTimeout(() => { window.location.href = vscodeUrl }, 1000)
 
         // Redirect to dashboard after 3s
