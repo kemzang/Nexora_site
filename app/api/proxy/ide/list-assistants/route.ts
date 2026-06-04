@@ -25,18 +25,21 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nexora-mu-henna.ver
 function buildModels(plan: PlanId, token: string) {
   const apiBase = `${BASE_URL}/api/proxy/model-proxy`
 
-  function m(name: string, model: string, provider = 'openai') {
-    return { name, model, provider, apiBase, apiKey: token }
+  // vision = true → la capacité uploadImage est déclarée explicitement, ce que
+  // l'extension lit en priorité pour autoriser l'envoi d'images (sinon bloqué).
+  function m(name: string, model: string, vision = false, provider = 'openai') {
+    const base = { name, model, provider, apiBase, apiKey: token }
+    return vision ? { ...base, capabilities: { uploadImage: true } } : base
   }
 
-  const deepseek    = m('Nexora DeepSeek V3',      'deepseek-chat')
-  const geminiFlash = m('Nexora Gemini Flash',      'gemini-flash',    'openai')
-  const geminiPro   = m('Nexora Gemini Pro',        'gemini-pro',      'openai')
-  const haiku       = m('Nexora Claude Haiku',      'claude-haiku',    'openai')
-  const grok        = m('Nexora Grok 2',            'grok-2',          'openai')
-  const sonnet      = m('Nexora Claude Sonnet',     'claude-sonnet',   'openai')
-  const opus        = m('Nexora Claude Opus',       'claude-opus',     'openai')
-  const gpt5        = m('Nexora GPT-5',             'gpt-5',           'openai')
+  const deepseek    = m('Nexora DeepSeek V3',      'deepseek-chat')           // pas de vision
+  const geminiFlash = m('Nexora Gemini Flash',      'gemini-flash',    true)
+  const geminiPro   = m('Nexora Gemini Pro',        'gemini-pro',      true)
+  const haiku       = m('Nexora Claude Haiku',      'claude-haiku',    true)
+  const grok        = m('Nexora Grok 2',            'grok-2')                  // grok-2 texte : pas de vision
+  const sonnet      = m('Nexora Claude Sonnet',     'claude-sonnet',   true)
+  const opus        = m('Nexora Claude Opus',       'claude-opus',     true)
+  const gpt5        = m('Nexora GPT-5',             'gpt-5',           true)
 
   switch (plan) {
     case 'starter':
@@ -91,7 +94,10 @@ export async function GET(req: NextRequest) {
       `schema: v1`,
       `models:`,
       ...models.map(m =>
-        `  - name: ${m.name}\n    model: ${m.model}\n    provider: ${m.provider}\n    apiBase: ${m.apiBase}`
+        `  - name: ${m.name}\n    model: ${m.model}\n    provider: ${m.provider}\n    apiBase: ${m.apiBase}` +
+        ((m as { capabilities?: { uploadImage?: boolean } }).capabilities?.uploadImage
+          ? `\n    capabilities:\n      uploadImage: true`
+          : '')
       ),
     ].join('\n')
 
