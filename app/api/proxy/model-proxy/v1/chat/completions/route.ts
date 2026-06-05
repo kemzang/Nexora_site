@@ -53,6 +53,10 @@ async function recordUsage(ctx: UsageContext, outputTokens: number): Promise<voi
   try {
     await supabase.from('usage_sessions').insert({
       user_id: ctx.userId,
+      // started_at explicite : le dashboard ET le quota filtrent par started_at >=
+      // début du mois. Sans valeur (si la colonne n'a pas de défaut DB), les lignes
+      // seraient exclues → conso affichée à 0 et quota jamais décompté.
+      started_at: new Date().toISOString(),
       session_type: 'chat_proxy',
       model_id: ctx.modelId,
       tokens_input: ctx.inputTokens,

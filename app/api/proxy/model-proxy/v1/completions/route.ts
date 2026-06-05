@@ -180,6 +180,7 @@ export async function POST(req: NextRequest) {
 
     void supabase.from('usage_sessions').insert({
       user_id: userId,
+      started_at: new Date().toISOString(), // requis pour le filtre mensuel (dashboard + quota)
       session_type: 'fim',
       model_id: model,
       tokens_input: Math.ceil(prompt.length / 4),
