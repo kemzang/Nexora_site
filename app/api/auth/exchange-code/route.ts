@@ -46,6 +46,15 @@ export async function POST(req: NextRequest) {
     const hash = await sha256(raw)
     const accessToken = `nxr_${Date.now()}_${hash.slice(0, 32)}`
 
+    // Évite l'accumulation : chaque login OAuth générait une nouvelle clé
+    // "Extension VS Code". On supprime les anciennes de cet utilisateur avant
+    // d'en créer une nouvelle → une seule clé d'extension à la fois.
+    await supabase
+      .from('api_keys')
+      .delete()
+      .eq('user_id', authCodeData.user_id)
+      .eq('name', 'Extension VS Code')
+
     const { error: tokenError } = await supabase
       .from('api_keys')
       .insert({
