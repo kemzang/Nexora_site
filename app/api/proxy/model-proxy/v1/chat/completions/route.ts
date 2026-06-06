@@ -108,9 +108,13 @@ function trackOutputStream(
       }
       controller.enqueue(chunk)
     },
-    flush() {
+    async flush() {
+      // IMPORTANT : on AWAIT l'enregistrement. En fire-and-forget (`void`), sur
+      // Vercel la fonction peut être gelée avant la fin de l'insert → conso
+      // perdue (compteur bloqué à 0). En awaitant, le flux reste ouvert tant que
+      // l'insert n'est pas terminé → conso fiablement enregistrée.
       const outputTokens = Math.ceil(outputChars / 4)
-      void recordUsage(ctx, outputTokens)
+      await recordUsage(ctx, outputTokens)
     },
   })
   return body.pipeThrough(transform)
@@ -620,13 +624,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Helper: estimate output tokens from a non-streamed OpenAI-format completion
-    const recordFromJson = (json: any) => {
+    const recordFromJson = async (json: any) => {
       const content = json?.choices?.[0]?.message?.content
       const outTokens =
         typeof json?.usage?.completion_tokens === 'number'
           ? json.usage.completion_tokens
           : Math.ceil((typeof content === 'string' ? content.length : 0) / 4)
-      void recordUsage(usageCtx, outTokens)
+      await recordUsage(usageCtx, outTokens)
     }
 
     // For OpenAI format: pass through, counting output
@@ -635,7 +639,7 @@ export async function POST(req: NextRequest) {
         return new NextResponse(trackOutputStream(upstreamResp.body, usageCtx), { status: 200, headers: responseHeaders })
       }
       const json = await upstreamResp.json()
-      recordFromJson(json)
+      await recordFromJson(json)
       return NextResponse.json(json, { headers: { 'X-Nexora-Model': selectedModel.id } })
     }
 
@@ -647,7 +651,7 @@ export async function POST(req: NextRequest) {
       } else {
         const json = await upstreamResp.json()
         const converted = anthropicNonStreamingToOpenAI(json, selectedModel.id)
-        recordFromJson(converted)
+        await recordFromJson(converted)
         return NextResponse.json(converted, { headers: { 'X-Nexora-Model': selectedModel.id } })
       }
     }
@@ -659,7 +663,7 @@ export async function POST(req: NextRequest) {
     } else {
       const json = await upstreamResp.json()
       const converted = geminiNonStreamingToOpenAI(json, selectedModel.id)
-      recordFromJson(converted)
+      await recordFromJson(converted)
       return NextResponse.json(converted, { headers: { 'X-Nexora-Model': selectedModel.id } })
     }
   } catch (err) {
