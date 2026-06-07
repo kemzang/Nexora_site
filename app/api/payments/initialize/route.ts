@@ -44,7 +44,7 @@ async function checkDuplicatePayment(userToken: string, userId: string, planSlug
 const VALID_PLANS = ['starter', 'pro', 'business', 'enterprise'] as const
 type PaidPlan = typeof VALID_PLANS[number]
 
-const PLAN_AMOUNTS: Record<PaidPlan, number> = { starter: 5, pro: 12, business: 25, enterprise: 60 }
+const PLAN_AMOUNTS: Record<PaidPlan, number> = { starter: 5, pro: 12, business: 30, enterprise: 80 }
 const VALID_CURRENCIES = ['XAF', 'USD', 'EUR', 'GBP'] as const
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -95,7 +95,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Business rule: block duplicate payment ────────────────────
+    // ── Business rule: block duplicate payment + capture user ─────
+    // On récupère l'userId pour le stocker dans la metadata du paiement : c'est
+    // lui qui permet d'ACTIVER l'abonnement après vérification du paiement.
+    let userId: string | undefined
     const authHeader = req.headers.get('authorization')
     if (authHeader && plan && plan !== 'free') {
       const token = authHeader.replace(/^Bearer\s+/i, '')
@@ -103,6 +106,7 @@ export async function POST(req: NextRequest) {
       const { data: { user } } = await anonClient.auth.getUser(token)
 
       if (user) {
+        userId = user.id
         const isDuplicate = await checkDuplicatePayment(token, user.id, plan)
         if (isDuplicate) {
           return NextResponse.json(
@@ -128,7 +132,11 @@ export async function POST(req: NextRequest) {
       description: `Abonnement Nexora ${safePlan}`,
       reference,
       callbackUrl: `${appUrl}/checkout/callback`,
-      metadata: { plan: safePlan, country: String(country).slice(0, 2).toUpperCase() },
+      metadata: {
+        plan: safePlan,
+        country: String(country).slice(0, 2).toUpperCase(),
+        ...(userId ? { userId } : {}),
+      },
     })
 
     if (result.success) {
