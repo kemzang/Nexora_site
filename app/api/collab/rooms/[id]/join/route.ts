@@ -45,7 +45,10 @@ export async function POST(
       .eq('room_id', roomId)
 
     if ((count ?? 0) >= room.max_members) {
-      return NextResponse.json({ error: 'Room plein (max 5 membres)' }, { status: 403 })
+      return NextResponse.json(
+        { error: `Session pleine (max ${room.max_members} personne${room.max_members > 1 ? 's' : ''} pour le plan du propriétaire). Le propriétaire doit passer à un plan supérieur pour inviter plus de monde.`, code: 'ROOM_FULL' },
+        { status: 403 }
+      )
     }
 
     await supabase.from('room_members').upsert(

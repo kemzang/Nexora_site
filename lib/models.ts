@@ -1,6 +1,7 @@
 export type ModelId = 'deepseek-chat' | 'gemini-flash' | 'gemini-pro' | 'claude-haiku' | 'grok-2' | 'claude-sonnet' | 'gpt-5' | 'claude-opus'
 
-export type PlanId = 'free' | 'starter' | 'pro' | 'business' | 'enterprise'
+// test1 / test2 : forfaits temporaires de TEST (à désactiver après les tests).
+export type PlanId = 'free' | 'test1' | 'test2' | 'starter' | 'pro' | 'business' | 'enterprise'
 
 export interface AIModel {
   id: ModelId
@@ -27,10 +28,18 @@ export interface Plan {
   tokensPerMonth: number
   firstMonthTokens?: number
   maxRequestsPerDay: number
+  // Nombre max de personnes dans une session de collaboration (propriétaire
+  // inclus). 99999 = illimité (Enterprise).
+  maxCollaborators: number
+  // Durée de l'abonnement en jours. Absent = mensuel (≈30j). Utilisé pour les
+  // forfaits test (7j / 14j).
+  durationDays?: number
   models: ModelId[]
   modelsLabel?: string
   features: string[]
   popular?: boolean
+  // Forfait de test temporaire (à désactiver après les tests).
+  isTest?: boolean
 }
 
 interface ComplexMessage {
@@ -168,6 +177,7 @@ export const PLANS: Record<PlanId, Plan> = {
     tokensPerMonth: 10000,
     firstMonthTokens: 100000,
     maxRequestsPerDay: 200,
+    maxCollaborators: 1,
     models: ['deepseek-chat', 'gemini-flash'],
     features: [
       '100K crédits le 1er mois, puis 10K/mois',
@@ -175,6 +185,46 @@ export const PLANS: Record<PlanId, Plan> = {
       'DeepSeek V3 & Gemini Flash',
       'Chat IA + Autocomplétion',
       'Mode Agent basique',
+    ],
+  },
+  // ── Forfaits de TEST (temporaires, à désactiver après les tests) ──────────
+  test1: {
+    id: 'test1',
+    name: 'Test 1 semaine',
+    nameFr: 'Test 1 semaine',
+    price: 1,
+    priceLabel: '$1',
+    // Petit budget volontaire : sert juste à tester le parcours payant.
+    tokensPerMonth: 30000,
+    maxRequestsPerDay: 200,
+    maxCollaborators: 2,
+    durationDays: 7,
+    isTest: true,
+    models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku'],
+    features: [
+      'Forfait de test — 1 semaine',
+      '30K crédits (test)',
+      'DeepSeek, Gemini, Claude Haiku',
+      'Jusqu’à 2 personnes en collaboration',
+    ],
+  },
+  test2: {
+    id: 'test2',
+    name: 'Test 2 semaines',
+    nameFr: 'Test 2 semaines',
+    price: 2,
+    priceLabel: '$2',
+    tokensPerMonth: 50000,
+    maxRequestsPerDay: 200,
+    maxCollaborators: 2,
+    durationDays: 14,
+    isTest: true,
+    models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku'],
+    features: [
+      'Forfait de test — 2 semaines',
+      '50K crédits (test)',
+      'DeepSeek, Gemini, Claude Haiku',
+      'Jusqu’à 2 personnes en collaboration',
     ],
   },
   starter: {
@@ -185,6 +235,7 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$5',
     tokensPerMonth: 4000000,
     maxRequestsPerDay: 500,
+    maxCollaborators: 2,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro'],
     features: [
       '4M crédits/mois',
@@ -202,6 +253,7 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$12',
     tokensPerMonth: 15000000,
     maxRequestsPerDay: 2000,
+    maxCollaborators: 5,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2'],
     modelsLabel: 'DeepSeek, Gemini, Claude Haiku, Grok',
     features: [
@@ -221,6 +273,7 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$30',
     tokensPerMonth: 40000000,
     maxRequestsPerDay: 5000,
+    maxCollaborators: 20,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet'],
     features: [
       '40M crédits/mois',
@@ -238,6 +291,7 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$80',
     tokensPerMonth: 100000000,
     maxRequestsPerDay: 99999,
+    maxCollaborators: 99999,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet', 'gpt-5', 'claude-opus'],
     features: [
       '100M crédits/mois',

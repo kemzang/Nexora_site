@@ -17,6 +17,8 @@ const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>
 
 const MAX_TOKENS_PER_PLAN: Record<PlanId, number> = {
   free: 2048,
+  test1: 4096,
+  test2: 4096,
   starter: 4096,
   pro: 8192,
   business: 16384,
@@ -129,6 +131,8 @@ async function getUserPlan(userId: string): Promise<PlanId> {
     .select('subscription_plans!inner(slug)')
     .eq('user_id', userId)
     .eq('status', 'active')
+    // Exclut les abonnements expirés (forfaits test 7/14j, ou tout plan échu).
+    .gt('current_period_end', new Date().toISOString())
     .maybeSingle()
   const plan = ((data?.subscription_plans as any)?.slug as PlanId) || 'free'
   planCache.set(userId, { plan, expiresAt: Date.now() + 300_000 })

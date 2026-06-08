@@ -82,6 +82,8 @@ export async function GET(req: NextRequest) {
       .select('subscription_plans!inner(slug)')
       .eq('user_id', userId)
       .eq('status', 'active')
+      // Exclut les abonnements expirés (forfaits test 7/14j, ou tout plan échu).
+      .gt('current_period_end', new Date().toISOString())
       .maybeSingle()
 
     const plan = ((subscription?.subscription_plans as { slug?: string } | null)?.slug ?? 'free') as PlanId

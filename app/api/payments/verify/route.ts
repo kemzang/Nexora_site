@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPayment } from '@/lib/payment'
 import { createClient } from '@supabase/supabase-js'
+import { PLANS, type PlanId } from '@/lib/models'
 
 // Client service role : nécessaire pour écrire dans user_subscriptions (RLS bypass).
 const admin = createClient(
@@ -54,7 +55,11 @@ async function activateSubscription(
     .eq('status', 'active')
 
   const now = new Date()
-  const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  // Durée : forfaits test = 7/14 jours (durationDays), sinon ≈ 1 mois.
+  const planCfg = PLANS[planSlug as PlanId]
+  const periodEnd = planCfg?.durationDays
+    ? new Date(now.getTime() + planCfg.durationDays * 24 * 60 * 60 * 1000)
+    : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
 
   const { error } = await admin.from('user_subscriptions').insert({
     user_id: userId,
