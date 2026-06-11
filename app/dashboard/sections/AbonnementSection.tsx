@@ -81,10 +81,41 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
   const { user } = useAuth()
   const [sub, setSub] = useState<SubscriptionData | null>(null)
   const [loading, setLoading] = useState(true)
+  // Plans actifs en base qui ne sont pas déjà dans la liste codée en dur
+  // (ex. plans de test). Ils s'affichent automatiquement et se masquent dès
+  // qu'on passe leur `is_active` à false en base — aucun redéploiement requis.
+  const [extraPlans, setExtraPlans] = useState<typeof UPGRADE_PLANS>([])
 
   useEffect(() => {
     if (user?.id) fetchSubscription(user.id)
   }, [user?.id])
+
+  useEffect(() => {
+    ;(async () => {
+      const { data } = await supabase
+        .from('subscription_plans')
+        .select('slug, name, price, features, sort_order')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+
+      const known = new Set([...UPGRADE_PLANS.map((p) => p.slug), 'free'])
+      const extras = ((data as any[]) || [])
+        .filter((p) => p?.slug && !known.has(p.slug))
+        .map((p) => ({
+          slug: p.slug,
+          name: p.name ?? p.slug,
+          price: `$${Number(p.price ?? 0)}`,
+          icon: Sparkles,
+          color: 'text-zinc-300',
+          bg: 'from-zinc-500/20 to-zinc-500/5',
+          border: 'hover:border-zinc-500/40',
+          activeBorder: 'border-zinc-500/40',
+          badgeColor: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/20',
+          features: Array.isArray(p.features) ? p.features : [],
+        })) as unknown as typeof UPGRADE_PLANS
+      setExtraPlans(extras)
+    })()
+  }, [])
 
   async function fetchSubscription(userId: string) {
     try {
@@ -144,7 +175,13 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
   const currentPlanIdx = PLAN_ORDER.indexOf(sub?.planSlug || 'free')
   const usagePercent = sub ? Math.min(100, Math.round(((sub.tokensPerMonth - sub.tokensRemaining) / sub.tokensPerMonth) * 100)) : 0
 
-  const plansToShow = UPGRADE_PLANS.filter(p => PLAN_ORDER.indexOf(p.slug) > currentPlanIdx)
+  const currentSlug = sub?.planSlug || 'free'
+  const plansToShow = [
+    // Plans standards : uniquement ceux au-dessus du plan actuel (upgrade).
+    ...UPGRADE_PLANS.filter((p) => PLAN_ORDER.indexOf(p.slug) > currentPlanIdx),
+    // Plans BDD supplémentaires (test/custom) : toujours visibles, sauf l'actuel.
+    ...extraPlans.filter((p) => p.slug !== currentSlug),
+  ]
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
