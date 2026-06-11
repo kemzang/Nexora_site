@@ -46,14 +46,20 @@ export default function Page() {
           return
         }
 
-        const vscodeUrl = new URL('vscode://Nexora.nexora/auth')
-        vscodeUrl.searchParams.set('code', data.code)
-        if (state) vscodeUrl.searchParams.set('state', state)
+        // Schéma de l'éditeur hôte transmis par l'extension (vscode par défaut).
+        // Validé via allowlist pour ne jamais injecter un schéma arbitraire.
+        const ALLOWED_SCHEMES = ['vscode', 'vscode-insiders', 'vscodium', 'cursor', 'windsurf', 'code-oss', 'trae']
+        const rawScheme = urlParams.get('uriScheme') || 'vscode'
+        const scheme = ALLOWED_SCHEMES.includes(rawScheme) ? rawScheme : 'vscode'
+
+        const editorUrl = new URL(`${scheme}://Nexora.nexora/auth`)
+        editorUrl.searchParams.set('code', data.code)
+        if (state) editorUrl.searchParams.set('state', state)
 
         setStatus('success')
-        setMessage('Authentification réussie! Redirection vers VS Code...')
+        setMessage('Authentification réussie ! Redirection vers ton éditeur…')
 
-        setTimeout(() => { window.location.href = vscodeUrl.toString() }, 1500)
+        setTimeout(() => { window.location.href = editorUrl.toString() }, 1500)
       } catch (err) {
         console.error('Auth error:', err)
         setStatus('error')
@@ -79,7 +85,7 @@ export default function Page() {
 
       <div className="glass rounded-2xl p-8 max-w-md w-full text-center relative z-10">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight mb-2">Authentification VS Code</h1>
+          <h1 className="text-2xl font-bold tracking-tight mb-2">Authentification de ton éditeur</h1>
           <div className="w-16 h-1 bg-indigo-500 mx-auto rounded-full" />
         </div>
 
@@ -102,7 +108,7 @@ export default function Page() {
             </div>
             <p className="text-emerald-400 font-medium">{message}</p>
             <p className="text-muted-foreground text-sm">
-              Si VS Code ne s'ouvre pas automatiquement, fermez cette fenêtre.
+              Si ton éditeur ne s'ouvre pas automatiquement, fermez cette fenêtre.
             </p>
           </div>
         )}
@@ -125,7 +131,7 @@ export default function Page() {
         )}
 
         <div className="mt-8 pt-6 border-t border-border/50">
-          <p className="text-muted-foreground text-sm">Nexora — Extension VS Code</p>
+          <p className="text-muted-foreground text-sm">Nexora — Extension éditeur</p>
         </div>
       </div>
     </div>

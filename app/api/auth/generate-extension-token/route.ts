@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
+import { generateApiKey, apiKeyExpiresAt } from '@/lib/api-keys'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 
@@ -31,9 +32,8 @@ export async function POST(req: NextRequest) {
       .eq('name', 'Extension VS Code')
       .eq('is_active', true)
 
-    // Generate a new signed token
-    const rawSecret = `${userId}_${Date.now()}_${Math.random()}`
-    const token = `nxr_${createHash('sha256').update(rawSecret).digest('hex').slice(0, 40)}`
+    // Generate a new cryptographically-random token (CSPRNG, 160-bit entropy)
+    const token = generateApiKey()
 
     const { data, error } = await supabase
       .from('api_keys')
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
         permissions: { chat: true, completion: true, generation: true },
         rate_limit_per_minute: 60,
         is_active: true,
+        expires_at: apiKeyExpiresAt(),
       })
       .select('id')
       .single()

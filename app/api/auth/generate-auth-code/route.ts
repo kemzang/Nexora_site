@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { generateAuthCode } from '@/lib/api-keys'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,9 +33,7 @@ export async function POST(req: NextRequest) {
       .lt('expires_at', new Date().toISOString())
       .containedBy('permissions', { auth_code: true, temporary: true })
 
-    const raw = `${userId}_${Date.now()}_${Math.random()}`
-    const hash = await sha256(raw)
-    const code = `nxr_auth_${Date.now()}_${hash.slice(0, 16)}`
+    const code = generateAuthCode()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
     const { error } = await supabase

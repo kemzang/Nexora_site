@@ -106,11 +106,11 @@ function CallbackContent() {
                   <div>
                     <p className="text-base font-semibold text-foreground">Connexion réussie !</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Ta clé Nexora est prête. Connecte l'IDE que tu utilises.
+                      Copie ta clé Nexora et colle-la dans ton IDE (JetBrains, CLI, VS Code…).
                     </p>
                   </div>
 
-                  {/* Clé copiable (universelle : VS Code, JetBrains, CLI) */}
+                  {/* Clé copiable (universelle : JetBrains, CLI, VS Code) — action principale */}
                   <div className="text-left bg-white/[0.04] rounded-xl border border-white/[0.08] p-3">
                     <p className="text-xs text-muted-foreground mb-1.5">Ta clé Nexora :</p>
                     <div className="flex items-center gap-2">
@@ -127,19 +127,26 @@ function CallbackContent() {
                     </div>
                   </div>
 
-                  {/* VS Code : bouton direct */}
-                  <a
-                    href={`vscode://Nexora.nexora/auth?token=${encodeURIComponent(token)}`}
+                  {/* CTA principal : copier la clé */}
+                  <button
+                    onClick={copyToken}
                     className="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    Ouvrir dans VS Code
-                  </a>
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Clé copiée !' : 'Copier la clé'}
+                  </button>
 
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    <span className="text-foreground/80">JetBrains</span> (IntelliJ, PyCharm…) ou{' '}
-                    <span className="text-foreground/80">CLI</span> : copie la clé ci-dessus et colle-la dans ton IDE.
-                  </p>
+                  {/* VS Code : option secondaire, clairement étiquetée */}
+                  <div className="pt-1">
+                    <p className="text-xs text-muted-foreground mb-2">Tu utilises VS Code ?</p>
+                    <a
+                      href={`vscode://Nexora.nexora/auth?token=${encodeURIComponent(token)}`}
+                      className="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.12] hover:bg-white/[0.06] text-foreground text-sm font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Ouvrir directement dans VS Code
+                    </a>
+                  </div>
                 </motion.div>
               )}
 
