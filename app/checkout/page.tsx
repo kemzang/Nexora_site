@@ -246,7 +246,7 @@ function CheckoutForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { showToast } = useToast()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const { t } = useTranslation()
   const plan = searchParams.get('plan') || 'starter'
   const currentPlan = planDetails[plan] || planDetails.pro
@@ -309,7 +309,10 @@ function CheckoutForm() {
 
     setLoading(true)
     try {
-      const authToken = user ? await getAuthToken() : null
+      // On utilise le token déjà chargé par le contexte d'auth. Appeler
+      // supabase.auth.getSession() ici provoquait un deadlock (lock de refresh)
+      // qui bloquait la requête → spinner infini sans aucun appel réseau.
+      const authToken = token
       const initRes = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: {
@@ -390,35 +393,73 @@ function CheckoutForm() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md mt-14">
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <div className="relative z-10 w-full max-w-4xl mt-16">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="grid items-start gap-5 lg:grid-cols-[0.85fr_1fr]"
+        >
+          {/* ─── Colonne GAUCHE : résumé + aperçu (occupe la largeur, évite le scroll) ─── */}
+          <div className="space-y-4 lg:sticky lg:top-20">
+            {/* Plan summary */}
+            <Card className="glass border-white/[0.08] overflow-hidden">
+              <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${currentPlan.color}18` }}>
+                      <div className="absolute inset-0 opacity-50" style={{ background: `radial-gradient(circle at center, ${currentPlan.color}30, transparent)` }} />
+                      <span className="text-base font-bold relative z-10" style={{ color: currentPlan.color }}>{currentPlan.name[0]}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{ch.planSelected}</p>
+                      <p className="font-bold text-foreground">{currentPlan.name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">{currentPlan.price}</p>
+                    {currentPlan.priceXAF > 0 && (
+                      <p className="text-xs text-muted-foreground">{currentPlan.priceXAF.toLocaleString('fr-FR')} FCFA</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Plan summary */}
-          <Card className="glass mb-4 border-white/[0.08] overflow-hidden">
-            <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-11 h-11 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${currentPlan.color}18` }}>
-                    <div className="absolute inset-0 opacity-50" style={{ background: `radial-gradient(circle at center, ${currentPlan.color}30, transparent)` }} />
-                    <span className="text-base font-bold relative z-10" style={{ color: currentPlan.color }}>{currentPlan.name[0]}</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{ch.planSelected}</p>
-                    <p className="font-bold text-foreground">{currentPlan.name}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold">{currentPlan.price}</p>
-                  {currentPlan.priceXAF > 0 && (
-                    <p className="text-xs text-muted-foreground">{currentPlan.priceXAF.toLocaleString('fr-FR')} FCFA</p>
-                  )}
-                </div>
+            {/* Aperçu de la carte (se remplit pendant la saisie) */}
+            {paymentMethod === 'card' && (
+              <VirtualCard
+                number={cardNumber}
+                name={cardName}
+                expiry={cardExpiry}
+                focused={focusedField}
+                holder={ch.holder}
+                exp={ch.exp}
+              />
+            )}
+
+            {/* Badges de sécurité */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{ch.securePayment}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-px h-3 bg-border/60" />
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{ch.tls}</span>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-xs text-muted-foreground/60">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Secured by NotchPay
+              </div>
+            </div>
+          </div>
 
-          {/* Payment form */}
+          {/* ─── Colonne DROITE : formulaire ─── */}
           <Card className="glass border-white/[0.08] overflow-hidden">
             <div className="h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
             <CardHeader className="text-center space-y-3 pt-7 pb-5">
@@ -514,15 +555,6 @@ function CheckoutForm() {
                       transition={{ duration: 0.25 }}
                       className="space-y-4"
                     >
-                      <VirtualCard
-                        number={cardNumber}
-                        name={cardName}
-                        expiry={cardExpiry}
-                        focused={focusedField}
-                        holder={ch.holder}
-                        exp={ch.exp}
-                      />
-
                       {/* Cardholder name */}
                       <div className="space-y-1.5">
                         <Label htmlFor="cardName" className="text-sm text-muted-foreground font-medium">{ch.cardName}</Label>
@@ -702,44 +734,12 @@ function CheckoutForm() {
                   )}
                 </Button>
               </form>
-
-              {/* Security badges */}
-              <div className="flex items-center justify-center gap-4 pt-1">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{ch.securePayment}</span>
-                </div>
-                <div className="w-px h-3 bg-border/60" />
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{ch.tls}</span>
-                </div>
-              </div>
-
-              {/* NotchPay badge */}
-              <div className="flex justify-center pt-1">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-xs text-muted-foreground/60">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Secured by NotchPay
-                </div>
-              </div>
             </CardContent>
           </Card>
         </motion.div>
       </div>
     </div>
   )
-}
-
-/* ─── Helpers ────────────────────────────────────────────────────── */
-async function getAuthToken(): Promise<string | null> {
-  try {
-    const { supabase } = await import('@/lib/supabase/client')
-    const { data } = await supabase.auth.getSession()
-    return data.session?.access_token ?? null
-  } catch {
-    return null
-  }
 }
 
 /* ─── Export ─────────────────────────────────────────────────────── */
