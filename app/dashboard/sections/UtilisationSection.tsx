@@ -202,15 +202,20 @@ export default function UtilisationSection() {
       fromDate.setDate(fromDate.getDate() - days + 1)
       const fromStr = fromDate.toISOString().split('T')[0]
 
+      const fromIso = new Date(fromStr + 'T00:00:00.000Z').toISOString()
       const { data: rows } = await supabase
-        .from('daily_usage')
-        .select('date, tokens_used, requests_count')
+        .from('usage_sessions')
+        .select('started_at, tokens_total, tokens_input')
         .eq('user_id', userId)
-        .gte('date', fromStr)
+        .gte('started_at', fromIso)
 
       const byDate: Record<string, { tokens: number; requests: number }> = {}
-      for (const row of (rows || []) as any[]) {
-        byDate[row.date] = { tokens: row.tokens_used, requests: row.requests_count }
+      for (const row of (rows || []) as { started_at: string; tokens_total: number | null; tokens_input: number | null }[]) {
+        const date = row.started_at.split('T')[0]
+        const tokens = row.tokens_total ?? row.tokens_input ?? 0
+        if (!byDate[date]) byDate[date] = { tokens: 0, requests: 0 }
+        byDate[date].tokens += tokens
+        byDate[date].requests += 1
       }
 
       const allDates = generateDateRange(days)

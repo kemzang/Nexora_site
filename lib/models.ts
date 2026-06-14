@@ -1,6 +1,7 @@
 export type ModelId = 'deepseek-chat' | 'gemini-flash' | 'gemini-pro' | 'claude-haiku' | 'grok-2' | 'claude-sonnet' | 'gpt-5' | 'claude-opus'
 
-export type PlanId = 'free' | 'starter' | 'pro' | 'business' | 'enterprise'
+// test1 / test2 : forfaits temporaires de TEST (à désactiver après les tests).
+export type PlanId = 'free' | 'test1' | 'test2' | 'starter' | 'pro' | 'business' | 'enterprise'
 
 export interface AIModel {
   id: ModelId
@@ -13,6 +14,9 @@ export interface AIModel {
   contextWindow: number
   capability: number
   sortOrder: number
+  supportsVision: boolean
+  /** Coût relatif en crédits (1x = référence). Pondère la consommation par modèle. */
+  creditMultiplier: number
 }
 
 export interface Plan {
@@ -24,10 +28,18 @@ export interface Plan {
   tokensPerMonth: number
   firstMonthTokens?: number
   maxRequestsPerDay: number
+  // Nombre max de personnes dans une session de collaboration (propriétaire
+  // inclus). 99999 = illimité (Enterprise).
+  maxCollaborators: number
+  // Durée de l'abonnement en jours. Absent = mensuel (≈30j). Utilisé pour les
+  // forfaits test (7j / 14j).
+  durationDays?: number
   models: ModelId[]
   modelsLabel?: string
   features: string[]
   popular?: boolean
+  // Forfait de test temporaire (à désactiver après les tests).
+  isTest?: boolean
 }
 
 interface ComplexMessage {
@@ -52,6 +64,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 64000,
     capability: 3,
     sortOrder: 1,
+    supportsVision: false,
+    creditMultiplier: 1,
   },
   'gemini-flash': {
     id: 'gemini-flash',
@@ -64,6 +78,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 32000,
     capability: 2,
     sortOrder: 2,
+    supportsVision: true,
+    creditMultiplier: 2.5,
   },
   'gemini-pro': {
     id: 'gemini-pro',
@@ -76,6 +92,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 32000,
     capability: 3,
     sortOrder: 3,
+    supportsVision: true,
+    creditMultiplier: 10,
   },
   'claude-haiku': {
     id: 'claude-haiku',
@@ -88,6 +106,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 200000,
     capability: 3,
     sortOrder: 4,
+    supportsVision: true,
+    creditMultiplier: 20,
   },
   'grok-2': {
     id: 'grok-2',
@@ -100,6 +120,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 32000,
     capability: 3,
     sortOrder: 5,
+    supportsVision: true,
+    creditMultiplier: 50,
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
@@ -112,6 +134,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 200000,
     capability: 4,
     sortOrder: 6,
+    supportsVision: true,
+    creditMultiplier: 75,
   },
   'gpt-5': {
     id: 'gpt-5',
@@ -124,6 +148,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 128000,
     capability: 5,
     sortOrder: 7,
+    supportsVision: true,
+    creditMultiplier: 200,
   },
   'claude-opus': {
     id: 'claude-opus',
@@ -136,6 +162,8 @@ export const MODELS: Record<ModelId, AIModel> = {
     contextWindow: 200000,
     capability: 5,
     sortOrder: 8,
+    supportsVision: true,
+    creditMultiplier: 375,
   },
 }
 
@@ -149,13 +177,54 @@ export const PLANS: Record<PlanId, Plan> = {
     tokensPerMonth: 10000,
     firstMonthTokens: 100000,
     maxRequestsPerDay: 200,
+    maxCollaborators: 1,
     models: ['deepseek-chat', 'gemini-flash'],
     features: [
-      '100K tokens le 1er mois, puis 10K/mois',
+      '100K crédits le 1er mois, puis 10K/mois',
       '200 requêtes/jour',
       'DeepSeek V3 & Gemini Flash',
       'Chat IA + Autocomplétion',
       'Mode Agent basique',
+    ],
+  },
+  // ── Forfaits de TEST (temporaires, à désactiver après les tests) ──────────
+  test1: {
+    id: 'test1',
+    name: 'Test 1 semaine',
+    nameFr: 'Test 1 semaine',
+    price: 1,
+    priceLabel: '$1',
+    // Petit budget volontaire : sert juste à tester le parcours payant.
+    tokensPerMonth: 30000,
+    maxRequestsPerDay: 200,
+    maxCollaborators: 2,
+    durationDays: 7,
+    isTest: true,
+    models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku'],
+    features: [
+      'Forfait de test — 1 semaine',
+      '30K crédits (test)',
+      'DeepSeek, Gemini, Claude Haiku',
+      'Jusqu’à 2 personnes en collaboration',
+    ],
+  },
+  test2: {
+    id: 'test2',
+    name: 'Test 2 semaines',
+    nameFr: 'Test 2 semaines',
+    price: 2,
+    priceLabel: '$2',
+    tokensPerMonth: 50000,
+    maxRequestsPerDay: 200,
+    maxCollaborators: 2,
+    durationDays: 14,
+    isTest: true,
+    models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku'],
+    features: [
+      'Forfait de test — 2 semaines',
+      '50K crédits (test)',
+      'DeepSeek, Gemini, Claude Haiku',
+      'Jusqu’à 2 personnes en collaboration',
     ],
   },
   starter: {
@@ -164,11 +233,12 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Starter',
     price: 5,
     priceLabel: '$5',
-    tokensPerMonth: 1000000,
+    tokensPerMonth: 4000000,
     maxRequestsPerDay: 500,
+    maxCollaborators: 2,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro'],
     features: [
-      '1M tokens/mois',
+      '4M crédits/mois',
       '500 requêtes/jour',
       '+ Gemini 2.5 Pro',
       'Autocomplétion avancée',
@@ -181,12 +251,13 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Pro',
     price: 12,
     priceLabel: '$12',
-    tokensPerMonth: 3000000,
+    tokensPerMonth: 15000000,
     maxRequestsPerDay: 2000,
+    maxCollaborators: 5,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2'],
     modelsLabel: 'DeepSeek, Gemini, Claude Haiku, Grok',
     features: [
-      '3M tokens/mois',
+      '15M crédits/mois',
       '2 000 requêtes/jour',
       '+ Claude Haiku & Grok',
       'Indexing codebase complet',
@@ -198,13 +269,14 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'business',
     name: 'Business',
     nameFr: 'Business',
-    price: 25,
-    priceLabel: '$25',
-    tokensPerMonth: 20000000,
+    price: 30,
+    priceLabel: '$30',
+    tokensPerMonth: 40000000,
     maxRequestsPerDay: 5000,
+    maxCollaborators: 20,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet'],
     features: [
-      '20M tokens/mois',
+      '40M crédits/mois',
       '5 000 requêtes/jour',
       '+ Claude Sonnet 4.6',
       'Accès API direct',
@@ -215,13 +287,14 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'enterprise',
     name: 'Enterprise',
     nameFr: 'Enterprise',
-    price: 60,
-    priceLabel: '$60',
-    tokensPerMonth: 80000000,
+    price: 80,
+    priceLabel: '$80',
+    tokensPerMonth: 100000000,
     maxRequestsPerDay: 99999,
+    maxCollaborators: 99999,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'grok-2', 'claude-sonnet', 'gpt-5', 'claude-opus'],
     features: [
-      '80M tokens/mois',
+      '100M crédits/mois',
       'Requêtes illimitées',
       '+ Claude Opus & GPT-5',
       'Tous les modèles disponibles',
@@ -232,6 +305,25 @@ export const PLANS: Record<PlanId, Plan> = {
 
 export function getModelsForPlan(planId: PlanId): ModelId[] {
   return PLANS[planId].models
+}
+
+/** Multiplicateur de crédit d'un modèle (défaut 1x si inconnu). */
+export function getCreditMultiplier(modelId: string): number {
+  return MODELS[modelId as ModelId]?.creditMultiplier ?? 1
+}
+
+/**
+ * Calcule les crédits (= tokens pondérés) consommés par une requête.
+ * On pondère les tokens réels par le coût relatif du modèle, de sorte qu'un
+ * modèle cher (Opus 5x) consomme bien plus du quota qu'un modèle bon marché (DeepSeek 0.25x).
+ */
+export function computeCreditsConsumed(
+  modelId: string,
+  inputTokens: number,
+  outputTokens: number,
+): number {
+  const totalTokens = inputTokens + outputTokens
+  return Math.ceil(totalTokens * getCreditMultiplier(modelId))
 }
 
 // Retourne la limite mensuelle effective : 100K le 1er mois pour free, 10K ensuite
@@ -314,6 +406,25 @@ export function analyzeComplexity(messages: ComplexMessage[]): number {
   return Math.max(1, Math.min(5, score))
 }
 
+/** Détecte si une liste de messages contient des images (data URL ou image_url) */
+export function hasImageContent(messages: any[]): boolean {
+  return messages.some((msg) => {
+    if (!msg.content) return false
+    if (typeof msg.content === 'string') {
+      return msg.content.includes('data:image/')
+    }
+    if (Array.isArray(msg.content)) {
+      return msg.content.some(
+        (part: any) =>
+          part.type === 'image_url' ||
+          part.type === 'image' ||
+          (part.type === 'text' && typeof part.text === 'string' && part.text.includes('data:image/'))
+      )
+    }
+    return false
+  })
+}
+
 export function selectBestModel(
   userPlan: PlanId,
   preferredModel?: ModelId,
@@ -322,21 +433,25 @@ export function selectBestModel(
   const availableModels = getModelsForPlan(userPlan)
   const available = availableModels.map(id => MODELS[id])
   const complexity = analyzeComplexity(messages)
+  const needsVision = hasImageContent(messages as any[])
 
+  // Si le modèle préféré est disponible dans ce plan et supporte la vision si nécessaire
   if (preferredModel && availableModels.includes(preferredModel)) {
     const chosen = MODELS[preferredModel]
-    if (chosen.capability >= complexity) {
+    if (chosen.capability >= complexity && (!needsVision || chosen.supportsVision)) {
       return { model: chosen, complexity, downgraded: false }
     }
   }
 
   const sorted = [...available].sort((a, b) => {
+    // Si images : les modèles sans vision passent en dernier
+    if (needsVision) {
+      if (a.supportsVision !== b.supportsVision) return a.supportsVision ? -1 : 1
+    }
     const aEnough = a.capability >= complexity ? 0 : 1
     const bEnough = b.capability >= complexity ? 0 : 1
     if (aEnough !== bEnough) return aEnough - bEnough
-    // Both capable: prefer cheapest (lowest sortOrder)
     if (aEnough === 0) return a.sortOrder - b.sortOrder
-    // Both incapable: prefer most capable, then most powerful (highest sortOrder)
     if (a.capability !== b.capability) return b.capability - a.capability
     return b.sortOrder - a.sortOrder
   })

@@ -11,6 +11,7 @@ interface AuthContextType {
   token: string | null
   signIn: (credentials: LoginCredentials) => Promise<{ error?: string, token?: string }>
   signUp: (credentials: RegisterCredentials) => Promise<{ error?: string, token?: string }>
+  signInWithGoogle: () => Promise<{ error?: string }>
   signOut: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -121,12 +122,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  /** Connexion via Google (OAuth Supabase). Redirige vers Google puis revient
+   *  sur le dashboard. Nécessite que le provider Google soit activé dans Supabase. */
+  const signInWithGoogle = async (): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo:
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/dashboard`
+            : undefined,
+      },
+    })
+    return error ? { error: error.message } : {}
+  }
+
   const value: AuthContextType = {
     user,
     loading,
     token,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     refreshUser
   }

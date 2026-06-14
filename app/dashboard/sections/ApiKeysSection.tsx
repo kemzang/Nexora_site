@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Key, Plus, Copy, Trash2, Eye, EyeOff, CheckCircle2, Loader2,
+  Key, Plus, Copy, Trash2, CheckCircle2, Loader2,
   AlertTriangle, Clock, Shield
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
@@ -22,18 +22,8 @@ interface ApiKeyRow {
   last_used_at: string | null
   created_at: string
   rate_limit_per_minute: number
-}
-
-async function generateApiKey(): Promise<{ fullKey: string; prefix: string; hash: string }> {
-  const buf = new Uint8Array(32)
-  crypto.getRandomValues(buf)
-  const hex = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('')
-  const fullKey = `nxr_${hex}`
-  const prefix = fullKey.substring(0, 12)
-  const encoded = new TextEncoder().encode(fullKey)
-  const hashBuf = await crypto.subtle.digest('SHA-256', encoded)
-  const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('')
-  return { fullKey, prefix, hash }
+  expires_at: string | null
+  permissions: Record<string, unknown> | null
 }
 
 function formatDate(dateStr: string) {
@@ -65,13 +55,21 @@ export default function ApiKeysSection() {
   const [deleting, setDeleting] = useState(false)
 
   const fetchKeys = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('api_keys')
-      .select('id, name, key_prefix, is_active, last_used_at, created_at, rate_limit_per_minute')
+    const { data } = await (supabase.from('api_keys') as any)
+      .select('id, name, key_prefix, is_active, last_used_at, created_at, rate_limit_per_minute, expires_at, permissions')
       .eq('user_id', userId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
-    setKeys(data || [])
+
+    const now = new Date()
+    // Filter out temporary auth codes and expired keys
+    const realKeys = ((data as ApiKeyRow[]) || []).filter(k => {
+      const perms = k.permissions as Record<string, unknown> | null
+      if (perms?.temporary || perms?.auth_code) return false
+      if (k.expires_at && new Date(k.expires_at) < now) return false
+      return true
+    })
+    setKeys(realKeys)
     setLoading(false)
   }, [])
 
@@ -83,18 +81,32 @@ export default function ApiKeysSection() {
     if (!newKeyName.trim() || !user?.id) return
     setCreating(true)
     try {
-      const { fullKey, prefix, hash } = await generateApiKey()
-      const { error } = await (supabase.from('api_keys') as any).insert({
-        user_id: user.id,
-        name: newKeyName.trim(),
-        key_prefix: prefix,
-        key_hash: hash,
-        permissions: { read: true, write: true },
-        rate_limit_per_minute: 60,
-        is_active: true,
+      // La clé est générée et insérée côté serveur (rôle service) : plus de
+      // dépendance au RLS/à la session du navigateur. On s'authentifie avec le
+      // jeton de session Supabase courant.
+      const { data: { session } } = await supabase.auth.getSession()
+      const accessToken = session?.access_token
+      if (!accessToken) {
+        showToast('Session expirée — reconnecte-toi puis réessaie', 'error')
+        return
+      }
+
+      const res = await fetch('/api/keys/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ name: newKeyName.trim() }),
       })
-      if (error) { showToast('Erreur lors de la création de la clé', 'error'); return }
-      setCreatedKey(fullKey)
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok || !data?.success || !data?.token) {
+        showToast(data?.error || 'Erreur lors de la création de la clé', 'error')
+        return
+      }
+
+      setCreatedKey(data.token)
       setNewKeyName('')
       setShowCreate(false)
       if (user?.id) fetchKeys(user.id)

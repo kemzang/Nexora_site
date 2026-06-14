@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { generateAuthCode } from '@/lib/api-keys'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,14 +18,22 @@ async function sha256(text: string): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     const { userId, state } = await req.json()
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'User ID requis' }, { status: 400 })
     }
 
-    const raw = `${userId}_${Date.now()}_${Math.random()}`
-    const hash = await sha256(raw)
-    const code = `nxr_auth_${Date.now()}_${hash.slice(0, 16)}`
+    // Clean up previously expired or unused auth codes for this user
+    // This prevents accumulation of stale codes in the api_keys table
+    await supabase
+      .from('api_keys')
+      .update({ is_active: false })
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .lt('expires_at', new Date().toISOString())
+      .containedBy('permissions', { auth_code: true, temporary: true })
+
+    const code = generateAuthCode()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
     const { error } = await supabase

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
-import { selectBestModel, estimateTokens, PLANS, getEffectiveTokenLimit, type ModelId, type PlanId } from '@/lib/models'
+import { selectBestModel, hasImageContent, estimateTokens, getEffectiveTokenLimit, computeCreditsConsumed, type ModelId, type PlanId } from '@/lib/models'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +17,8 @@ const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>
 
 const MAX_TOKENS_PER_PLAN: Record<PlanId, number> = {
   free: 2048,
+  test1: 4096,
+  test2: 4096,
   starter: 4096,
   pro: 8192,
   business: 16384,
@@ -35,6 +37,91 @@ const API_ROUTES: Record<string, { baseUrl: string; keyEnv: string; format: 'ope
   'claude-opus':      { baseUrl: 'https://api.anthropic.com/v1/messages',                     keyEnv: 'ANTHROPIC_API_KEY',  format: 'anthropic' },
 }
 
+// ── Usage tracking ───────────────────────────────────────────────────────────
+
+interface UsageContext {
+  userId: string
+  plan: PlanId
+  modelId: string
+  inputTokens: number
+  preferred: string | null
+  complexity: number
+  downgraded: boolean
+}
+
+/** Enregistre la consommation finale (entrée + sortie, pondérée par le crédit du modèle). */
+async function recordUsage(ctx: UsageContext, outputTokens: number): Promise<void> {
+  const credits = computeCreditsConsumed(ctx.modelId, ctx.inputTokens, outputTokens)
+  try {
+    await supabase.from('usage_sessions').insert({
+      user_id: ctx.userId,
+      // started_at explicite : le dashboard ET le quota filtrent par started_at >=
+      // début du mois. Sans valeur (si la colonne n'a pas de défaut DB), les lignes
+      // seraient exclues → conso affichée à 0 et quota jamais décompté.
+      started_at: new Date().toISOString(),
+      session_type: 'chat_proxy',
+      model_id: ctx.modelId,
+      tokens_input: ctx.inputTokens,
+      tokens_output: outputTokens,
+      tokens_total: credits, // crédits pondérés — c'est ce qui décompte le quota
+      metadata: {
+        plan: ctx.plan,
+        model: ctx.modelId,
+        preferred: ctx.preferred,
+        complexity: ctx.complexity,
+        downgraded: ctx.downgraded,
+        creditMultiplier: credits / Math.max(1, ctx.inputTokens + outputTokens),
+      },
+    })
+  } catch {
+    // tracking best-effort — ne jamais casser la réponse
+  }
+}
+
+/**
+ * Wrappe un flux SSE OpenAI : laisse passer les chunks tels quels vers le client
+ * tout en comptant le texte de sortie (delta.content), puis enregistre la conso.
+ */
+function trackOutputStream(
+  body: ReadableStream<Uint8Array>,
+  ctx: UsageContext,
+): ReadableStream<Uint8Array> {
+  let outputChars = 0
+  const decoder = new TextDecoder()
+  const transform = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      try {
+        const text = decoder.decode(chunk, { stream: true })
+        for (const line of text.split('\n')) {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('data:')) continue
+          const payload = trimmed.slice(5).trim()
+          if (!payload || payload === '[DONE]') continue
+          try {
+            const json = JSON.parse(payload)
+            const delta = json?.choices?.[0]?.delta?.content
+            if (typeof delta === 'string') outputChars += delta.length
+          } catch {
+            /* ligne SSE partielle — ignorée */
+          }
+        }
+      } catch {
+        /* ignore decode errors */
+      }
+      controller.enqueue(chunk)
+    },
+    async flush() {
+      // IMPORTANT : on AWAIT l'enregistrement. En fire-and-forget (`void`), sur
+      // Vercel la fonction peut être gelée avant la fin de l'insert → conso
+      // perdue (compteur bloqué à 0). En awaitant, le flux reste ouvert tant que
+      // l'insert n'est pas terminé → conso fiablement enregistrée.
+      const outputTokens = Math.ceil(outputChars / 4)
+      await recordUsage(ctx, outputTokens)
+    },
+  })
+  return body.pipeThrough(transform)
+}
+
 // ── Plan helpers ─────────────────────────────────────────────────────────────
 async function getUserPlan(userId: string): Promise<PlanId> {
   const cached = planCache.get(userId)
@@ -44,6 +131,8 @@ async function getUserPlan(userId: string): Promise<PlanId> {
     .select('subscription_plans!inner(slug)')
     .eq('user_id', userId)
     .eq('status', 'active')
+    // Exclut les abonnements expirés (forfaits test 7/14j, ou tout plan échu).
+    .gt('current_period_end', new Date().toISOString())
     .maybeSingle()
   const plan = ((data?.subscription_plans as any)?.slug as PlanId) || 'free'
   planCache.set(userId, { plan, expiresAt: Date.now() + 300_000 })
@@ -453,6 +542,18 @@ export async function POST(req: NextRequest) {
     const route = API_ROUTES[selectedModel.id]
     if (!route) return NextResponse.json({ error: `Model ${selectedModel.id} not configured` }, { status: 500 })
 
+    // Si le modèle retenu ne supporte pas la vision mais que les messages contiennent des images,
+    // on strip les parties image pour éviter une erreur 400 côté provider.
+    // Si le modèle retenu ne supporte pas la vision, stripper les images pour éviter une erreur 400.
+    const effectiveMessages = (hasImageContent(messages) && !selectedModel.supportsVision)
+      ? (messages as any[]).map((msg: any) => {
+          if (!Array.isArray(msg.content)) return msg
+          const textParts = msg.content.filter((p: any) => p.type !== 'image_url' && p.type !== 'image')
+          const text = textParts.map((p: any) => p.text ?? '').join(' ').trim()
+          return { ...msg, content: text || '[Image non supportée par ce modèle]' }
+        })
+      : messages
+
     const apiKey = process.env[route.keyEnv]
     if (!apiKey) return NextResponse.json({ error: 'Server API key not configured' }, { status: 500 })
 
@@ -465,10 +566,10 @@ export async function POST(req: NextRequest) {
       upstreamResp = await fetch(route.baseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...rest, model: selectedModel.apiIdentifier, messages, stream, max_tokens: maxTokens }),
+        body: JSON.stringify({ ...rest, model: selectedModel.apiIdentifier, messages: effectiveMessages, stream, max_tokens: maxTokens }),
       })
     } else if (route.format === 'anthropic') {
-      const anthropicBody = buildAnthropicBody({ ...rest, messages, stream, max_tokens: maxTokens }, selectedModel.apiIdentifier)
+      const anthropicBody = buildAnthropicBody({ ...rest, messages: effectiveMessages, stream, max_tokens: maxTokens }, selectedModel.apiIdentifier)
       upstreamResp = await fetch(route.baseUrl, {
         method: 'POST',
         headers: {
@@ -480,7 +581,7 @@ export async function POST(req: NextRequest) {
       })
     } else {
       // Gemini
-      const geminiBody = buildGeminiBody({ ...rest, messages, max_tokens: maxTokens })
+      const geminiBody = buildGeminiBody({ ...rest, messages: effectiveMessages, max_tokens: maxTokens })
       const modelPath = selectedModel.apiIdentifier
       const endpoint = stream
         ? `${route.baseUrl}/models/${modelPath}:streamGenerateContent?alt=sse`
@@ -504,14 +605,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: errorText }, { status: upstreamResp.status })
     }
 
-    // Track usage (fire and forget)
-    void supabase.from('usage_sessions').insert({
-      user_id: userId,
-      session_type: 'chat_proxy',
-      model_id: null,
-      tokens_input: estimateTokens(messages),
-      metadata: { plan: userPlan, model: selectedModel.id, preferred: preferredModel || null, complexity, downgraded },
-    })
+    // Usage tracking context — credits are weighted by the model's cost multiplier
+    const inputTokens = estimateTokens(messages)
+    const usageCtx: UsageContext = {
+      userId,
+      plan: userPlan,
+      modelId: selectedModel.id,
+      inputTokens,
+      preferred: (preferredModel as string) || null,
+      complexity,
+      downgraded,
+    }
 
     const responseHeaders: Record<string, string> = {
       'Content-Type': 'text/event-stream',
@@ -523,19 +627,35 @@ export async function POST(req: NextRequest) {
       'X-Nexora-Complexity': String(complexity),
     }
 
-    // For OpenAI format: pass through as-is
+    // Helper: estimate output tokens from a non-streamed OpenAI-format completion
+    const recordFromJson = async (json: any) => {
+      const content = json?.choices?.[0]?.message?.content
+      const outTokens =
+        typeof json?.usage?.completion_tokens === 'number'
+          ? json.usage.completion_tokens
+          : Math.ceil((typeof content === 'string' ? content.length : 0) / 4)
+      await recordUsage(usageCtx, outTokens)
+    }
+
+    // For OpenAI format: pass through, counting output
     if (route.format === 'openai') {
-      return new NextResponse(upstreamResp.body, { status: 200, headers: responseHeaders })
+      if (stream && upstreamResp.body) {
+        return new NextResponse(trackOutputStream(upstreamResp.body, usageCtx), { status: 200, headers: responseHeaders })
+      }
+      const json = await upstreamResp.json()
+      await recordFromJson(json)
+      return NextResponse.json(json, { headers: { 'X-Nexora-Model': selectedModel.id } })
     }
 
     // For Anthropic: convert SSE or JSON to OpenAI format
     if (route.format === 'anthropic') {
       if (stream) {
         const converted = anthropicStreamToOpenAI(upstreamResp.body!, selectedModel.id)
-        return new NextResponse(converted, { status: 200, headers: responseHeaders })
+        return new NextResponse(trackOutputStream(converted, usageCtx), { status: 200, headers: responseHeaders })
       } else {
         const json = await upstreamResp.json()
         const converted = anthropicNonStreamingToOpenAI(json, selectedModel.id)
+        await recordFromJson(converted)
         return NextResponse.json(converted, { headers: { 'X-Nexora-Model': selectedModel.id } })
       }
     }
@@ -543,10 +663,11 @@ export async function POST(req: NextRequest) {
     // For Gemini: convert SSE or JSON to OpenAI format
     if (stream) {
       const converted = geminiStreamToOpenAI(upstreamResp.body!, selectedModel.id)
-      return new NextResponse(converted, { status: 200, headers: responseHeaders })
+      return new NextResponse(trackOutputStream(converted, usageCtx), { status: 200, headers: responseHeaders })
     } else {
       const json = await upstreamResp.json()
       const converted = geminiNonStreamingToOpenAI(json, selectedModel.id)
+      await recordFromJson(converted)
       return NextResponse.json(converted, { headers: { 'X-Nexora-Model': selectedModel.id } })
     }
   } catch (err) {

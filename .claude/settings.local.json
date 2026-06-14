@@ -6,9 +6,21 @@
       "Bash(Format-Table FullName)",
       "Bash(npm run *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\pc\\\\Desktop\\\\kemzang\\\\xenora\\\\app\\\\dashboard\\\\\" -Recurse -File | Select-Object FullName)",
+<<<<<<< HEAD
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\pc\\\\Desktop\\\\kemzang\\\\xenora\\\\app\\\\api\\\\collab\\\\\" -Recurse | Select-Object FullName)",
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
       "Bash(xargs grep -l \"room_members\\\\|collaboration_rooms\\\\|collab_messages\")"
+=======
+      "Bash(npx tsc *)",
+      "Bash(npx tsx *)",
+      "Bash(node --loader tsx/esm tests/integration/proxy.test.ts)",
+      "Bash(NODE_OPTIONS='--experimental-vm-modules' npx tsx tests/integration/proxy.test.ts)",
+      "Bash(npm install *)",
+      "Bash(node_modules/.bin/tsx tests/integration/proxy.test.ts)",
+      "Bash(node_modules/.bin/tsx --help)",
+      "Bash(node_modules/.bin/tsx tests/integration/payments.test.ts)",
+      "Bash(grep -v \"^$\")"
+>>>>>>> 231c4e5c7ba35dc8761a9c8386d035c54486a070
     ]
   }
 }

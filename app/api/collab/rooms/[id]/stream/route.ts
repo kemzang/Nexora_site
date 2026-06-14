@@ -10,10 +10,10 @@ const POLL_INTERVAL_MS = 800
 const PRESENCE_INTERVAL_MS = 5_000
 const PRESENCE_TIMEOUT_S = 30
 
-// ── Rate limiting (in-memory, per edge instance, sliding 60s window) ──────────
+// ── Rate limiting (in-memory, par edge instance, fenêtre glissante 60s) ──────
 
 const rateMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 10      // max SSE connections per userId per minute
+const RATE_LIMIT = 10
 const RATE_WINDOW_MS = 60_000
 
 function isRateLimited(userId: string): boolean {
@@ -28,23 +28,15 @@ function isRateLimited(userId: string): boolean {
   return entry.count > RATE_LIMIT
 }
 
-// ── Auth légère (edge-compatible, pas d'import depuis auth-verify) ────────────
+// ── Auth edge-compatible ───────────────────────────────────────────────────────
 
 async function sha256hex(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(text),
-  )
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-async function verifyTokenEdge(
-  token: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-): Promise<string | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function verifyTokenEdge(token: string, supabase: any): Promise<string | null> {
   if (token.startsWith('nxr_')) {
     const hash = await sha256hex(token)
     const { data } = await supabase
@@ -58,19 +50,14 @@ async function verifyTokenEdge(
     if (row.expires_at && new Date(row.expires_at) < new Date()) return null
     return row.user_id
   }
-  // JWT Supabase natif
-  const {
-    data: { user },
-  } = await supabase.auth.getUser(token)
+  const { data: { user } } = await supabase.auth.getUser(token)
   return (user as { id: string } | null)?.id ?? null
 }
 
-// ── SSE helper ────────────────────────────────────────────────────────────────
+// ── SSE helpers ───────────────────────────────────────────────────────────────
 
 function sseChunk(event: string, data: unknown): Uint8Array {
-  return new TextEncoder().encode(
-    `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`,
-  )
+  return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
 }
 
 function sseComment(text: string): Uint8Array {
@@ -91,7 +78,6 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // ── Auth ──────────────────────────────────────────────────────────────────
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response('Non autorisé', { status: 401 })
@@ -111,33 +97,31 @@ export async function GET(
 
   const { id: roomId } = await params
 
-  // ── Vérifier que le room existe et est actif ──────────────────────────────
+  // Vérifier que le room existe et est actif
   const { data: room } = await supabase
-    .from('rooms')
+    .from('collaboration_rooms')
     .select('id, is_active')
     .eq('id', roomId)
     .single()
 
   if (!room) {
-    return new Response(
-      JSON.stringify({ error: 'room_not_found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
-
-  if (!room.is_active) {
-    // Retourner un stream SSE avec event error pour que le client affiche un msg
-    const errChunk = new TextEncoder().encode(
-      `event: error\ndata: ${JSON.stringify({ code: 'room_inactive' })}\n\n`,
-    )
-    return new Response(new ReadableStream({
-      start(c) { c.enqueue(errChunk); c.close() },
-    }), {
-      headers: { 'Content-Type': 'text/event-stream; charset=utf-8' },
+    return new Response(JSON.stringify({ error: 'room_not_found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  // ── Vérifier que l'user est membre du room ────────────────────────────────
+  if (!room.is_active) {
+    const errChunk = new TextEncoder().encode(
+      `event: error\ndata: ${JSON.stringify({ code: 'room_inactive' })}\n\n`,
+    )
+    return new Response(
+      new ReadableStream({ start(c) { c.enqueue(errChunk); c.close() } }),
+      { headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } },
+    )
+  }
+
+  // Vérifier que l'user est membre du room
   const { data: member } = await supabase
     .from('room_members')
     .select('id')
@@ -147,7 +131,6 @@ export async function GET(
 
   if (!member) return new Response('Accès refusé', { status: 403 })
 
-  // Curseur de temps initial (depuis quand on écoute les messages)
   let since =
     req.nextUrl.searchParams.get('since') ??
     new Date(Date.now() - 5_000).toISOString()
@@ -161,19 +144,15 @@ export async function GET(
         if (!closed) controller.enqueue(chunk)
       }
 
-      // Ping initial + délai de reconnexion conseillé au client
       enqueue(sseComment('stream connected'))
       enqueue(new TextEncoder().encode('retry: 3000\n\n'))
 
-      // Polling Supabase côté serveur
       const poll = async () => {
         if (closed) return
         try {
           const { data: messages } = await supabase
             .from('collab_messages')
-            .select(
-              'id, sender_id, sender_name, role, content, model_id, created_at',
-            )
+            .select('id, sender_id, sender_name, role, content, model_id, created_at')
             .eq('room_id', roomId)
             .gt('created_at', since)
             .order('created_at', { ascending: true })
@@ -188,9 +167,6 @@ export async function GET(
         }
       }
 
-      const interval = setInterval(() => void poll(), POLL_INTERVAL_MS)
-
-      // Présence : qui est en ligne (last_seen_at dans les 30 dernières secondes)
       const presencePoll = async () => {
         if (closed) return
         try {
@@ -205,9 +181,10 @@ export async function GET(
           // Erreur transitoire — on ignore
         }
       }
+
+      const interval = setInterval(() => void poll(), POLL_INTERVAL_MS)
       const presenceInterval = setInterval(() => void presencePoll(), PRESENCE_INTERVAL_MS)
 
-      // Fermeture propre après SSE_MAX_MS → le client reconnecte avec `since`
       const maxTimer = setTimeout(() => {
         closed = true
         clearInterval(interval)
@@ -216,7 +193,6 @@ export async function GET(
         controller.close()
       }, SSE_MAX_MS)
 
-      // Déconnexion côté client (onglet fermé, extension arrêtée…)
       req.signal.addEventListener('abort', () => {
         closed = true
         clearInterval(interval)
@@ -232,7 +208,7 @@ export async function GET(
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no', // désactive le buffering nginx/Vercel
+      'X-Accel-Buffering': 'no',
     },
   })
 }

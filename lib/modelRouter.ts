@@ -19,7 +19,7 @@ export interface ModelRoute {
   minPlan: PlanId
 }
 
-const PLAN_ORDER: PlanId[] = ['free', 'starter', 'pro', 'business', 'enterprise']
+const PLAN_ORDER: PlanId[] = ['free', 'test1', 'test2', 'starter', 'pro', 'business', 'enterprise']
 
 export function planSatisfies(userPlan: PlanId, required: PlanId): boolean {
   return PLAN_ORDER.indexOf(userPlan) >= PLAN_ORDER.indexOf(required)

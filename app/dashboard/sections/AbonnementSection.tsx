@@ -34,7 +34,7 @@ const UPGRADE_PLANS = [
     border: 'hover:border-sky-500/40',
     activeBorder: 'border-sky-500/40',
     badgeColor: 'bg-sky-500/15 text-sky-400 border-sky-500/20',
-    features: ['1 000 000 tokens/mois', '500 requêtes/jour', 'DeepSeek, Gemini Flash', 'Gemini 2.5 Pro', 'Auto-complétion VS Code'],
+    features: ['4M crédits/mois', '500 requêtes/jour', 'DeepSeek, Gemini Flash', 'Gemini 2.5 Pro', 'Autocomplétion illimitée'],
   },
   {
     slug: 'pro',
@@ -47,31 +47,31 @@ const UPGRADE_PLANS = [
     activeBorder: 'border-amber-500/40',
     badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
     popular: true,
-    features: ['3 000 000 tokens/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
+    features: ['15M crédits/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
   },
   {
     slug: 'business',
     name: 'Business',
-    price: '$25',
+    price: '$30',
     icon: Star,
     color: 'text-emerald-400',
     bg: 'from-emerald-500/20 to-emerald-500/5',
     border: 'hover:border-emerald-500/40',
     activeBorder: 'border-emerald-500/40',
     badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    features: ['20 000 000 tokens/mois', '5 000 requêtes/jour', '+ Claude Sonnet 4.6', 'Accès API direct', 'Support dédié'],
+    features: ['40M crédits/mois', '5 000 requêtes/jour', '+ Claude Sonnet 4.6', 'Accès API direct', 'Support dédié'],
   },
   {
     slug: 'enterprise',
     name: 'Enterprise',
-    price: '$60',
+    price: '$80',
     icon: Crown,
     color: 'text-violet-400',
     bg: 'from-violet-500/20 to-violet-500/5',
     border: 'hover:border-violet-500/40',
     activeBorder: 'border-violet-500/40',
     badgeColor: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
-    features: ['80 000 000 tokens/mois', 'Requêtes illimitées', '+ Claude Opus & GPT-5', 'Tous les modèles', 'Support 24/7 + SSO + SLA'],
+    features: ['100M crédits/mois', 'Requêtes illimitées', '+ Claude Opus & GPT-5', 'Tous les modèles', 'Support 24/7 + SSO + SLA'],
   },
 ]
 
@@ -81,29 +81,74 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
   const { user } = useAuth()
   const [sub, setSub] = useState<SubscriptionData | null>(null)
   const [loading, setLoading] = useState(true)
+  // Plans actifs en base qui ne sont pas déjà dans la liste codée en dur
+  // (ex. plans de test). Ils s'affichent automatiquement et se masquent dès
+  // qu'on passe leur `is_active` à false en base — aucun redéploiement requis.
+  const [extraPlans, setExtraPlans] = useState<typeof UPGRADE_PLANS>([])
 
   useEffect(() => {
     if (user?.id) fetchSubscription(user.id)
   }, [user?.id])
 
+  useEffect(() => {
+    ;(async () => {
+      const { data } = await supabase
+        .from('subscription_plans')
+        .select('slug, name, price, features, sort_order')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+
+      const known = new Set([...UPGRADE_PLANS.map((p) => p.slug), 'free'])
+      const extras = ((data as any[]) || [])
+        .filter((p) => p?.slug && !known.has(p.slug))
+        .map((p) => ({
+          slug: p.slug,
+          name: p.name ?? p.slug,
+          price: `$${Number(p.price ?? 0)}`,
+          icon: Sparkles,
+          color: 'text-zinc-300',
+          bg: 'from-zinc-500/20 to-zinc-500/5',
+          border: 'hover:border-zinc-500/40',
+          activeBorder: 'border-zinc-500/40',
+          badgeColor: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/20',
+          features: Array.isArray(p.features) ? p.features : [],
+        })) as unknown as typeof UPGRADE_PLANS
+      setExtraPlans(extras)
+    })()
+  }, [])
+
   async function fetchSubscription(userId: string) {
     try {
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-      const { data } = await supabase
-        .from('user_subscriptions')
-        .select('status, tokens_remaining, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .maybeSingle() as any
+      const [subResult, sessionsResult] = await Promise.all([
+        supabase
+          .from('user_subscriptions')
+          .select('status, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .maybeSingle() as any,
+        supabase
+          .from('usage_sessions')
+          .select('tokens_total, tokens_input')
+          .eq('user_id', userId)
+          .gte('started_at', startOfMonth),
+      ])
+
+      const data = subResult.data
+      const sessions = (sessionsResult.data ?? []) as { tokens_total: number | null; tokens_input: number | null }[]
+      const tokensUsed = sessions.reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
 
       if (data?.subscription_plans) {
         const plan = data.subscription_plans
+        const tokensPerMonth: number = plan.tokens_per_month || 10000
         setSub({
           planName: plan.name || 'Free',
           planSlug: plan.slug || 'free',
           price: plan.price || 0,
-          tokensPerMonth: plan.tokens_per_month || 10000,
-          tokensRemaining: data.tokens_remaining || 0,
+          tokensPerMonth,
+          tokensRemaining: Math.max(0, tokensPerMonth - tokensUsed),
           renewalDate: data.current_period_end,
           status: data.status,
           features: Array.isArray(plan.features) ? plan.features : [],
@@ -114,7 +159,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
           planSlug: 'free',
           price: 0,
           tokensPerMonth: 10000,
-          tokensRemaining: 0,
+          tokensRemaining: Math.max(0, 10000 - tokensUsed),
           renewalDate: null,
           status: 'active',
           features: ['100K tokens le 1er mois, puis 10K/mois', '200 requêtes/jour', 'DeepSeek V3 & Gemini Flash'],
@@ -130,7 +175,13 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
   const currentPlanIdx = PLAN_ORDER.indexOf(sub?.planSlug || 'free')
   const usagePercent = sub ? Math.min(100, Math.round(((sub.tokensPerMonth - sub.tokensRemaining) / sub.tokensPerMonth) * 100)) : 0
 
-  const plansToShow = UPGRADE_PLANS.filter(p => PLAN_ORDER.indexOf(p.slug) > currentPlanIdx)
+  const currentSlug = sub?.planSlug || 'free'
+  const plansToShow = [
+    // Plans standards : uniquement ceux au-dessus du plan actuel (upgrade).
+    ...UPGRADE_PLANS.filter((p) => PLAN_ORDER.indexOf(p.slug) > currentPlanIdx),
+    // Plans BDD supplémentaires (test/custom) : toujours visibles, sauf l'actuel.
+    ...extraPlans.filter((p) => p.slug !== currentSlug),
+  ]
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">

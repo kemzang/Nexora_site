@@ -33,7 +33,7 @@ const FIM_PLAN_MIN: Record<FimModelId, PlanId> = {
   'gpt-5': 'enterprise',
 }
 
-const PLAN_ORDER: PlanId[] = ['free', 'starter', 'pro', 'business', 'enterprise']
+const PLAN_ORDER: PlanId[] = ['free', 'test1', 'test2', 'starter', 'pro', 'business', 'enterprise']
 
 function planGte(a: PlanId, b: PlanId): boolean {
   return PLAN_ORDER.indexOf(a) >= PLAN_ORDER.indexOf(b)
@@ -126,14 +126,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const limitReached = await checkMonthlyLimit(userId, userPlan)
-    if (limitReached) {
-      const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
-      const retryAfter = Math.ceil((endOfMonth.getTime() - Date.now()) / 1000)
-      return NextResponse.json(
-        { error: `Monthly token limit reached (${limitReached}). Upgrade your plan.`, code: 'MONTHLY_LIMIT_REACHED', plan: userPlan, retry_after: retryAfter },
-        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
-      )
+    // Autocomplétion ILLIMITÉE pour les plans payants (ne décompte pas les crédits,
+    // comme Copilot/Cursor). Le Free reste plafonné — ça pousse à s'abonner.
+    const autocompleteIsFree = userPlan !== 'free'
+    if (!autocompleteIsFree) {
+      const limitReached = await checkMonthlyLimit(userId, userPlan)
+      if (limitReached) {
+        const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+        const retryAfter = Math.ceil((endOfMonth.getTime() - Date.now()) / 1000)
+        return NextResponse.json(
+          { error: `Monthly token limit reached (${limitReached}). Upgrade your plan.`, code: 'MONTHLY_LIMIT_REACHED', plan: userPlan, retry_after: retryAfter },
+          { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+        )
+      }
     }
 
     const apiKey = process.env[fimRoute.keyEnv]
@@ -175,10 +180,14 @@ export async function POST(req: NextRequest) {
 
     void supabase.from('usage_sessions').insert({
       user_id: userId,
+      started_at: new Date().toISOString(), // requis pour le filtre mensuel (dashboard + quota)
       session_type: 'fim',
       model_id: model,
       tokens_input: Math.ceil(prompt.length / 4),
-      metadata: { model, max_tokens },
+      // Plans payants : autocomplétion gratuite → tokens_total: 0 (n'entame pas le quota).
+      // Free : on laisse tokens_total absent → le quota compte via tokens_input.
+      ...(autocompleteIsFree ? { tokens_total: 0 } : {}),
+      metadata: { model, max_tokens, autocompleteFree: autocompleteIsFree },
     })
 
     if (stream) {

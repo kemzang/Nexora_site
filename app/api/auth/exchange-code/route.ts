@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { generateApiKey, apiKeyExpiresAt } from '@/lib/api-keys'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,10 +42,17 @@ export async function POST(req: NextRequest) {
     // Désactiver le code (usage unique)
     await supabase.from('api_keys').update({ is_active: false }).eq('key_hash', codeHash)
 
-    // Générer le token d'accès permanent
-    const raw = `${authCodeData.user_id}_${Date.now()}_${Math.random()}`
-    const hash = await sha256(raw)
-    const accessToken = `nxr_${Date.now()}_${hash.slice(0, 32)}`
+    // Générer le token d'accès (CSPRNG, 160 bits d'entropie réelle)
+    const accessToken = generateApiKey()
+
+    // Évite l'accumulation : chaque login OAuth générait une nouvelle clé
+    // "Extension VS Code". On supprime les anciennes de cet utilisateur avant
+    // d'en créer une nouvelle → une seule clé d'extension à la fois.
+    await supabase
+      .from('api_keys')
+      .delete()
+      .eq('user_id', authCodeData.user_id)
+      .eq('name', 'Extension VS Code')
 
     const { error: tokenError } = await supabase
       .from('api_keys')
@@ -56,6 +64,7 @@ export async function POST(req: NextRequest) {
         permissions: { chat: true, completion: true, generation: true },
         rate_limit_per_minute: 60,
         is_active: true,
+        expires_at: apiKeyExpiresAt(),
       })
 
     if (tokenError) {

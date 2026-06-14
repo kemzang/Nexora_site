@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       .eq('id', userId)
       .single()
 
-    // Retourner l'organisation au format Continue Hub
+    // Retourner l'organisation au format Nexora Hub
     const organizations = [
       {
         id: userId,
