@@ -163,15 +163,6 @@ function PhoneInput({
   )
 }
 
-/* ─── Card formatters ────────────────────────────────────────────── */
-function formatCardNumber(v: string) {
-  return v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
-}
-function formatExpiry(v: string) {
-  const d = v.replace(/\D/g, '').slice(0, 4)
-  return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d
-}
-
 /* ─── Virtual card ───────────────────────────────────────────────── */
 function VirtualCard({
   number, name, expiry, focused, holder, exp,
@@ -259,12 +250,61 @@ function CheckoutForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Card fields
-  const [cardNumber, setCardNumber] = useState('')
-  const [cardName, setCardName] = useState('')
-  const [cardExpiry, setCardExpiry] = useState('')
-  const [cardCvv, setCardCvv] = useState('')
-  const [focusedField, setFocusedField] = useState<string | null>(null)
+  // (Les champs carte ont été retirés : la carte est saisie dans la fenêtre
+  //  sécurisée NotchPay, jamais sur cette page.)
+
+  // Paiement carte dans une fenêtre sécurisée (popup NotchPay) : l'utilisateur
+  // reste sur cette page pendant qu'on attend la confirmation du paiement.
+  const [waitingPayment, setWaitingPayment] = useState(false)
+  const popupRef = useRef<Window | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stopWaiting = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+    if (popupRef.current && !popupRef.current.closed) popupRef.current.close()
+    popupRef.current = null
+    setWaitingPayment(false)
+    setLoading(false)
+  }
+
+  // Nettoyage si l'utilisateur quitte la page pendant l'attente
+  useEffect(() => () => {
+    if (pollRef.current) clearInterval(pollRef.current)
+  }, [])
+
+  const checkPaymentOnce = async (reference: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/payments/verify?reference=${encodeURIComponent(reference)}`)
+      const data = await res.json()
+      const status = String(data?.status ?? data?.transaction?.status ?? '').toLowerCase()
+      return ['complete', 'completed', 'success', 'paid'].includes(status)
+    } catch {
+      return false
+    }
+  }
+
+  const startWaitingForPayment = (reference: string) => {
+    setWaitingPayment(true)
+    setLoading(false)
+    let closedSince: number | null = null
+    pollRef.current = setInterval(async () => {
+      const paid = await checkPaymentOnce(reference)
+      if (paid) {
+        stopWaiting()
+        router.push(`/checkout/callback?reference=${encodeURIComponent(reference)}`)
+        return
+      }
+      // Popup fermé sans paiement confirmé : on laisse ~10s de grâce (webhook /
+      // vérification en retard) puis on arrête d'attendre.
+      if (popupRef.current?.closed) {
+        if (closedSince === null) closedSince = Date.now()
+        else if (Date.now() - closedSince > 10_000) {
+          stopWaiting()
+          setError(ch.errors.initError)
+        }
+      }
+    }, 4000)
+  }
 
   useEffect(() => {
     if (!country.hasMobileMoney) {
@@ -276,30 +316,11 @@ function CheckoutForm() {
     setPhone('')
   }, [country])
 
-  const validateCard = (): string | null => {
-    if (!cardName.trim()) return ch.errors.cardName
-    if (cardNumber.replace(/\s/g, '').length < 16) return ch.errors.cardNumber
-    if (!cardExpiry.match(/^\d{2}\/\d{2}$/)) return ch.errors.expiry
-    const [mm, yy] = cardExpiry.split('/').map(Number)
-    const now = new Date()
-    if (mm < 1 || mm > 12) return ch.errors.expiryMonth
-    if (2000 + yy < now.getFullYear() || (2000 + yy === now.getFullYear() && mm < now.getMonth() + 1))
-      return ch.errors.expired
-    if (cardCvv.length < 3) return ch.errors.cvv
-    return null
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    if (paymentMethod === 'card') {
-      const err = validateCard()
-      if (err) { setError(err); return }
-      if (phone && !validatePhone(phone, country)) {
-        setError(ch.errors.phoneLength.replace('{length}', String(country.phoneLength))); return
-      }
-    } else {
+    if (paymentMethod !== 'card') {
       if (!phone) { setError(ch.errors.phone); return }
       if (!validatePhone(phone, country)) {
         setError(ch.errors.phoneLength.replace('{length}', String(country.phoneLength))); return
@@ -307,11 +328,17 @@ function CheckoutForm() {
       if (!momoChannel) { setError(ch.errors.operator); return }
     }
 
+    // Pour la carte : on ouvre la fenêtre de paiement TOUT DE SUITE (dans le
+    // geste utilisateur) pour éviter le blocage des popups, puis on lui donne
+    // l'URL NotchPay une fois l'initialisation faite.
+    let popup: Window | null = null
+    if (paymentMethod === 'card') {
+      popup = window.open('about:blank', 'nexora_payment', 'width=480,height=760')
+      popupRef.current = popup
+    }
+
     setLoading(true)
     try {
-      // On utilise le token déjà chargé par le contexte d'auth. Appeler
-      // supabase.auth.getSession() ici provoquait un deadlock (lock de refresh)
-      // qui bloquait la requête → spinner infini sans aucun appel réseau.
       const authToken = token
       const initRes = await fetch('/api/payments/initialize', {
         method: 'POST',
@@ -332,6 +359,7 @@ function CheckoutForm() {
       const initData = await initRes.json()
 
       if (!initData.success) {
+        if (popup && !popup.closed) popup.close()
         if (initData.code === 'DUPLICATE_PAYMENT') {
           setError(ch.errors.duplicate)
         } else {
@@ -341,8 +369,14 @@ function CheckoutForm() {
         return
       }
 
+      // ── Carte : paiement dans la fenêtre sécurisée NotchPay, sans quitter
+      //    Nexora. On surveille le statut et on enchaîne automatiquement. ──
       if (paymentMethod === 'card') {
-        if (initData.authorizationUrl) {
+        if (initData.authorizationUrl && popup && !popup.closed) {
+          popup.location.href = initData.authorizationUrl
+          startWaitingForPayment(initData.reference)
+        } else if (initData.authorizationUrl) {
+          // Popup bloquée par le navigateur → repli sur la redirection classique
           window.location.href = initData.authorizationUrl
         } else {
           setError(ch.errors.initError)
@@ -369,6 +403,7 @@ function CheckoutForm() {
         setLoading(false)
       }
     } catch {
+      if (popup && !popup.closed) popup.close()
       setError(ch.errors.connection)
       setLoading(false)
     }
@@ -427,13 +462,14 @@ function CheckoutForm() {
               </CardContent>
             </Card>
 
-            {/* Aperçu de la carte (se remplit pendant la saisie) */}
+            {/* Visuel carte Nexora (décoratif) — la saisie se fait dans la
+                fenêtre sécurisée NotchPay au moment du paiement. */}
             {paymentMethod === 'card' && (
               <VirtualCard
-                number={cardNumber}
-                name={cardName}
-                expiry={cardExpiry}
-                focused={focusedField}
+                number=""
+                name=""
+                expiry=""
+                focused={null}
                 holder={ch.holder}
                 exp={ch.exp}
               />
@@ -555,92 +591,18 @@ function CheckoutForm() {
                       transition={{ duration: 0.25 }}
                       className="space-y-4"
                     >
-                      {/* Cardholder name */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="cardName" className="text-sm text-muted-foreground font-medium">{ch.cardName}</Label>
-                        <Input
-                          id="cardName"
-                          placeholder="Jean Dupont"
-                          value={cardName}
-                          onChange={e => setCardName(e.target.value)}
-                          onFocus={() => setFocusedField('name')}
-                          onBlur={() => setFocusedField(null)}
-                          className="bg-card border-border/60 focus:border-indigo-500/50 uppercase h-12 rounded-xl"
-                          maxLength={30}
-                          autoComplete="cc-name"
-                        />
-                      </div>
-
-                      {/* Card number */}
-                      <div className="space-y-1.5">
-                        <Label htmlFor="cardNumber" className="text-sm text-muted-foreground font-medium">{ch.cardNumber}</Label>
-                        <div className="relative">
-                          <Input
-                            id="cardNumber"
-                            placeholder="1234 5678 9012 3456"
-                            value={cardNumber}
-                            onChange={e => setCardNumber(formatCardNumber(e.target.value))}
-                            onFocus={() => setFocusedField('number')}
-                            onBlur={() => setFocusedField(null)}
-                            className="bg-card border-border/60 focus:border-indigo-500/50 pr-10 font-mono tracking-widest h-12 rounded-xl"
-                            maxLength={19}
-                            inputMode="numeric"
-                            autoComplete="cc-number"
-                          />
-                          <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                      {/* Notice : la carte est saisie dans la fenêtre sécurisée NotchPay */}
+                      <div className="flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15">
+                          <Lock className="w-4 h-4 text-indigo-400" />
                         </div>
-                      </div>
-
-                      {/* Expiry + CVV */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="expiry" className="text-sm text-muted-foreground font-medium">{ch.expiry}</Label>
-                          <Input
-                            id="expiry"
-                            placeholder="MM/AA"
-                            value={cardExpiry}
-                            onChange={e => setCardExpiry(formatExpiry(e.target.value))}
-                            onFocus={() => setFocusedField('expiry')}
-                            onBlur={() => setFocusedField(null)}
-                            className="bg-card border-border/60 focus:border-indigo-500/50 font-mono text-center h-12 rounded-xl"
-                            maxLength={5}
-                            inputMode="numeric"
-                            autoComplete="cc-exp"
-                          />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">Paiement par carte sécurisé</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Au clic, une fenêtre de paiement sécurisée s'ouvre pour saisir ta carte.
+                            Tes informations bancaires ne transitent jamais par Nexora.
+                          </p>
                         </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="cvv" className="text-sm text-muted-foreground font-medium">{ch.cvv}</Label>
-                          <Input
-                            id="cvv"
-                            placeholder="•••"
-                            type={focusedField === 'cvv' ? 'text' : 'password'}
-                            value={cardCvv}
-                            onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                            onFocus={() => setFocusedField('cvv')}
-                            onBlur={() => setFocusedField(null)}
-                            className="bg-card border-border/60 focus:border-indigo-500/50 font-mono text-center h-12 rounded-xl"
-                            maxLength={4}
-                            inputMode="numeric"
-                            autoComplete="cc-csc"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Phone for card (optional) */}
-                      <div className="space-y-1.5">
-                        <Label className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5" />
-                          {ch.phone}
-                          <span className="text-xs text-muted-foreground/50 ml-1">(optional)</span>
-                        </Label>
-                        <PhoneInput
-                          country={country}
-                          value={phone}
-                          onChange={setPhone}
-                          placeholder={ch.phonePlaceholder}
-                          digits={ch.digits}
-                          valid={ch.valid}
-                        />
                       </div>
 
                       {/* Cards accepted */}
@@ -713,10 +675,27 @@ function CheckoutForm() {
                   )}
                 </AnimatePresence>
 
+                {/* ── Attente du paiement (fenêtre NotchPay ouverte) ── */}
+                {waitingPayment && (
+                  <div className="flex items-center gap-3 rounded-xl border border-indigo-500/25 bg-indigo-500/[0.06] p-3">
+                    <Loader2 className="w-4 h-4 animate-spin text-indigo-400 shrink-0" />
+                    <p className="flex-1 text-xs text-muted-foreground leading-relaxed">
+                      Fenêtre de paiement ouverte — termine le paiement, cette page se met à jour automatiquement.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={stopWaiting}
+                      className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                )}
+
                 {/* ── Submit ── */}
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || waitingPayment}
                   className="w-full h-12 relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition-all hover:scale-[1.01] hover:shadow-indigo-600/40 mt-1 group border-0"
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
