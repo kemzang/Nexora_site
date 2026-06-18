@@ -56,7 +56,7 @@ export default function ChatQuickStartPage() {
 
       <h1 className="text-3xl font-bold tracking-tight mb-3">Chat IA — Démarrage rapide</h1>
       <p className="text-muted-foreground text-base mb-8 leading-relaxed">
-        Le mode Chat de Nexora vous permet de converser avec les meilleurs modèles IA (DeepSeek, Gemini, Claude, Grok) directement depuis VS Code, sans quitter votre éditeur.
+        Le mode Chat de Nexora vous permet de converser avec les meilleurs modèles IA (DeepSeek, Gemini, Claude) directement depuis VS Code, sans quitter votre éditeur.
       </p>
 
       <div className="h-px bg-border/50 mb-8" />
@@ -84,9 +84,9 @@ export default function ChatQuickStartPage() {
           {[
             { plan: 'Free',       models: 'DeepSeek V3, Gemini Flash', color: 'text-muted-foreground' },
             { plan: 'Neo',        models: '+ Gemini Pro', color: 'text-sky-400' },
-            { plan: 'Pro',        models: '+ Claude Haiku, Grok 2', color: 'text-amber-400' },
-            { plan: 'Business',   models: '+ Claude Sonnet', color: 'text-emerald-400' },
-            { plan: 'Enterprise', models: '+ Claude Opus, GPT-4', color: 'text-violet-400' },
+            { plan: 'Pro',        models: '+ Claude Haiku, Claude Sonnet', color: 'text-amber-400' },
+            { plan: 'Business',   models: '+ Claude Opus', color: 'text-emerald-400' },
+            { plan: 'Enterprise', models: 'Tous les modèles', color: 'text-violet-400' },
           ].map(row => (
             <div key={row.plan} className="flex items-center gap-3 text-sm">
               <span className={`w-20 font-medium ${row.color}`}>{row.plan}</span>

@@ -31,9 +31,7 @@ const API_ROUTES: Record<string, { baseUrl: string; keyEnv: string; format: 'ope
   'gemini-flash':     { baseUrl: 'https://generativelanguage.googleapis.com/v1beta',          keyEnv: 'GEMINI_API_KEY',     format: 'gemini'    },
   'gemini-pro':       { baseUrl: 'https://generativelanguage.googleapis.com/v1beta',          keyEnv: 'GEMINI_API_KEY',     format: 'gemini'    },
   'claude-haiku':     { baseUrl: 'https://api.anthropic.com/v1/messages',                     keyEnv: 'ANTHROPIC_API_KEY',  format: 'anthropic' },
-  'grok-2':           { baseUrl: 'https://api.x.ai/v1/chat/completions',                     keyEnv: 'XAI_API_KEY',        format: 'openai'    },
   'claude-sonnet':    { baseUrl: 'https://api.anthropic.com/v1/messages',                     keyEnv: 'ANTHROPIC_API_KEY',  format: 'anthropic' },
-  'gpt-5':            { baseUrl: 'https://api.openai.com/v1/chat/completions',                keyEnv: 'OPENAI_API_KEY',     format: 'openai'    },
   'claude-opus':      { baseUrl: 'https://api.anthropic.com/v1/messages',                     keyEnv: 'ANTHROPIC_API_KEY',  format: 'anthropic' },
 }
 

@@ -16,21 +16,15 @@ const usageCache = new Map<string, { total: number; expiresAt: number }>()
 const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>()
 
 // DeepSeek supports /completions (FIM) only via beta endpoint
-// Other models (Gemini, GPT) also support FIM in various forms
 const FIM_ROUTES: Partial<Record<FimModelId, { url: string; keyEnv: string }>> = {
   'deepseek-chat': {
     url: 'https://api.deepseek.com/beta/completions', // MUST use /beta for FIM
     keyEnv: 'DEEPSEEK_API_KEY',
   },
-  'gpt-5': {
-    url: 'https://api.openai.com/v1/completions',
-    keyEnv: 'OPENAI_API_KEY',
-  },
 }
 
 const FIM_PLAN_MIN: Record<FimModelId, PlanId> = {
   'deepseek-chat': 'free',
-  'gpt-5': 'enterprise',
 }
 
 const PLAN_ORDER: PlanId[] = ['free', 'test1', 'test2', 'starter', 'pro', 'business', 'enterprise']

@@ -1,7 +1,7 @@
 import type { PlanId } from './models'
 
 export type ProviderFormat = 'openai' | 'anthropic' | 'gemini'
-export type FimModelId = 'deepseek-chat' | 'gpt-5'
+export type FimModelId = 'deepseek-chat'
 
 export interface ModelRoute {
   provider: string
@@ -78,7 +78,7 @@ export const MODEL_ROUTES: Record<string, ModelRoute> = {
     keyEnv: 'ANTHROPIC_API_KEY',
     format: 'anthropic',
     upstreamModel: 'claude-sonnet-4-6',
-    minPlan: 'business',
+    minPlan: 'pro',
   },
   'claude-opus': {
     provider: 'Anthropic',
@@ -86,28 +86,7 @@ export const MODEL_ROUTES: Record<string, ModelRoute> = {
     keyEnv: 'ANTHROPIC_API_KEY',
     format: 'anthropic',
     upstreamModel: 'claude-opus-4-5',
-    minPlan: 'enterprise',
-  },
-
-  // ── xAI Grok ─────────────────────────────────────────────────
-  'grok-2': {
-    provider: 'xAI',
-    chatUrl: 'https://api.x.ai/v1/chat/completions',
-    keyEnv: 'XAI_API_KEY',
-    format: 'openai',
-    upstreamModel: 'grok-2-1212',
-    minPlan: 'pro',
-  },
-
-  // ── OpenAI ────────────────────────────────────────────────────
-  'gpt-5': {
-    provider: 'OpenAI',
-    chatUrl: 'https://api.openai.com/v1/chat/completions',
-    fimUrl: 'https://api.openai.com/v1/completions',
-    keyEnv: 'OPENAI_API_KEY',
-    format: 'openai',
-    upstreamModel: 'gpt-4o', // update when GPT-5 is GA
-    minPlan: 'enterprise',
+    minPlan: 'business',
   },
 }
 

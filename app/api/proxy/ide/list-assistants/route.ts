@@ -21,7 +21,7 @@ const supabase = createClient(
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nexora-mu-henna.vercel.app'
 
 // Each model entry becomes a ModelConfig (AssistantUnrolled.models[]).
-// provider: 'openai' covers all OpenAI-compatible APIs (DeepSeek, Grok, etc.).
+// provider: 'openai' covers all OpenAI-compatible APIs (DeepSeek, etc.).
 function buildModels(plan: PlanId, token: string) {
   const apiBase = `${BASE_URL}/api/proxy/model-proxy`
 
@@ -36,10 +36,8 @@ function buildModels(plan: PlanId, token: string) {
   const geminiFlash = m('Nexora Gemini Flash',      'gemini-flash',    true)
   const geminiPro   = m('Nexora Gemini Pro',        'gemini-pro',      true)
   const haiku       = m('Nexora Claude Haiku',      'claude-haiku',    true)
-  const grok        = m('Nexora Grok 2',            'grok-2')                  // grok-2 texte : pas de vision
   const sonnet      = m('Nexora Claude Sonnet',     'claude-sonnet',   true)
   const opus        = m('Nexora Claude Opus',       'claude-opus',     true)
-  const gpt5        = m('Nexora GPT-5',             'gpt-5',           true)
 
   // L'extension prend le 1er modèle de la liste comme défaut → on met le MEILLEUR
   // modèle (rapport qualité/coût) accessible au plan en tête. DeepSeek reste
@@ -50,14 +48,14 @@ function buildModels(plan: PlanId, token: string) {
       // Gemini Flash par défaut (capable, multimodal, peu cher)
       return { models: [geminiFlash, geminiPro, deepseek], autocomplete: deepseek }
     case 'pro':
-      // Gemini Pro par défaut (très capable, bon rapport ×10)
-      return { models: [geminiPro, haiku, geminiFlash, grok, deepseek], autocomplete: deepseek }
-    case 'business':
       // Claude Sonnet par défaut (excellent pour l'agent / le code)
-      return { models: [sonnet, geminiPro, haiku, geminiFlash, grok, deepseek], autocomplete: deepseek }
+      return { models: [sonnet, geminiPro, haiku, geminiFlash, deepseek], autocomplete: deepseek }
+    case 'business':
+      // Claude Sonnet par défaut ; Opus disponible pour le maximum
+      return { models: [sonnet, opus, geminiPro, haiku, geminiFlash, deepseek], autocomplete: deepseek }
     case 'enterprise':
-      // Claude Sonnet par défaut ; Opus / GPT-5 disponibles pour le maximum
-      return { models: [sonnet, opus, gpt5, geminiPro, haiku, geminiFlash, grok, deepseek], autocomplete: deepseek }
+      // Claude Sonnet par défaut ; Opus disponible pour le maximum
+      return { models: [sonnet, opus, geminiPro, haiku, geminiFlash, deepseek], autocomplete: deepseek }
     default: // free
       // Gemini Flash par défaut au lieu de DeepSeek → bien meilleure 1re impression
       return { models: [geminiFlash, deepseek], autocomplete: deepseek }

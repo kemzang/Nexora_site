@@ -36,12 +36,10 @@ async function getUserPlan(userId: string): Promise<PlanId> {
 }
 
 const PROVIDER_ROUTES: Record<string, { url: string; keyEnv: string }> = {
-  openai:   { url: 'https://api.openai.com/v1/chat/completions', keyEnv: 'OPENAI_API_KEY' },
   deepseek: { url: 'https://api.deepseek.com/v1/chat/completions', keyEnv: 'DEEPSEEK_API_KEY' },
 }
 
 const PROVIDER_DEFAULT_MODELS: Record<string, string> = {
-  openai:   'gpt-4o',
   deepseek: 'deepseek-chat',
 }
 
@@ -61,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     // ── Input validation ────────────────────────────────────────────────────
     const body = await req.json()
-    const { messages, model, provider = 'openai' } = body
+    const { messages, model, provider = 'deepseek' } = body
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'messages requis et doit être un tableau non vide' }, { status: 400 })

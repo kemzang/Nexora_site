@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Nexora — AI Extension for VS Code",
-  description: "Next-generation AI for VS Code. Access GPT-4o, Claude, Gemini, DeepSeek and more directly in your editor.",
-  keywords: ["AI", "VS Code", "extension", "GPT-4", "Claude", "code completion", "developer tools"],
+  description: "Next-generation AI for VS Code. Access Claude, Gemini, DeepSeek and more directly in your editor.",
+  keywords: ["AI", "VS Code", "extension", "Claude", "Gemini", "DeepSeek", "code completion", "developer tools"],
 };
 
 export default function RootLayout({

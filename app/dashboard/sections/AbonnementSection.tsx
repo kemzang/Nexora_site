@@ -47,7 +47,7 @@ const UPGRADE_PLANS = [
     activeBorder: 'border-amber-500/40',
     badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
     popular: true,
-    features: ['15M crédits/mois', '2 000 requêtes/jour', '+ Grok, Claude Haiku', 'Mode Agent IA', 'Support prioritaire'],
+    features: ['15M crédits/mois', '2 000 requêtes/jour', '+ Claude Haiku & Sonnet 4.6', 'Mode Agent IA', 'Support prioritaire'],
   },
   {
     slug: 'business',
@@ -59,7 +59,7 @@ const UPGRADE_PLANS = [
     border: 'hover:border-emerald-500/40',
     activeBorder: 'border-emerald-500/40',
     badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    features: ['40M crédits/mois', '5 000 requêtes/jour', '+ Claude Sonnet 4.6', 'Accès API direct', 'Support dédié'],
+    features: ['40M crédits/mois', '5 000 requêtes/jour', '+ Claude Opus 4.7', 'Accès API direct', 'Support dédié'],
   },
   {
     slug: 'enterprise',
@@ -71,7 +71,7 @@ const UPGRADE_PLANS = [
     border: 'hover:border-violet-500/40',
     activeBorder: 'border-violet-500/40',
     badgeColor: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
-    features: ['100M crédits/mois', 'Requêtes illimitées', '+ Claude Opus & GPT-5', 'Tous les modèles', 'Support 24/7 + SSO + SLA'],
+    features: ['100M crédits/mois', 'Requêtes illimitées', 'Tous les modèles', 'Support 24/7 + SSO + SLA'],
   },
 ]
 
