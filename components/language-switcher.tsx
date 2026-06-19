@@ -58,14 +58,14 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
                   onClick={() => { setLang(l); setOpen(false) }}
                   className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 text-left transition-colors text-sm ${
                     isActive
-                      ? 'bg-indigo-500/15 text-foreground font-medium'
+                      ? 'bg-muted text-foreground font-medium'
                       : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                   }`}
                 >
                   <span className="text-base leading-none">{tr.flag}</span>
                   <span>{tr.langName}</span>
                   {isActive && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-foreground" />
                   )}
                 </button>
               )

@@ -145,7 +145,7 @@ export default function ApiKeysSection() {
         </div>
         <Button
           onClick={() => { setShowCreate(true); setNewKeyName('') }}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20"
+          variant="outline"
         >
           <Plus className="w-4 h-4 mr-2" /> Nouvelle clé
         </Button>
@@ -165,7 +165,7 @@ export default function ApiKeysSection() {
       <AnimatePresence>
         {showCreate && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <Card className="glass border-indigo-500/30">
+            <Card className="glass border-border">
               <CardHeader className="pb-4">
                 <CardTitle className="text-base">Créer une nouvelle clé</CardTitle>
                 <CardDescription className="text-sm">Donnez un nom descriptif à votre clé pour l'identifier facilement.</CardDescription>
@@ -179,7 +179,7 @@ export default function ApiKeysSection() {
                     value={newKeyName}
                     onChange={e => setNewKeyName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                    className="bg-card border-border/50 focus:border-indigo-500/50"
+                    className="bg-card border-border/50 focus:border-foreground/30"
                     maxLength={50}
                   />
                 </div>
@@ -187,7 +187,7 @@ export default function ApiKeysSection() {
                   <Button
                     onClick={handleCreate}
                     disabled={creating || !newKeyName.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white"
+                    className="bg-primary text-primary-foreground"
                   >
                     {creating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Création...</> : 'Créer la clé'}
                   </Button>
@@ -222,7 +222,7 @@ export default function ApiKeysSection() {
                   <Button
                     size="sm"
                     onClick={() => handleCopy(createdKey)}
-                    className={`shrink-0 transition-all ${keyCopied ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-500'} text-white`}
+                    className={`shrink-0 transition-all ${keyCopied ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-primary'} text-primary-foreground`}
                   >
                     {keyCopied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
@@ -243,9 +243,9 @@ export default function ApiKeysSection() {
       <Card className="glass">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Key className="w-4 h-4 text-indigo-400" />
+            <Key className="w-4 h-4 text-foreground/70" />
             Clés actives
-            {!loading && <span className="ml-1 px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-medium">{keys.length}</span>}
+            {!loading && <span className="ml-1 px-2 py-0.5 rounded-full bg-muted text-foreground/70 text-xs font-medium">{keys.length}</span>}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -263,14 +263,14 @@ export default function ApiKeysSection() {
             </div>
           ) : keys.length === 0 ? (
             <div className="text-center py-14">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-                <Key className="w-7 h-7 text-indigo-400/60" />
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <Key className="w-7 h-7 text-muted-foreground" />
               </div>
               <p className="font-medium text-foreground mb-1">Aucune clé API</p>
               <p className="text-sm text-muted-foreground mb-5">Créez votre première clé pour utiliser Nexora dans VS Code</p>
               <Button
                 onClick={() => setShowCreate(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white"
+                className="bg-primary text-primary-foreground"
                 size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />Créer une clé
@@ -286,8 +286,8 @@ export default function ApiKeysSection() {
                   transition={{ delay: i * 0.05 }}
                   className="flex items-center gap-3 p-4 rounded-xl border border-border/40 bg-card/30 hover:bg-card/50 hover:border-border/60 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                    <Key className="w-4 h-4 text-indigo-400" />
+                  <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Key className="w-4 h-4 text-foreground/70" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/ui/toast'
 
-// Libellés selon l'IDE source (?ide=vscode|jetbrains|cli)
 const IDE_LABELS: Record<string, { name: string; deepLink?: (token: string) => string }> = {
   vscode: {
     name: 'VS Code',
@@ -41,7 +40,6 @@ function VSCodeCallbackInner() {
         const data = await res.json()
         if (data.success) {
           setApiKey(data.token)
-          // Deep link automatique uniquement pour VS Code (les autres IDE collent le token)
           if (ideInfo.deepLink) {
             try {
               window.location.href = ideInfo.deepLink(data.token)
@@ -76,7 +74,7 @@ function VSCodeCallbackInner() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-foreground/[0.03] blur-[120px] rounded-full" />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-md">
         <Card className="glass">
@@ -84,8 +82,8 @@ function VSCodeCallbackInner() {
             <div className="flex justify-center">
               {loading ? (
                 <div className="relative">
-                  <div className="w-14 h-14 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                  <div className="absolute inset-0 w-14 h-14 border-2 border-violet-500 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+                  <div className="w-14 h-14 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-0 w-14 h-14 border-2 border-foreground/20 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
                 </div>
               ) : (
                 <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
@@ -106,14 +104,14 @@ function VSCodeCallbackInner() {
           {!loading && apiKey && (
             <CardContent className="space-y-5 pb-8">
               <p className="text-sm">
-                Bonjour <span className="text-indigo-400 font-semibold">{user.firstName || user.email}</span> !
+                Bonjour <span className="text-foreground/70 font-semibold">{user.firstName || user.email}</span> !
               </p>
               <div className="bg-card border border-border/50 rounded-xl p-4">
                 <p className="text-xs text-muted-foreground mb-2">
-                  Votre clé Nexora <span className="font-mono text-indigo-400">nxr_</span> :
+                  Votre clé Nexora <span className="font-mono text-foreground/70">nxr_</span> :
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs text-indigo-300 bg-background px-2.5 py-1.5 rounded-lg font-mono break-all">
+                  <code className="flex-1 text-xs text-foreground/70 bg-background px-2.5 py-1.5 rounded-lg font-mono break-all">
                     {apiKey}
                   </code>
                   <Button size="sm" variant="ghost" onClick={copyToClipboard} className="text-muted-foreground hover:text-foreground shrink-0">
@@ -128,7 +126,7 @@ function VSCodeCallbackInner() {
                     : `Copiez cette clé et collez-la dans ${ideInfo.name} pour vous connecter.`}
                 </p>
                 <div className="flex gap-2">
-                  <Button onClick={() => window.close()} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white">
+                  <Button variant="outline" onClick={() => window.close()} className="flex-1">
                     Fermer
                   </Button>
                   <Button variant="outline" onClick={() => window.open('/dashboard', '_blank')} className="border-border/50 text-muted-foreground hover:text-foreground">
@@ -150,7 +148,7 @@ export default function VSCodeCallbackPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

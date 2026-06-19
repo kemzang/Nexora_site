@@ -138,7 +138,7 @@ export default function CodebaseDocumentationAwarenessPage() {
           { cmd: '@doc docs/conventions.md', desc: 'Inclut un fichier de documentation personnalisé' },
         ].map(item => (
           <div key={item.cmd} className="flex items-start gap-3 text-sm">
-            <code className="px-2 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-indigo-300 shrink-0 mt-0.5">{item.cmd}</code>
+            <code className="px-2 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-foreground/70 shrink-0 mt-0.5">{item.cmd}</code>
             <span className="text-muted-foreground">{item.desc}</span>
           </div>
         ))}
@@ -190,10 +190,10 @@ docs/internal/    # Documentation interne confidentielle`} />
       <div className="h-px bg-border/50 my-8" />
 
       <div className="flex items-center justify-between text-sm">
-        <Link href="/docs/autocomplete/quick-start" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+        <Link href="/docs/autocomplete/quick-start" className="text-foreground/70 hover:text-foreground transition-colors">
           ← Auto-complétion
         </Link>
-        <Link href="/docs" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+        <Link href="/docs" className="text-foreground/70 hover:text-foreground transition-colors">
           Accueil Docs →
         </Link>
       </div>

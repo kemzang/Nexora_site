@@ -27,7 +27,7 @@ interface CollabMember {
 
 function NexoraLogo() {
   return (
-    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 flex-shrink-0">
+    <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
       <span className="text-white font-bold text-sm tracking-tight select-none">N</span>
     </div>
   )
@@ -43,8 +43,8 @@ function MessageBubble({ msg, myUserId }: { msg: CollabMessage; myUserId: string
   return (
     <div className={`flex gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} mb-3`}>
       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1 ${
-        isAI ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-        : isMe ? 'bg-indigo-600 text-white'
+        isAI ? 'bg-primary text-primary-foreground'
+        : isMe ? 'bg-foreground text-background'
         : 'bg-slate-200 text-slate-600'
       }`}>
         {isAI ? 'AI' : msg.sender_name[0]?.toUpperCase() ?? '?'}
@@ -54,12 +54,12 @@ function MessageBubble({ msg, myUserId }: { msg: CollabMessage; myUserId: string
           {isMe ? 'Vous' : msg.sender_name} · {time}
         </span>
         <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
-          isAI ? 'bg-violet-50 text-violet-900 border border-violet-100'
-          : isMe ? 'bg-indigo-600 text-white rounded-tr-sm'
+          isAI ? 'bg-muted text-foreground border border-border'
+          : isMe ? 'bg-foreground text-background rounded-tr-sm'
           : 'bg-white text-slate-800 border border-slate-100 rounded-tl-sm'
         }`}>
           {isAI && (
-            <span className="block text-[10px] font-semibold text-violet-400 mb-1 uppercase tracking-wider">
+            <span className="block text-[10px] font-semibold text-foreground/70 mb-1 uppercase tracking-wider">
               {msg.model_id ?? 'AI'}
             </span>
           )}
@@ -215,8 +215,8 @@ export default function CollabRoomPage() {
   // ── Loading auth ──
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-muted flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-foreground/30 border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -225,7 +225,7 @@ export default function CollabRoomPage() {
   if (!user) {
     const returnUrl = encodeURIComponent(`/collab/${roomId}?token=${inviteToken}`)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-muted flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 p-8 w-full max-w-md text-center">
           <NexoraLogo />
           <h1 className="font-bold text-slate-900 text-lg mt-4 mb-2">Connexion requise</h1>
@@ -234,14 +234,14 @@ export default function CollabRoomPage() {
           </p>
           <button
             onClick={() => router.push(`/auth/login?return=${returnUrl}`)}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition flex items-center justify-center gap-2"
           >
             <LogIn className="w-4 h-4" />
             Se connecter
           </button>
           <p className="text-xs text-slate-400 mt-4">
             Pas encore de compte ?{' '}
-            <a href={`/auth/register?return=${returnUrl}`} className="text-indigo-600 hover:underline">
+            <a href={`/auth/register?return=${returnUrl}`} className="text-foreground/80 hover:underline">
               Créer un compte
             </a>
           </p>
@@ -253,7 +253,7 @@ export default function CollabRoomPage() {
   // ── Join screen ──
   if (!joined) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-muted flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 p-8 w-full max-w-md">
           <div className="flex items-center gap-3 mb-6">
             <NexoraLogo />
@@ -275,14 +275,14 @@ export default function CollabRoomPage() {
                   value={displayName}
                   onChange={e => setDisplayName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && void handleJoin()}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/30"
                   autoFocus
                 />
                 {joinError && <p className="text-red-500 text-sm px-1">{joinError}</p>}
                 <button
                   onClick={() => void handleJoin()}
                   disabled={!displayName.trim() || joining}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {joining ? 'Connexion…' : 'Rejoindre la session'}
                 </button>
@@ -291,7 +291,7 @@ export default function CollabRoomPage() {
                 <p className="text-xs text-slate-400 mb-2">Tu préfères utiliser VS Code ?</p>
                 <a
                   href={`vscode://nexora/collab?room=${roomId}&token=${inviteToken}`}
-                  className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="inline-flex items-center gap-1.5 text-xs text-foreground/80 hover:text-foreground font-medium"
                 >
                   <ExternalLink className="w-3 h-3" />
                   Ouvrir dans VS Code + Nexora
@@ -346,7 +346,7 @@ export default function CollabRoomPage() {
           </div>
           {members.map(m => (
             <div key={m.user_id} className="flex items-center gap-2 px-3 py-2">
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${m.user_id === user.id ? 'bg-indigo-500' : 'bg-emerald-400'}`} />
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${m.user_id === user.id ? 'bg-foreground' : 'bg-emerald-400'}`} />
               <span className="text-xs text-slate-700 truncate">
                 {m.display_name}{m.user_id === user.id ? ' (vous)' : ''}
               </span>
@@ -356,7 +356,7 @@ export default function CollabRoomPage() {
             <p className="text-xs text-slate-400 px-3 py-3">Aucun membre en ligne</p>
           )}
           <div className="mt-auto border-t border-slate-100 p-3">
-            <a href={vscodeLink} className="flex items-center gap-1.5 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium">
+            <a href={vscodeLink} className="flex items-center gap-1.5 text-[11px] text-foreground/80 hover:text-foreground font-medium">
               <ExternalLink className="w-3 h-3" />
               Ouvrir dans VS Code
             </a>
@@ -369,7 +369,7 @@ export default function CollabRoomPage() {
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-3 opacity-30">
+                  <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-3 opacity-30">
                     <span className="text-white font-bold text-lg">N</span>
                   </div>
                   <p className="text-slate-400 text-sm">Aucun message pour l'instant.</p>
@@ -393,12 +393,12 @@ export default function CollabRoomPage() {
                 }}
                 placeholder="Message… (Entrée pour envoyer)"
                 rows={1}
-                className="flex-1 resize-none px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 max-h-32 leading-relaxed"
+                className="flex-1 resize-none px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/30 max-h-32 leading-relaxed"
               />
               <button
                 onClick={() => void handleSend()}
                 disabled={!input.trim() || sending}
-                className="p-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
               >
                 <Send className="w-4 h-4" />
               </button>

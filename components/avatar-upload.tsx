@@ -98,7 +98,7 @@ export function AvatarUpload({
       <div className="relative group">
         <Avatar className={`${sizeClasses[size]} border-4 border-white/20`}>
           <AvatarImage src={avatarUrl} alt="Avatar" />
-          <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-lg font-semibold">
+          <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -127,7 +127,8 @@ export function AvatarUpload({
           onClick={triggerFileInput}
           disabled={uploading}
           size="sm"
-          className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300"
+          variant="outline"
+          className="w-full"
         >
           {uploading ? (
             <>
@@ -152,7 +153,7 @@ export function AvatarUpload({
           disabled={uploading}
         />
 
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-muted-foreground text-center">
           JPG, PNG ou GIF • Max 5MB
         </p>
       </div>

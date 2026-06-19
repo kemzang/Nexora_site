@@ -134,9 +134,9 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
         ? `Renouvellement le ${new Date(stats.renewalDate).toLocaleDateString('fr-FR')}`
         : 'Plan gratuit',
       icon: Star,
-      color: 'text-violet-400',
-      bg: 'from-violet-500/20 to-violet-500/5',
-      ring: 'ring-violet-500/20',
+      color: 'text-foreground/70',
+      bg: 'from-muted to-muted/50',
+      ring: 'ring-border',
     },
   ]
 
@@ -197,7 +197,7 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
                   initial={{ width: 0 }}
                   animate={{ width: `${usagePercent}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-                  className={`h-full rounded-full ${usagePercent > 80 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500'}`}
+                  className={`h-full rounded-full ${usagePercent > 80 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-primary'}`}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">{usagePercent}% utilisé ce mois</p>
@@ -220,9 +220,9 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
                     icon: Key,
                     label: 'Créer une clé API',
                     desc: 'Connecter VS Code',
-                    color: 'text-indigo-400',
-                    bg: 'bg-indigo-500/10',
-                    hover: 'hover:bg-indigo-500/15 hover:border-indigo-500/30',
+                    color: 'text-foreground/70',
+                    bg: 'bg-muted',
+                    hover: 'hover:bg-muted hover:border-border',
                     section: 'api-keys',
                   },
                   {
@@ -278,11 +278,11 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                     item.done
                       ? 'bg-emerald-500/15 border border-emerald-500/30'
-                      : 'bg-indigo-500/10 border border-indigo-500/20'
+                      : 'bg-muted border-border'
                   }`}>
                     {item.done
                       ? <span className="text-emerald-400 text-xs">✓</span>
-                      : <span className="text-indigo-400 text-xs font-bold">{item.step}</span>
+                      : <span className="text-foreground/70 text-xs font-bold">{item.step}</span>
                     }
                   </div>
                   <div>

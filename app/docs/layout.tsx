@@ -41,7 +41,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <span className="text-border/60">|</span>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
                 <span className="text-white font-bold text-xs">N</span>
               </div>
               <span className="font-semibold text-sm">Nexora Docs</span>

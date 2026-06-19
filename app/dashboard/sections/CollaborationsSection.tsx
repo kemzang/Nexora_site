@@ -106,10 +106,10 @@ export default function CollaborationsSection() {
       </div>
 
       {/* Info note */}
-      <Card className="glass border-indigo-500/20 bg-indigo-500/5">
+      <Card className="glass border-border bg-muted/50">
         <CardContent className="p-4 flex gap-3">
-          <Link2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-indigo-300/90 leading-relaxed">
+          <Link2 className="w-4 h-4 text-foreground/70 shrink-0 mt-0.5" />
+          <p className="text-xs text-foreground/70 leading-relaxed">
             Les sessions se créent depuis l'extension VS Code (bouton « Collab »).
             Elles apparaissent ici — partagez le lien web pour qu'un collègue rejoigne
             depuis son navigateur, sans VS Code.
@@ -121,10 +121,10 @@ export default function CollaborationsSection() {
       <Card className="glass">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Users className="w-4 h-4 text-indigo-400" />
+            <Users className="w-4 h-4 text-foreground/70" />
             Sessions actives
             {!loading && (
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-medium">
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-muted text-foreground/70 text-xs font-medium">
                 {rooms.length}
               </span>
             )}
@@ -133,12 +133,12 @@ export default function CollaborationsSection() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-foreground/70" />
             </div>
           ) : rooms.length === 0 ? (
             <div className="text-center py-14">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-                <Users className="w-7 h-7 text-indigo-400/60" />
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <Users className="w-7 h-7 text-muted-foreground" />
               </div>
               <p className="font-medium text-foreground mb-1">Aucune session active</p>
               <p className="text-sm text-muted-foreground">
@@ -155,8 +155,8 @@ export default function CollaborationsSection() {
                   transition={{ delay: i * 0.05 }}
                   className="flex items-center gap-3 p-4 rounded-xl border border-border/40 bg-card/30 hover:bg-card/50 hover:border-border/60 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                    <Users className="w-4 h-4 text-indigo-400" />
+                  <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4 text-foreground/70" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export default function CollaborationsSection() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Ouvrir la session web"
-                      className="p-2 rounded-lg text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>

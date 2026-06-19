@@ -69,10 +69,10 @@ export default function AideSection() {
       </div>
 
       {/* Quick start */}
-      <Card className="glass border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-violet-500/5">
+      <Card className="glass border-border bg-gradient-to-br from-muted to-muted/50">
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-5">
-            <Terminal className="w-4 h-4 text-indigo-400" />
+            <Terminal className="w-4 h-4 text-foreground/70" />
             <h2 className="font-semibold">Guide de démarrage rapide</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -82,16 +82,16 @@ export default function AideSection() {
                 icon: Code,
                 title: 'Installer l\'extension',
                 desc: 'Recherchez "Nexora AI" dans le marketplace VS Code',
-                color: 'text-indigo-400',
-                bg: 'bg-indigo-500/10',
+                color: 'text-foreground/70',
+                bg: 'bg-muted',
               },
               {
                 step: '02',
                 icon: Key,
                 title: 'Créer une clé API',
                 desc: 'Générez votre clé dans l\'onglet "Clés API" du dashboard',
-                color: 'text-violet-400',
-                bg: 'bg-violet-500/10',
+                color: 'text-foreground/70',
+                bg: 'bg-muted',
               },
               {
                 step: '03',
@@ -126,9 +126,9 @@ export default function AideSection() {
               icon: Book,
               title: 'Documentation',
               desc: 'Guides complets, référence API et tutoriels',
-              color: 'text-indigo-400',
-              bg: 'bg-indigo-500/10',
-              hover: 'hover:border-indigo-500/30 hover:bg-indigo-500/5',
+              color: 'text-foreground/70',
+              bg: 'bg-muted',
+              hover: 'hover:border-border hover:bg-muted',
               action: 'Consulter →',
             },
             {
@@ -144,9 +144,9 @@ export default function AideSection() {
               icon: MessagesSquare,
               title: 'Communauté',
               desc: 'Discord et forum avec la communauté Nexora',
-              color: 'text-violet-400',
-              bg: 'bg-violet-500/10',
-              hover: 'hover:border-violet-500/30 hover:bg-violet-500/5',
+              color: 'text-foreground/70',
+              bg: 'bg-muted',
+              hover: 'hover:border-border hover:bg-muted',
               action: 'Rejoindre →',
             },
           ].map(item => (
@@ -157,7 +157,7 @@ export default function AideSection() {
                 </div>
                 <h3 className="font-semibold text-sm mb-1">{item.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-3">{item.desc}</p>
-                <span className="text-xs text-indigo-400 font-medium">{item.action}</span>
+                <span className="text-xs text-foreground/70 font-medium">{item.action}</span>
               </CardContent>
             </Card>
           ))}
@@ -177,9 +177,9 @@ export default function AideSection() {
       </div>
 
       {/* Contact */}
-      <Card className="glass bg-gradient-to-br from-indigo-500/5 to-violet-500/5 border-indigo-500/20">
+      <Card className="glass bg-gradient-to-br from-muted to-muted/50 border-border">
         <CardContent className="p-6 text-center">
-          <Sparkles className="w-9 h-9 mx-auto mb-3 text-indigo-400" />
+          <Sparkles className="w-9 h-9 mx-auto mb-3 text-foreground/70" />
           <h2 className="text-lg font-bold mb-1">Vous avez d'autres questions ?</h2>
           <p className="text-muted-foreground text-sm mb-5 max-w-sm mx-auto">
             Notre équipe est disponible pour vous aider. Réponse sous 24h en semaine.
@@ -187,7 +187,7 @@ export default function AideSection() {
           <div className="flex flex-wrap justify-center gap-3">
             <a
               href="mailto:contact@nexora.ai"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors shadow-md shadow-indigo-600/20"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium transition-colors"
             >
               <Mail className="w-3.5 h-3.5" />
               Envoyer un email

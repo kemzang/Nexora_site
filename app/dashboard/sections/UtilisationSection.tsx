@@ -99,8 +99,8 @@ function AreaChart({ data, period }: AreaChartProps) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible" style={{ height: '220px' }}>
         <defs>
           <linearGradient id="nexoraGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
           </linearGradient>
           <clipPath id="chartClip">
             <rect x="0" y="0" width={CW} height={CH} />
@@ -117,7 +117,7 @@ function AreaChart({ data, period }: AreaChartProps) {
           {/* Hover vertical line */}
           {hovered && (
             <line x1={hovered.x} y1={0} x2={hovered.x} y2={CH}
-              stroke="rgba(99,102,241,0.3)" strokeWidth={1} strokeDasharray="4,4" />
+              stroke="rgba(255,255,255,0.15)" strokeWidth={1} strokeDasharray="4,4" />
           )}
 
           {/* Area fill */}
@@ -125,14 +125,14 @@ function AreaChart({ data, period }: AreaChartProps) {
 
           {/* Line */}
           {N > 0 && (
-            <path d={linePath} fill="none" stroke="#6366f1" strokeWidth={2.5}
+            <path d={linePath} fill="none" stroke="currentColor" strokeWidth={2.5}
               strokeLinejoin="round" strokeLinecap="round" />
           )}
 
           {/* Hover dot */}
           {hovered && (
             <circle cx={hovered.x} cy={hovered.y} r={5}
-              fill="#6366f1" stroke="var(--background)" strokeWidth={2.5} />
+              fill="currentColor" stroke="var(--background)" strokeWidth={2.5} />
           )}
 
           {/* Invisible hover zones */}
@@ -260,9 +260,9 @@ export default function UtilisationSection() {
             <button
               key={p.id}
               onClick={() => setPeriod(p.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 period === p.id
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.05]'
               }`}
             >
@@ -279,15 +279,15 @@ export default function UtilisationSection() {
             label: 'Tokens consommés',
             value: loading ? '—' : totalTokens.toLocaleString('fr-FR'),
             icon: Zap,
-            color: 'text-indigo-400',
-            bg: 'from-indigo-500/20 to-indigo-500/5',
+            color: 'text-foreground/70',
+            bg: 'from-muted to-muted/50',
           },
           {
             label: 'Requêtes totales',
             value: loading ? '—' : totalRequests.toLocaleString('fr-FR'),
             icon: Activity,
-            color: 'text-violet-400',
-            bg: 'from-violet-500/20 to-violet-500/5',
+            color: 'text-foreground/70',
+            bg: 'from-muted to-muted/50',
           },
           {
             label: 'Moyenne / jour',
@@ -325,7 +325,7 @@ export default function UtilisationSection() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-indigo-400" />
+              <BarChart3 className="w-4 h-4 text-foreground/70" />
               Consommation de tokens
               {!loading && hasData && trend !== 0 && (
                 <span className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-md ${
@@ -344,8 +344,8 @@ export default function UtilisationSection() {
             <div className="h-[220px] skeleton rounded-xl" />
           ) : !hasData ? (
             <div className="h-[220px] flex flex-col items-center justify-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="w-7 h-7 text-indigo-400/50" />
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="w-7 h-7 text-muted-foreground" />
               </div>
               <p className="font-medium text-foreground mb-1">Aucune donnée pour cette période</p>
               <p className="text-sm text-muted-foreground">Commencez à utiliser Nexora dans VS Code pour voir vos statistiques</p>
@@ -358,16 +358,16 @@ export default function UtilisationSection() {
 
       {/* Peak day info */}
       {!loading && hasData && peakDay.tokens > 0 && (
-        <Card className="glass border-indigo-500/20 bg-indigo-500/5">
+        <Card className="glass border-border bg-muted/50">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/15 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-indigo-400" />
+            <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-foreground/70" />
             </div>
             <div>
               <p className="text-sm font-medium">Pic de consommation</p>
               <p className="text-xs text-muted-foreground">
                 {new Date(peakDay.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} ·{' '}
-                <span className="text-indigo-300 font-medium">{peakDay.tokens.toLocaleString('fr-FR')} tokens</span> ·{' '}
+                <span className="text-foreground/70 font-medium">{peakDay.tokens.toLocaleString('fr-FR')} tokens</span> ·{' '}
                 {peakDay.requests} requête{peakDay.requests > 1 ? 's' : ''}
               </p>
             </div>

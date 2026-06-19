@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,8 +47,6 @@ export default function Page() {
           return
         }
 
-        // Schéma de l'éditeur hôte transmis par l'extension (vscode par défaut).
-        // Validé via allowlist pour ne jamais injecter un schéma arbitraire.
         const ALLOWED_SCHEMES = ['vscode', 'vscode-insiders', 'vscodium', 'cursor', 'windsurf', 'code-oss', 'trae']
         const rawScheme = urlParams.get('uriScheme') || 'vscode'
         const scheme = ALLOWED_SCHEMES.includes(rawScheme) ? rawScheme : 'vscode'
@@ -73,7 +72,7 @@ export default function Page() {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -81,19 +80,19 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-foreground/[0.03] blur-[120px] rounded-full" />
 
       <div className="glass rounded-2xl p-8 max-w-md w-full text-center relative z-10">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight mb-2">Authentification de ton éditeur</h1>
-          <div className="w-16 h-1 bg-indigo-500 mx-auto rounded-full" />
+          <div className="w-16 h-1 bg-primary mx-auto rounded-full" />
         </div>
 
         {status === 'loading' && (
           <div className="space-y-4">
             <div className="relative inline-flex">
-              <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <div className="absolute inset-0 w-8 h-8 border-2 border-violet-500 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+              <div className="w-8 h-8 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
+              <div className="absolute inset-0 w-8 h-8 border-2 border-foreground/20 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
             </div>
             <p className="text-muted-foreground">Authentification en cours...</p>
           </div>
@@ -121,12 +120,9 @@ export default function Page() {
               </svg>
             </div>
             <p className="text-red-400 font-medium">{message}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-colors text-sm"
-            >
+            <Button variant="outline" onClick={() => window.location.reload()}>
               Réessayer
-            </button>
+            </Button>
           </div>
         )}
 

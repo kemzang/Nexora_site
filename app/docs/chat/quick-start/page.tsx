@@ -17,8 +17,8 @@ function CodeBlock({ code, lang = 'bash' }: { code: string; lang?: string }) {
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-4 mb-8">
-      <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
-        <span className="text-indigo-400 text-sm font-bold">{n}</span>
+      <div className="w-8 h-8 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0 mt-0.5">
+        <span className="text-foreground/70 text-sm font-bold">{n}</span>
       </div>
       <div className="flex-1">
         <h3 className="font-semibold text-base mb-2">{title}</h3>
@@ -63,9 +63,9 @@ export default function ChatQuickStartPage() {
 
       <h2 className="text-xl font-bold mb-5">Prérequis</h2>
       <ul className="space-y-2 text-sm text-muted-foreground mb-8">
-        <li className="flex items-start gap-2"><span className="text-indigo-400 mt-0.5">•</span>Extension Nexora installée dans VS Code</li>
-        <li className="flex items-start gap-2"><span className="text-indigo-400 mt-0.5">•</span>Compte Nexora créé et vérifié sur <a href="https://nexora.ai" className="text-indigo-400 hover:underline">nexora.ai</a></li>
-        <li className="flex items-start gap-2"><span className="text-indigo-400 mt-0.5">•</span>Extension connectée à votre compte (token configuré)</li>
+        <li className="flex items-start gap-2"><span className="text-foreground/70 mt-0.5">•</span>Extension Nexora installée dans VS Code</li>
+        <li className="flex items-start gap-2"><span className="text-foreground/70 mt-0.5">•</span>Compte Nexora créé et vérifié sur <a href="https://nexora.ai" className="text-foreground/70 hover:underline">nexora.ai</a></li>
+        <li className="flex items-start gap-2"><span className="text-foreground/70 mt-0.5">•</span>Extension connectée à votre compte (token configuré)</li>
       </ul>
 
       <h2 className="text-xl font-bold mb-5">Utilisation</h2>
@@ -86,7 +86,7 @@ export default function ChatQuickStartPage() {
             { plan: 'Neo',        models: '+ Gemini Pro', color: 'text-sky-400' },
             { plan: 'Pro',        models: '+ Claude Haiku, Claude Sonnet', color: 'text-amber-400' },
             { plan: 'Business',   models: '+ Claude Opus', color: 'text-emerald-400' },
-            { plan: 'Enterprise', models: 'Tous les modèles', color: 'text-violet-400' },
+            { plan: 'Enterprise', models: 'Tous les modèles', color: 'text-foreground/70' },
           ].map(row => (
             <div key={row.plan} className="flex items-center gap-3 text-sm">
               <span className={`w-20 font-medium ${row.color}`}>{row.plan}</span>
@@ -104,7 +104,7 @@ export default function ChatQuickStartPage() {
       </Step>
 
       <Step n={4} title="Utiliser le contexte du fichier courant">
-        <p>Nexora peut analyser votre fichier ouvert. Dans le Chat, tapez <code className="px-1 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-indigo-300">@file</code> pour référencer le fichier actif, ou <code className="px-1 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-indigo-300">@selection</code> pour la sélection courante.</p>
+        <p>Nexora peut analyser votre fichier ouvert. Dans le Chat, tapez <code className="px-1 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-foreground/70">@file</code> pour référencer le fichier actif, ou <code className="px-1 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-foreground/70">@selection</code> pour la sélection courante.</p>
       </Step>
 
       <div className="h-px bg-border/50 my-8" />
@@ -144,7 +144,7 @@ export default function ChatQuickStartPage() {
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Page suivante</span>
-        <Link href="/docs/autocomplete/quick-start" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+        <Link href="/docs/autocomplete/quick-start" className="text-foreground/70 hover:text-foreground transition-colors">
           Auto-complétion →
         </Link>
       </div>

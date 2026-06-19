@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
           <h1 className="text-2xl font-bold tracking-tight mb-3">Mot de passe mis à jour !</h1>
           <p className="text-muted-foreground mb-8">Redirection vers la connexion...</p>
           <div className="flex justify-center">
-            <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
           </div>
         </motion.div>
       </div>
@@ -74,16 +74,16 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/8 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/8 blur-[120px] rounded-full" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-foreground/[0.02] blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-foreground/[0.02] blur-[120px] rounded-full" />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-md">
         <Card className="glass">
           <CardHeader className="text-center space-y-5 pt-10">
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.15, type: "spring" }} className="flex justify-center">
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-500 flex items-center justify-center shadow-xl shadow-indigo-500/20">
-                  <Sparkles className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-xl">
+                  <Sparkles className="w-7 h-7 text-primary-foreground" />
                 </div>
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute -top-1 -right-1">
                   <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -112,22 +112,23 @@ export default function ResetPasswordPage() {
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm ml-0.5">Nouveau mot de passe</Label>
                 <Input id="password" type="password" placeholder="••••••••" {...register('password')}
-                  className="bg-card border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:border-indigo-500/50 h-11 rounded-xl transition-all" />
+                  className="bg-card border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:border-foreground/30 h-11 rounded-xl transition-all" />
                 {errors.password && <p className="text-red-400 text-xs ml-1">{errors.password.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-sm ml-0.5">Confirmer</Label>
                 <Input id="confirmPassword" type="password" placeholder="••••••••" {...register('confirmPassword')}
-                  className="bg-card border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:border-indigo-500/50 h-11 rounded-xl transition-all" />
+                  className="bg-card border-border/50 text-foreground placeholder:text-muted-foreground/50 focus:border-foreground/30 h-11 rounded-xl transition-all" />
                 {errors.confirmPassword && <p className="text-red-400 text-xs ml-1">{errors.confirmPassword.message}</p>}
               </div>
               <Button type="submit" disabled={loading || !sessionReady}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold h-11 rounded-xl shadow-lg shadow-indigo-600/20">
+                variant="outline"
+                className="w-full font-semibold h-11 rounded-xl">
                 {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Mise à jour...</> : <><Lock className="mr-2 h-4 w-4" />Mettre à jour</>}
               </Button>
             </form>
             <div className="text-center pt-1">
-              <Link href="/auth/login" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
+              <Link href="/auth/login" className="text-sm text-foreground/70 hover:text-foreground transition-colors font-medium">
                 Retour à la connexion
               </Link>
             </div>

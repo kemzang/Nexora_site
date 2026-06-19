@@ -58,8 +58,8 @@ function OnboardingCallbackContent() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="orb orb-float-1 w-[500px] h-[500px] bg-indigo-600/10 top-0 left-0" />
-      <div className="orb orb-float-2 w-[400px] h-[400px] bg-violet-600/8 bottom-0 right-0" />
+      <div className="orb orb-float-1 w-[500px] h-[500px] bg-foreground/[0.03] top-0 left-0" />
+      <div className="orb orb-float-2 w-[400px] h-[400px] bg-foreground/[0.02] bottom-0 right-0" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -68,14 +68,14 @@ function OnboardingCallbackContent() {
       >
         <div className="glass-strong rounded-2xl border border-white/[0.08] overflow-hidden p-8 text-center space-y-6">
           <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-2xl shadow-indigo-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center">
               <Sparkles className="w-8 h-8 text-white" />
             </div>
           </div>
 
           {status === 'loading' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-              <Loader2 className="w-10 h-10 text-indigo-400 animate-spin mx-auto" />
+              <Loader2 className="w-10 h-10 text-foreground/70 animate-spin mx-auto" />
               <p className="text-sm text-muted-foreground">Setting up your account…</p>
             </motion.div>
           )}
@@ -91,7 +91,7 @@ function OnboardingCallbackContent() {
               </div>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium transition-colors"
               >
                 Go to Dashboard
                 <ArrowRight className="w-4 h-4" />
@@ -106,7 +106,7 @@ function OnboardingCallbackContent() {
                 <p className="text-base font-semibold text-foreground">Onboarding failed</p>
                 <p className="text-sm text-muted-foreground mt-1">{errorMsg}</p>
               </div>
-              <Link href="/auth/register" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors">
+              <Link href="/auth/register" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium transition-colors">
                 Try again
               </Link>
             </motion.div>
@@ -121,7 +121,7 @@ export default function OnboardingCallbackPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-foreground/70 animate-spin" />
       </div>
     }>
       <OnboardingCallbackContent />

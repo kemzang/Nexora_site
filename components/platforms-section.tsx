@@ -3,10 +3,11 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { Check, Copy, ArrowRight, Terminal } from 'lucide-react'
+import { GlassCard } from './ui/glass-card'
+import { Badge } from './ui/badge'
+import { SectionLayout } from './patterns/section-layout'
 
 type Lang = 'fr' | 'en' | 'es' | 'pt'
-
-/* ─── Brand logos (inline SVG) ───────────────────────────────────── */
 
 function VSCodeLogo({ className = '' }: { className?: string }) {
   return (
@@ -45,13 +46,11 @@ function JetBrainsLogo({ className = '' }: { className?: string }) {
 
 function NexoraMark({ className = '' }: { className?: string }) {
   return (
-    <div className={`rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 ${className}`}>
-      <span className="text-white font-bold tracking-tight select-none" style={{ fontSize: '1.4em' }}>N</span>
+    <div className={`rounded-2xl bg-primary flex items-center justify-center ${className}`}>
+      <span className="text-primary-foreground font-bold tracking-tight select-none" style={{ fontSize: '1.4em' }}>N</span>
     </div>
   )
 }
-
-/* ─── Translations ───────────────────────────────────────────────── */
 
 const DICT: Record<Lang, {
   badge: string
@@ -124,8 +123,6 @@ const VSCODE_URL = 'https://marketplace.visualstudio.com/items?itemName=Nexora.n
 const JETBRAINS_URL = 'https://plugins.jetbrains.com/plugin/nexora'
 const CLI_INSTALL = 'npm install -g @nexora/cli'
 
-/* ─── Component ───────────────────────────────────────────────────── */
-
 export function PlatformsSection({ lang }: { lang: Lang }) {
   const t = DICT[lang] ?? DICT.fr
   const [copied, setCopied] = useState(false)
@@ -137,128 +134,117 @@ export function PlatformsSection({ lang }: { lang: Lang }) {
   }
 
   return (
-    <section id="platforms" className="relative py-28 sm:py-36 overflow-hidden">
-      <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="orb w-[450px] h-[450px] bg-violet-600/8 top-10 left-0" style={{ filter: 'blur(110px)' }} />
-      <div className="orb w-[350px] h-[350px] bg-indigo-600/8 bottom-0 right-10" style={{ filter: 'blur(90px)' }} />
+    <SectionLayout id="platforms">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.5 }}
+        className="text-center mb-16"
+      >
+        <Badge variant="primary" className="mb-5">
+          <NexoraMark className="w-3.5 h-3.5" />
+          {t.badge}
+        </Badge>
+        <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 text-balance">{t.title}</h2>
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{t.subtitle}</p>
+      </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <motion.a
+          href={VSCODE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="group relative glass rounded-2xl border-border hover:border-[#0098FF]/40 p-7 flex flex-col transition-colors"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-300 mb-5">
-            <NexoraMark className="w-3.5 h-3.5 !shadow-none" />
-            <span>{t.badge}</span>
+          <div className="flex items-center gap-3 mb-5">
+            <VSCodeLogo className="w-11 h-11" />
+            <div>
+              <h3 className="font-semibold text-foreground text-lg leading-tight">VS Code</h3>
+              <p className="text-[11px] text-muted-foreground">Visual Studio Code</p>
+            </div>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 text-balance">{t.title}</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{t.subtitle}</p>
-        </motion.div>
+          <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.vscodeDesc}</p>
+          <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/70 group-hover:gap-2.5 transition-all">
+            {t.vscodeCta}
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </motion.a>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* VS Code */}
-          <motion.a
-            href={VSCODE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.5 }}
-            className="group relative glass rounded-2xl border border-white/[0.07] hover:border-[#0098FF]/40 p-7 flex flex-col transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <VSCodeLogo className="w-11 h-11" />
-              <div>
-                <h3 className="font-semibold text-foreground text-lg leading-tight">VS Code</h3>
-                <p className="text-[11px] text-muted-foreground">Visual Studio Code</p>
-              </div>
+        <motion.a
+          href={JETBRAINS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ delay: 0.08, duration: 0.5 }}
+          className="group relative glass rounded-2xl border-border hover:border-[#B24EFF]/40 p-7 flex flex-col transition-colors"
+        >
+          <div className="flex items-center gap-3 mb-5">
+            <JetBrainsLogo className="w-11 h-11" />
+            <div>
+              <h3 className="font-semibold text-foreground text-lg leading-tight">JetBrains</h3>
+              <p className="text-[11px] text-muted-foreground">Toute la suite</p>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.vscodeDesc}</p>
-            <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#3BA9FF] group-hover:gap-2.5 transition-all">
-              {t.vscodeCta}
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </motion.a>
-
-          {/* JetBrains */}
-          <motion.a
-            href={JETBRAINS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ delay: 0.08, duration: 0.5 }}
-            className="group relative glass rounded-2xl border border-white/[0.07] hover:border-[#B24EFF]/40 p-7 flex flex-col transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <JetBrainsLogo className="w-11 h-11" />
-              <div>
-                <h3 className="font-semibold text-foreground text-lg leading-tight">JetBrains</h3>
-                <p className="text-[11px] text-muted-foreground">Toute la suite</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{t.jetbrainsDesc}</p>
-            <div className="flex flex-wrap gap-1.5 mt-4 flex-1 content-start">
-              {JETBRAINS_IDES.map((ide) => (
-                <span
-                  key={ide}
-                  className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] text-muted-foreground"
-                >
-                  {ide}
-                </span>
-              ))}
-            </div>
-            <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#C77DFF] group-hover:gap-2.5 transition-all">
-              {t.jetbrainsCta}
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </motion.a>
-
-          {/* CLI */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ delay: 0.16, duration: 0.5 }}
-            className="group relative glass rounded-2xl border border-white/[0.07] hover:border-emerald-500/40 p-7 flex flex-col transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
-                <Terminal className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground text-lg leading-tight">CLI</h3>
-                <p className="text-[11px] text-muted-foreground">Ligne de commande</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.cliDesc}</p>
-            <p className="text-[11px] text-muted-foreground/70 mt-5 mb-1.5">{t.cliHint}</p>
-            <button
-              onClick={copyCli}
-              className="flex items-center justify-between gap-2 w-full rounded-lg bg-black/40 border border-white/[0.08] px-3 py-2.5 font-mono text-xs text-emerald-300 hover:border-emerald-500/30 transition-colors"
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <span className="text-emerald-500/60">$</span>
-                <span className="truncate">{CLI_INSTALL}</span>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">{t.jetbrainsDesc}</p>
+          <div className="flex flex-wrap gap-1.5 mt-4 flex-1 content-start">
+            {JETBRAINS_IDES.map((ide) => (
+              <span
+                key={ide}
+                className="px-2 py-0.5 rounded-md bg-muted border border-border text-[10px] text-muted-foreground"
+              >
+                {ide}
               </span>
-              {copied ? (
-                <span className="flex items-center gap-1 text-emerald-400 flex-shrink-0">
-                  <Check className="w-3.5 h-3.5" /> {t.copied}
-                </span>
-              ) : (
-                <Copy className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-              )}
-            </button>
-          </motion.div>
-        </div>
+            ))}
+          </div>
+          <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/70 group-hover:gap-2.5 transition-all">
+            {t.jetbrainsCta}
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </motion.a>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ delay: 0.16, duration: 0.5 }}
+          className="group relative glass rounded-2xl border-border hover:border-emerald-500/40 p-7 flex flex-col transition-colors"
+        >
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-11 h-11 rounded-xl bg-muted border border-border flex items-center justify-center">
+              <Terminal className="w-6 h-6 text-foreground/70" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-lg leading-tight">CLI</h3>
+              <p className="text-[11px] text-muted-foreground">Ligne de commande</p>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.cliDesc}</p>
+          <p className="text-[11px] text-muted-foreground/70 mt-5 mb-1.5">{t.cliHint}</p>
+          <button
+            onClick={copyCli}
+            className="flex items-center justify-between gap-2 w-full rounded-lg bg-muted border border-border px-3 py-2.5 font-mono text-xs text-foreground/70 hover:border-foreground/20 transition-colors"
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="text-foreground/40">$</span>
+              <span className="truncate">{CLI_INSTALL}</span>
+            </span>
+            {copied ? (
+              <span className="flex items-center gap-1 text-foreground/70 flex-shrink-0">
+                <Check className="w-3.5 h-3.5" /> {t.copied}
+              </span>
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+            )}
+          </button>
+        </motion.div>
       </div>
-    </section>
+    </SectionLayout>
   )
 }

@@ -84,7 +84,7 @@ function InvoiceModal({ invoice, user, onClose }: { invoice: Invoice; user: User
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
                   <span className="text-white font-bold text-sm">N</span>
                 </div>
                 <span className="font-bold text-lg">Nexora</span>
@@ -141,7 +141,7 @@ function InvoiceModal({ invoice, user, onClose }: { invoice: Invoice; user: User
           </div>
 
           {/* Total */}
-          <div className="flex items-center justify-between bg-indigo-500/5 border border-indigo-500/20 rounded-xl px-5 py-4">
+          <div className="flex items-center justify-between bg-muted/50 border-border rounded-xl px-5 py-4">
             <span className="font-bold">Total</span>
             <span className="text-2xl font-bold text-foreground">{formatCurrency(invoice.amount, invoice.currency)}</span>
           </div>
@@ -208,10 +208,10 @@ export default function FacturesSection() {
       <Card className="glass">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <FileText className="w-4 h-4 text-indigo-400" />
+            <FileText className="w-4 h-4 text-foreground/70" />
             Historique des factures
             {!loading && invoices.length > 0 && (
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-medium">{invoices.length}</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-muted text-foreground/70 text-xs font-medium">{invoices.length}</span>
             )}
           </CardTitle>
         </CardHeader>
@@ -232,8 +232,8 @@ export default function FacturesSection() {
             </div>
           ) : invoices.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-7 h-7 text-indigo-400/50" />
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-7 h-7 text-muted-foreground" />
               </div>
               <p className="font-medium text-foreground mb-1">Aucune facture</p>
               <p className="text-sm text-muted-foreground">Vos factures apparaîtront ici après votre premier paiement</p>
@@ -259,8 +259,8 @@ export default function FacturesSection() {
                 >
                   {/* Invoice ID */}
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-                      <FileText className="w-4 h-4 text-indigo-400" />
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-foreground/70" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-foreground">{inv.invoice_number}</p>
@@ -296,7 +296,7 @@ export default function FacturesSection() {
                     </Button>
                     {inv.pdf_url ? (
                       <a href={inv.pdf_url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" variant="ghost" className="text-indigo-400 hover:text-indigo-300 gap-1.5 text-xs">
+                        <Button size="sm" variant="ghost" className="text-foreground/70 hover:text-foreground gap-1.5 text-xs">
                           <Download className="w-3.5 h-3.5" />
                           PDF
                         </Button>
@@ -306,7 +306,7 @@ export default function FacturesSection() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setSelectedInvoice(inv)}
-                        className="text-muted-foreground hover:text-indigo-400 gap-1.5 text-xs"
+                        className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
                       >
                         <Printer className="w-3.5 h-3.5" />
                         Imprimer

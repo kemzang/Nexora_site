@@ -66,11 +66,11 @@ const UPGRADE_PLANS = [
     name: 'Enterprise',
     price: '$80',
     icon: Crown,
-    color: 'text-violet-400',
-    bg: 'from-violet-500/20 to-violet-500/5',
-    border: 'hover:border-violet-500/40',
-    activeBorder: 'border-violet-500/40',
-    badgeColor: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
+    color: 'text-foreground/70',
+    bg: 'from-muted to-muted/50',
+    border: 'hover:border-border',
+    activeBorder: 'border-border',
+    badgeColor: 'bg-muted text-foreground/70 border-border',
     features: ['100M crédits/mois', 'Requêtes illimitées', 'Tous les modèles', 'Support 24/7 + SSO + SLA'],
   },
 ]
@@ -206,11 +206,11 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
           </CardContent>
         </Card>
       ) : sub && (
-        <Card className="glass border-indigo-500/25 bg-indigo-500/5">
+        <Card className="glass border-border bg-muted/50">
           <CardContent className="p-6">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center">
                   <Zap className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -242,7 +242,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
                   initial={{ width: 0 }}
                   animate={{ width: `${usagePercent}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-                  className={`h-full rounded-full ${usagePercent > 80 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500'}`}
+                  className={`h-full rounded-full ${usagePercent > 80 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-primary'}`}
                 />
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -301,7 +301,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
                     <ul className="space-y-2 mb-5">
                       {plan.features.map(f => (
                         <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                          <Check className="w-3.5 h-3.5 text-foreground/70 shrink-0 mt-0.5" />
                           {f}
                         </li>
                       ))}
@@ -310,7 +310,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
                       <Button className={`w-full text-sm ${
                         plan.popular
                           ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-md shadow-amber-500/20'
-                          : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                          : 'bg-primary text-primary-foreground'
                       }`}>
                         Passer au {plan.name}
                         <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
@@ -326,9 +326,9 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
 
       {/* Already on highest plan */}
       {!loading && sub && sub.planSlug === 'enterprise' && (
-        <Card className="glass border-violet-500/25 bg-violet-500/5">
+        <Card className="glass border-border bg-muted/50">
           <CardContent className="p-6 text-center">
-            <Crown className="w-10 h-10 text-violet-400 mx-auto mb-3" />
+            <Crown className="w-10 h-10 text-foreground/70 mx-auto mb-3" />
             <h3 className="font-bold text-lg mb-1">Vous êtes sur le plan Enterprise</h3>
             <p className="text-muted-foreground text-sm">Vous bénéficiez de toutes les fonctionnalités Nexora.</p>
           </CardContent>

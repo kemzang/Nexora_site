@@ -21,14 +21,14 @@ import { countries, validatePhone, type Country } from '@/lib/countries'
 
 /* ─── Plan config ────────────────────────────────────────────────── */
 const planDetails: Record<string, { name: string; price: string; priceXAF: number; color: string }> = {
-  free:       { name: 'Free',          price: '0€',  priceXAF: 0,     color: '#6366f1' },
+  free:       { name: 'Free',          price: '0€',  priceXAF: 0,     color: '#94a3b8' },
   // Forfaits de test temporaires ($1 / $2)
   test1:      { name: 'Test 1 semaine',  price: '1€',  priceXAF: 660,   color: '#94a3b8' },
   test2:      { name: 'Test 2 semaines', price: '2€',  priceXAF: 1320,  color: '#94a3b8' },
   starter:    { name: 'Starter',       price: '5€',  priceXAF: 3280,  color: '#38bdf8' },
   pro:        { name: 'Pro',           price: '12€', priceXAF: 7870,  color: '#f59e0b' },
   business:   { name: 'Business',      price: '30€', priceXAF: 19670, color: '#10b981' },
-  enterprise: { name: 'Enterprise',    price: '80€', priceXAF: 52440, color: '#8b5cf6' },
+  enterprise: { name: 'Enterprise',    price: '80€', priceXAF: 52440, color: '#94a3b8' },
 }
 
 type PaymentMethod = 'card' | 'mobile_money'
@@ -87,7 +87,7 @@ function CountrySelector({
                   placeholder={placeholder}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-accent/50 border border-border/50 rounded-lg text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                  className="w-full pl-9 pr-3 py-2 bg-accent/50 border border-border/50 rounded-lg text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground/30 transition-colors"
                   autoFocus
                 />
               </div>
@@ -98,14 +98,14 @@ function CountrySelector({
                   key={c.code}
                   type="button"
                   onClick={() => { onSelect(c); setOpen(false); setSearch('') }}
-                  className={`flex items-center gap-3 w-full px-3.5 py-2.5 text-left hover:bg-accent transition-colors ${c.code === selected.code ? 'bg-indigo-500/10' : ''}`}
+                  className={`flex items-center gap-3 w-full px-3.5 py-2.5 text-left hover:bg-accent transition-colors ${c.code === selected.code ? 'bg-muted' : ''}`}
                 >
                   <span className="text-xl">{c.flag}</span>
                   <div className="flex-1">
                     <p className="text-sm text-foreground">{c.name}</p>
                   </div>
                   <span className="text-xs text-muted-foreground font-mono">{c.dialCode}</span>
-                  {c.code === selected.code && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                  {c.code === selected.code && <CheckCircle2 className="w-3.5 h-3.5 text-foreground/70 shrink-0" />}
                 </button>
               ))}
               {filtered.length === 0 && (
@@ -146,7 +146,7 @@ function PhoneInput({
             value={value}
             onChange={e => handleChange(e.target.value)}
             maxLength={country.phoneLength}
-            className={`bg-card border-border/60 focus:border-indigo-500/50 h-12 rounded-xl pr-10 transition-colors ${
+            className={`bg-card border-border/60 focus:border-foreground/30 h-12 rounded-xl pr-10 transition-colors ${
               isValid ? 'border-emerald-500/40 focus:border-emerald-500/60' : ''
             }`}
           />
@@ -174,21 +174,21 @@ function VirtualCard({
   return (
     <motion.div
       className="relative h-44 rounded-2xl overflow-hidden select-none shadow-2xl"
-      style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 70%, #2d1b69 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #1a1a2e 100%)' }}
       animate={{ rotateY: focused === 'cvv' ? 180 : 0 }}
       transition={{ duration: 0.5 }}
     >
       {/* Circles */}
       <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5" />
       <div className="absolute -bottom-14 -left-10 w-52 h-52 rounded-full bg-white/[0.03]" />
-      <div className="absolute top-1/3 right-12 w-28 h-28 rounded-full bg-indigo-400/5" />
+      <div className="absolute top-1/3 right-12 w-28 h-28 rounded-full bg-foreground/[0.03]" />
       {/* Shimmer */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent" />
 
       <div className="absolute inset-0 p-5 flex flex-col justify-between" style={{ backfaceVisibility: 'hidden' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shadow-lg">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-neutral-700 to-neutral-900 dark:from-neutral-300 dark:to-neutral-500 flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-xs">N</span>
             </div>
             <span className="text-white/70 text-xs font-semibold tracking-[0.2em]">NEXORA</span>
@@ -413,9 +413,9 @@ function CheckoutForm() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="orb orb-float-1 w-[600px] h-[600px] bg-indigo-600/8 top-[-20%] left-[-20%]" />
-      <div className="orb orb-float-2 w-[500px] h-[500px] bg-violet-600/6 bottom-[-15%] right-[-15%]" />
-      <div className="orb w-[400px] h-[400px] bg-purple-600/5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ filter: 'blur(100px)' }} />
+      <div className="orb orb-float-1 w-[600px] h-[600px] bg-foreground/[0.02] top-[-20%] left-[-20%]" />
+      <div className="orb orb-float-2 w-[500px] h-[500px] bg-foreground/[0.02] bottom-[-15%] right-[-15%]" />
+      <div className="orb w-[400px] h-[400px] bg-foreground/[0.02] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ filter: 'blur(100px)' }} />
 
       {/* Nav top bar */}
       <div className="fixed top-0 inset-x-0 z-50 h-14 border-b border-white/[0.06] bg-background/60 backdrop-blur-xl flex items-center px-4">
@@ -439,7 +439,7 @@ function CheckoutForm() {
           <div className="space-y-4 lg:sticky lg:top-20">
             {/* Plan summary */}
             <Card className="glass border-white/[0.08] overflow-hidden">
-              <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+              <div className="h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -497,10 +497,10 @@ function CheckoutForm() {
 
           {/* ─── Colonne DROITE : formulaire ─── */}
           <Card className="glass border-white/[0.08] overflow-hidden">
-            <div className="h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+            <div className="h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
             <CardHeader className="text-center space-y-3 pt-7 pb-5">
               <div className="flex justify-center">
-                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-500/30">
+                <div className="relative w-14 h-14 rounded-2xl bg-primary flex items-center justify-center">
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 to-transparent" />
                   <Lock className="w-6 h-6 text-white relative z-10" />
                 </div>
@@ -550,12 +550,12 @@ function CheckoutForm() {
                       onClick={() => setPaymentMethod('card')}
                       className={`relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm overflow-hidden ${
                         paymentMethod === 'card'
-                          ? 'bg-indigo-500/15 border-indigo-500/40 text-foreground font-semibold'
+                          ? 'bg-muted border-border text-foreground font-semibold'
                           : 'bg-card border-border/50 text-muted-foreground hover:bg-accent hover:text-foreground'
                       }`}
                     >
                       {paymentMethod === 'card' && (
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50" />
                       )}
                       <CreditCard className="w-4 h-4 relative z-10" />
                       <span className="relative z-10">{ch.card}</span>
@@ -566,12 +566,12 @@ function CheckoutForm() {
                         onClick={() => setPaymentMethod('mobile_money')}
                         className={`relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm overflow-hidden ${
                           paymentMethod === 'mobile_money'
-                            ? 'bg-indigo-500/15 border-indigo-500/40 text-foreground font-semibold'
+                            ? 'bg-muted border-border text-foreground font-semibold'
                             : 'bg-card border-border/50 text-muted-foreground hover:bg-accent hover:text-foreground'
                         }`}
                       >
                         {paymentMethod === 'mobile_money' && (
-                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5" />
+                          <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50" />
                         )}
                         <Smartphone className="w-4 h-4 relative z-10" />
                         <span className="relative z-10">{ch.momo}</span>
@@ -592,9 +592,9 @@ function CheckoutForm() {
                       className="space-y-4"
                     >
                       {/* Notice : la carte est saisie dans la fenêtre sécurisée NotchPay */}
-                      <div className="flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15">
-                          <Lock className="w-4 h-4 text-indigo-400" />
+                      <div className="flex items-start gap-3 rounded-xl border border-border bg-muted p-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.06]">
+                          <Lock className="w-4 h-4 text-foreground/70" />
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm font-medium text-foreground">Paiement par carte sécurisé</p>
@@ -641,7 +641,7 @@ function CheckoutForm() {
                               onClick={() => setMomoChannel(chan.id)}
                               className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-all relative overflow-hidden ${
                                 momoChannel === chan.id
-                                  ? 'border-indigo-500/40 text-foreground font-medium'
+                                  ? 'border-border text-foreground font-medium'
                                   : 'bg-card border-border/50 text-muted-foreground hover:bg-accent'
                               }`}
                               style={momoChannel === chan.id ? { backgroundColor: `${chan.color}14` } : {}}
@@ -649,7 +649,7 @@ function CheckoutForm() {
                               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: chan.color, boxShadow: `0 0 8px ${chan.color}60` }} />
                               <span className="text-sm">{chan.name}</span>
                               {momoChannel === chan.id && (
-                                <CheckCircle2 className="ml-auto w-4 h-4 text-indigo-400 shrink-0" />
+                                <CheckCircle2 className="ml-auto w-4 h-4 text-foreground/70 shrink-0" />
                               )}
                             </button>
                           ))}
@@ -677,8 +677,8 @@ function CheckoutForm() {
 
                 {/* ── Attente du paiement (fenêtre NotchPay ouverte) ── */}
                 {waitingPayment && (
-                  <div className="flex items-center gap-3 rounded-xl border border-indigo-500/25 bg-indigo-500/[0.06] p-3">
-                    <Loader2 className="w-4 h-4 animate-spin text-indigo-400 shrink-0" />
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-muted p-3">
+                    <Loader2 className="w-4 h-4 animate-spin text-foreground/70 shrink-0" />
                     <p className="flex-1 text-xs text-muted-foreground leading-relaxed">
                       Fenêtre de paiement ouverte — termine le paiement, cette page se met à jour automatiquement.
                     </p>
@@ -696,7 +696,7 @@ function CheckoutForm() {
                 <Button
                   type="submit"
                   disabled={loading || waitingPayment}
-                  className="w-full h-12 relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition-all hover:scale-[1.01] hover:shadow-indigo-600/40 mt-1 group border-0"
+                  className="w-full h-12 relative overflow-hidden bg-primary text-primary-foreground font-semibold rounded-xl transition-all hover:scale-[1.01] mt-1 group border-0"
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   {loading ? (
@@ -726,7 +726,7 @@ export default function CheckoutPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500/60 border-t-indigo-500 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
       </div>
     }>
       <CheckoutForm />

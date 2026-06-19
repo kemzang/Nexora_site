@@ -17,8 +17,8 @@ function CodeBlock({ code, lang = 'json' }: { code: string; lang?: string }) {
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-4 mb-8">
-      <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
-        <span className="text-indigo-400 text-sm font-bold">{n}</span>
+      <div className="w-8 h-8 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0 mt-0.5">
+        <span className="text-foreground/70 text-sm font-bold">{n}</span>
       </div>
       <div className="flex-1">
         <h3 className="font-semibold text-base mb-2">{title}</h3>
@@ -69,12 +69,12 @@ export default function AutocompleteQuickStartPage() {
 
       <Step n={1} title="Vérifier que vous êtes sur Starter ou supérieur">
         <p>
-          Vérifiez votre plan dans le <a href="/dashboard" className="text-indigo-400 hover:underline">tableau de bord</a> → Abonnement. Si vous êtes sur Free, <a href="/checkout?plan=starter" className="text-indigo-400 hover:underline">passez au plan Starter</a>.
+          Vérifiez votre plan dans le <a href="/dashboard" className="text-foreground/70 hover:underline">tableau de bord</a> → Abonnement. Si vous êtes sur Free, <a href="/checkout?plan=starter" className="text-foreground/70 hover:underline">passez au plan Starter</a>.
         </p>
       </Step>
 
       <Step n={2} title="Activer dans les paramètres VS Code">
-        <p>Ouvrez les paramètres VS Code (<kbd className="px-1.5 py-0.5 bg-white/[0.08] border border-border/60 rounded text-xs font-mono">Ctrl+,</kbd>) et recherchez <code className="px-1 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-indigo-300">nexora</code>. Activez :</p>
+        <p>Ouvrez les paramètres VS Code (<kbd className="px-1.5 py-0.5 bg-white/[0.08] border border-border/60 rounded text-xs font-mono">Ctrl+,</kbd>) et recherchez <code className="px-1 py-0.5 bg-white/[0.06] rounded text-xs font-mono text-foreground/70">nexora</code>. Activez :</p>
         <CodeBlock lang="json" code={`{
   "nexora.autocomplete.enabled": true,
   "nexora.autocomplete.triggerDelay": 300,
@@ -132,7 +132,7 @@ export default function AutocompleteQuickStartPage() {
         <div className="p-4 rounded-xl bg-white/[0.03] border border-border/50">
           <h3 className="text-sm font-semibold mb-1">Consommation de tokens</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Chaque suggestion consomme entre 50 et 300 tokens selon la complexité. Le délai de déclenchement (<code className="text-indigo-300 font-mono text-xs">triggerDelay</code>) permet de réduire les requêtes inutiles.
+            Chaque suggestion consomme entre 50 et 300 tokens selon la complexité. Le délai de déclenchement (<code className="text-foreground/70 font-mono text-xs">triggerDelay</code>) permet de réduire les requêtes inutiles.
           </p>
         </div>
       </div>
@@ -151,10 +151,10 @@ export default function AutocompleteQuickStartPage() {
       <div className="h-px bg-border/50 my-8" />
 
       <div className="flex items-center justify-between text-sm">
-        <Link href="/docs/chat/quick-start" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+        <Link href="/docs/chat/quick-start" className="text-foreground/70 hover:text-foreground transition-colors">
           ← Chat
         </Link>
-        <Link href="/docs/guides/codebase-documentation-awareness" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+        <Link href="/docs/guides/codebase-documentation-awareness" className="text-foreground/70 hover:text-foreground transition-colors">
           Guide : Documentation projet →
         </Link>
       </div>

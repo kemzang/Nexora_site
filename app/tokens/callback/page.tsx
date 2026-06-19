@@ -62,8 +62,8 @@ function CallbackContent() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="orb orb-float-1 w-[500px] h-[500px] bg-indigo-600/10 top-[-10%] left-[-10%]" />
-      <div className="orb orb-float-2 w-[400px] h-[400px] bg-violet-600/8 bottom-[-10%] right-[-10%]" />
+      <div className="orb orb-float-1 w-[500px] h-[500px] bg-foreground/[0.03] top-[-10%] left-[-10%]" />
+      <div className="orb orb-float-2 w-[400px] h-[400px] bg-foreground/[0.02] bottom-[-10%] right-[-10%]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -71,12 +71,12 @@ function CallbackContent() {
         className="relative z-10 w-full max-w-md"
       >
         <div className="glass-strong rounded-2xl border border-white/[0.08] overflow-hidden">
-          <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/60 to-transparent" />
+          <div className="h-px bg-gradient-to-r from-transparent via-foreground/30 to-transparent" />
 
           <div className="p-8 text-center space-y-6">
             {/* Logo */}
             <div className="flex justify-center">
-              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-2xl shadow-indigo-500/30">
+              <div className="relative w-16 h-16 rounded-2xl bg-primary flex items-center justify-center">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
             </div>
@@ -91,7 +91,7 @@ function CallbackContent() {
               {status === 'loading' && (
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
                   <div className="flex justify-center">
-                    <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
+                    <Loader2 className="w-10 h-10 text-foreground/70 animate-spin" />
                   </div>
                   <p className="text-sm text-muted-foreground">Vérification de tes identifiants…</p>
                 </motion.div>
@@ -114,7 +114,7 @@ function CallbackContent() {
                   <div className="text-left bg-white/[0.04] rounded-xl border border-white/[0.08] p-3">
                     <p className="text-xs text-muted-foreground mb-1.5">Ta clé Nexora :</p>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-xs font-mono text-indigo-300 break-all bg-background/60 rounded-lg px-2.5 py-1.5 select-all">
+                      <code className="flex-1 text-xs font-mono text-foreground/70 break-all bg-background/60 rounded-lg px-2.5 py-1.5 select-all">
                         {token}
                       </code>
                       <button
@@ -130,7 +130,7 @@ function CallbackContent() {
                   {/* CTA principal : copier la clé */}
                   <button
                     onClick={copyToken}
-                    className="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+                    className="inline-flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium transition-colors"
                   >
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     {copied ? 'Clé copiée !' : 'Copier la clé'}
@@ -162,7 +162,7 @@ function CallbackContent() {
                   </div>
                   <Link
                     href="/auth/login"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium transition-colors"
                   >
                     Try again
                   </Link>
@@ -171,7 +171,7 @@ function CallbackContent() {
             </AnimatePresence>
           </div>
 
-          <div className="h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+          <div className="h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
           <div className="px-8 py-4 flex items-center justify-between">
             <p className="text-xs text-muted-foreground/50">nexora-mu-henna.vercel.app</p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground/50">
@@ -189,7 +189,7 @@ export default function TokensCallbackPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-foreground/70 animate-spin" />
       </div>
     }>
       <CallbackContent />

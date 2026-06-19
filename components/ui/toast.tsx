@@ -26,10 +26,10 @@ const icons: Record<ToastType, typeof CheckCircle> = {
 }
 
 const colors: Record<ToastType, string> = {
-  success: 'bg-green-500/20 border-green-500/50 text-green-300',
-  error: 'bg-red-500/20 border-red-500/50 text-red-300',
-  info: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
-  warning: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+  success: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400',
+  error: 'bg-red-500/15 border-red-500/30 text-red-600 dark:text-red-400',
+  info: 'bg-muted border-border text-foreground',
+  warning: 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400',
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {

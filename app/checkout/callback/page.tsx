@@ -59,14 +59,14 @@ function CallbackContent() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-foreground/[0.03] blur-[120px] rounded-full" />
 
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md relative z-10">
         {status === 'loading' && (
           <div className="glass rounded-2xl p-10">
             <div className="relative inline-flex mb-6">
-              <div className="w-12 h-12 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <div className="absolute inset-0 w-12 h-12 border-2 border-violet-500 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+              <div className="w-12 h-12 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
+              <div className="absolute inset-0 w-12 h-12 border-2 border-foreground/20 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
             </div>
             <h1 className="text-xl font-bold tracking-tight mb-3">Vérification du paiement...</h1>
             <p className="text-muted-foreground text-sm">Veuillez patienter pendant la confirmation.</p>
@@ -80,7 +80,7 @@ function CallbackContent() {
             <h1 className="text-2xl font-bold tracking-tight mb-3">Paiement réussi !</h1>
             <p className="text-muted-foreground mb-8">Votre abonnement est actif. Redirection...</p>
             <div className="flex justify-center">
-              <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
             </div>
           </div>
         )}
@@ -92,7 +92,7 @@ function CallbackContent() {
             <h1 className="text-2xl font-bold tracking-tight mb-3">Paiement échoué</h1>
             <p className="text-muted-foreground mb-8">Le paiement n'a pas pu être traité.</p>
             <Link href="/#pricing">
-              <Button className="bg-indigo-600 hover:bg-indigo-500 text-white">Réessayer</Button>
+              <Button variant="outline">Réessayer</Button>
             </Link>
           </div>
         )}
@@ -105,7 +105,7 @@ export default function CallbackPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-foreground/30 border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <CallbackContent />

@@ -42,7 +42,7 @@ const sections: Record<string, React.FC<{ user: any; onNavigate: (s: string) => 
 function NexoraLogo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   const s = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8'
   return (
-    <div className={`${s} rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 flex-shrink-0`}>
+    <div className={`${s} rounded-xl bg-primary flex items-center justify-center flex-shrink-0`}>
       <span className="text-white font-bold text-sm tracking-tight select-none">N</span>
     </div>
   )
@@ -79,8 +79,8 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="relative">
-          <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <div className="absolute inset-0 w-10 h-10 border-2 border-violet-500 border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+          <div className="w-10 h-10 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+          <div className="absolute inset-0 w-10 h-10 border-2 border-foreground border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
         </div>
       </div>
     )
@@ -147,22 +147,22 @@ export default function DashboardPage() {
                 onClick={() => handleNavigate(link.section)}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-3.5 rounded-xl text-sm transition-all text-left relative group ${
                   isActive
-                    ? 'bg-indigo-500/14 text-indigo-300 font-medium'
+                    ? 'bg-muted text-foreground/70 font-medium'
                     : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.05]'
                 }`}
               >
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-indigo-400 rounded-full" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-foreground rounded-full" />
                 )}
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                   isActive
-                    ? 'bg-indigo-500/20'
+                    ? 'bg-muted'
                     : 'bg-white/[0.04] group-hover:bg-white/[0.07]'
                 }`}>
-                  <link.icon className={`w-4 h-4 ${isActive ? 'text-indigo-400' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                  <link.icon className={`w-4 h-4 ${isActive ? 'text-foreground/70' : 'text-muted-foreground group-hover:text-foreground'}`} />
                 </div>
                 <span className="flex-1">{link.label}</span>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-indigo-400/50 shrink-0" />}
+                {isActive && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
               </button>
             )
           })}
@@ -171,7 +171,7 @@ export default function DashboardPage() {
         {/* User info at bottom */}
         <div className="px-4 pb-5 pt-3 border-t border-border/60 shrink-0">
           <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/[0.03] border border-white/[0.05] mb-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-md shadow-indigo-500/20">
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shrink-0">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -216,9 +216,9 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <button className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-colors">
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full ring-1 ring-background" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-foreground rounded-full ring-1 ring-background" />
               </button>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity">
                 {initials}
               </div>
             </div>
