@@ -177,8 +177,6 @@ export default function HomePage() {
       </nav>
 
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        <div className="absolute inset-0 bg-grid-lg pointer-events-none" />
-
         <div className="orb orb-float-1 w-[700px] h-[700px] bg-foreground/[0.03] top-[5%] left-[-15%]" />
         <div className="orb orb-float-2 w-[500px] h-[500px] bg-foreground/[0.02] bottom-[10%] right-[-10%]" />
 
@@ -273,7 +271,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <SectionLayout id="features" background="grid">
+      <SectionLayout id="features" background="default">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -312,7 +310,6 @@ export default function HomePage() {
       <PlatformsSection lang={lang} />
 
       <section className="relative py-20 border-y border-border overflow-hidden">
-        <div className="absolute inset-0 bg-dots pointer-events-none" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <StatCard value={10000} suffix="+" label={t.statsSection.developers} />
