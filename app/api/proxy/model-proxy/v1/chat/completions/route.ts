@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
 import { selectBestModel, hasImageContent, estimateTokens, getEffectiveTokenLimit, computeCreditsConsumed, type ModelId, type PlanId } from '@/lib/models'
+import { cacheGet, cacheSet } from '@/lib/upstash-cache'
 
 export const runtime = 'nodejs'
 
@@ -11,6 +12,13 @@ const supabase = createClient(
 )
 
 // ── Caches ───────────────────────────────────────────────────────────────────
+// Deux niveaux : Map locale (rapide, mais isolée à l'instance serverless qui la
+// détient) en L1, puis Upstash Redis (partagé entre TOUTES les instances) en
+// L2 avant de retomber sur Supabase. Sous charge, Vercel répartit les requêtes
+// entre plusieurs instances Node — sans L2, chacune revalidait indépendamment
+// le plan/quota (jusqu'à 5 min de dérive entre instances). Si Upstash n'est pas
+// configuré (UPSTASH_REDIS_REST_URL absent), cacheGet renvoie toujours null et
+// on retombe exactement sur le comportement L1→Supabase d'origine.
 const planCache = new Map<string, { plan: PlanId; expiresAt: number }>()
 const usageCache = new Map<string, { total: number; expiresAt: number }>()
 const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>()
@@ -124,6 +132,13 @@ function trackOutputStream(
 async function getUserPlan(userId: string): Promise<PlanId> {
   const cached = planCache.get(userId)
   if (cached && cached.expiresAt > Date.now()) return cached.plan
+
+  const shared = await cacheGet<PlanId>(`plan:${userId}`)
+  if (shared) {
+    planCache.set(userId, { plan: shared, expiresAt: Date.now() + 300_000 })
+    return shared
+  }
+
   const { data } = await supabase
     .from('user_subscriptions')
     .select('subscription_plans!inner(slug)')
@@ -134,15 +149,26 @@ async function getUserPlan(userId: string): Promise<PlanId> {
     .maybeSingle()
   const plan = ((data?.subscription_plans as any)?.slug as PlanId) || 'free'
   planCache.set(userId, { plan, expiresAt: Date.now() + 300_000 })
+  void cacheSet(`plan:${userId}`, plan, 300)
   return plan
 }
 
 async function getUserCreatedAt(userId: string): Promise<string | undefined> {
   const cached = createdAtCache.get(userId)
   if (cached && cached.expiresAt > Date.now()) return cached.createdAt
+
+  const shared = await cacheGet<string>(`created-at:${userId}`)
+  if (shared) {
+    createdAtCache.set(userId, { createdAt: shared, expiresAt: Date.now() + 3_600_000 })
+    return shared
+  }
+
   const { data } = await supabase.auth.admin.getUserById(userId)
   const createdAt = data?.user?.created_at
-  if (createdAt) createdAtCache.set(userId, { createdAt, expiresAt: Date.now() + 3_600_000 })
+  if (createdAt) {
+    createdAtCache.set(userId, { createdAt, expiresAt: Date.now() + 3_600_000 })
+    void cacheSet(`created-at:${userId}`, createdAt, 3_600)
+  }
   return createdAt
 }
 
@@ -150,10 +176,18 @@ async function checkMonthlyLimit(userId: string, plan: PlanId): Promise<string |
   const createdAt = await getUserCreatedAt(userId)
   const planLimit = getEffectiveTokenLimit(plan, createdAt)
   if (planLimit <= 0) return null
+
   const cached = usageCache.get(userId)
   if (cached && cached.expiresAt > Date.now()) {
     return cached.total >= planLimit ? planLimit.toString() : null
   }
+
+  const sharedTotal = await cacheGet<number>(`usage:${userId}`)
+  if (sharedTotal !== null) {
+    usageCache.set(userId, { total: sharedTotal, expiresAt: Date.now() + 60_000 })
+    return sharedTotal >= planLimit ? planLimit.toString() : null
+  }
+
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const { data } = await supabase
@@ -163,6 +197,7 @@ async function checkMonthlyLimit(userId: string, plan: PlanId): Promise<string |
     .eq('user_id', userId)
   const usage = (data ?? []).reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
   usageCache.set(userId, { total: usage, expiresAt: Date.now() + 60_000 })
+  void cacheSet(`usage:${userId}`, usage, 60)
   return usage >= planLimit ? planLimit.toString() : null
 }
 
