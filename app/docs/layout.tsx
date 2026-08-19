@@ -9,6 +9,12 @@ export const metadata: Metadata = {
 
 const docLinks = [
   {
+    section: 'Documentation',
+    links: [
+      { href: '/docs', label: 'Aperçu & installation' },
+    ],
+  },
+  {
     section: 'Chat',
     links: [
       { href: '/docs/chat/quick-start', label: 'Démarrage rapide' },

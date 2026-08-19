@@ -44,7 +44,7 @@ export type Translations = {
   cta: { title: string; subtitle: string; button: string }
   footer: {
     desc: string
-    cols: { title: string; links: string[] }[]
+    cols: { title: string; links: { label: string; href: string }[] }[]
     rights: string
   }
   checkout: {
@@ -167,9 +167,20 @@ const fr: Translations = {
   footer: {
     desc: "L'extension VS Code qui transforme votre code avec l'intelligence artificielle.",
     cols: [
-      { title: 'Produit', links: ['Fonctionnalités', 'Tarifs', 'Documentation', 'API'] },
-      { title: 'Entreprise', links: ['Contact', 'Support', 'Partenaires', 'Blog'] },
-      { title: 'Légal', links: ['Confidentialité', 'CGU', 'Sécurité', 'Mentions légales'] },
+      { title: 'Produit', links: [
+        { label: 'Fonctionnalités', href: '/#features' },
+        { label: 'Tarifs', href: '/pricing' },
+        { label: 'Documentation', href: '/docs' },
+        { label: 'Changelog', href: '/changelog' },
+      ] },
+      { title: 'Entreprise', links: [
+        { label: 'À propos', href: '/about' },
+        { label: 'Contact', href: '/contact' },
+      ] },
+      { title: 'Légal', links: [
+        { label: 'Confidentialité', href: '/privacy' },
+        { label: 'CGU', href: '/terms' },
+      ] },
     ],
     rights: 'Tous droits réservés.',
   },
@@ -293,9 +304,20 @@ const en: Translations = {
   footer: {
     desc: 'The VS Code extension that transforms your code with artificial intelligence.',
     cols: [
-      { title: 'Product', links: ['Features', 'Pricing', 'Documentation', 'API'] },
-      { title: 'Company', links: ['Contact', 'Support', 'Partners', 'Blog'] },
-      { title: 'Legal', links: ['Privacy', 'Terms', 'Security', 'Legal notice'] },
+      { title: 'Product', links: [
+        { label: 'Features', href: '/#features' },
+        { label: 'Pricing', href: '/pricing' },
+        { label: 'Documentation', href: '/docs' },
+        { label: 'Changelog', href: '/changelog' },
+      ] },
+      { title: 'Company', links: [
+        { label: 'About', href: '/about' },
+        { label: 'Contact', href: '/contact' },
+      ] },
+      { title: 'Legal', links: [
+        { label: 'Privacy', href: '/privacy' },
+        { label: 'Terms', href: '/terms' },
+      ] },
     ],
     rights: 'All rights reserved.',
   },
@@ -419,9 +441,20 @@ const es: Translations = {
   footer: {
     desc: 'La extensión de VS Code que transforma tu código con inteligencia artificial.',
     cols: [
-      { title: 'Producto', links: ['Características', 'Precios', 'Documentación', 'API'] },
-      { title: 'Empresa', links: ['Contacto', 'Soporte', 'Socios', 'Blog'] },
-      { title: 'Legal', links: ['Privacidad', 'Términos', 'Seguridad', 'Aviso legal'] },
+      { title: 'Producto', links: [
+        { label: 'Características', href: '/#features' },
+        { label: 'Precios', href: '/pricing' },
+        { label: 'Documentación', href: '/docs' },
+        { label: 'Changelog', href: '/changelog' },
+      ] },
+      { title: 'Empresa', links: [
+        { label: 'Acerca de', href: '/about' },
+        { label: 'Contacto', href: '/contact' },
+      ] },
+      { title: 'Legal', links: [
+        { label: 'Privacidad', href: '/privacy' },
+        { label: 'Términos', href: '/terms' },
+      ] },
     ],
     rights: 'Todos los derechos reservados.',
   },
@@ -545,9 +578,20 @@ const pt: Translations = {
   footer: {
     desc: 'A extensão VS Code que transforma o seu código com inteligência artificial.',
     cols: [
-      { title: 'Produto', links: ['Funcionalidades', 'Preços', 'Documentação', 'API'] },
-      { title: 'Empresa', links: ['Contacto', 'Suporte', 'Parceiros', 'Blog'] },
-      { title: 'Legal', links: ['Privacidade', 'Termos', 'Segurança', 'Aviso legal'] },
+      { title: 'Produto', links: [
+        { label: 'Funcionalidades', href: '/#features' },
+        { label: 'Preços', href: '/pricing' },
+        { label: 'Documentação', href: '/docs' },
+        { label: 'Changelog', href: '/changelog' },
+      ] },
+      { title: 'Empresa', links: [
+        { label: 'Sobre', href: '/about' },
+        { label: 'Contato', href: '/contact' },
+      ] },
+      { title: 'Legal', links: [
+        { label: 'Privacidade', href: '/privacy' },
+        { label: 'Termos', href: '/terms' },
+      ] },
     ],
     rights: 'Todos os direitos reservados.',
   },

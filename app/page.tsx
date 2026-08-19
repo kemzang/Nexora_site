@@ -1,14 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { LanguageSwitcher } from '@/components/language-switcher'
 import { PlatformsSection } from '@/components/platforms-section'
 import { useTranslation } from '@/lib/i18n/context'
-import { useAuth } from '@/hooks/use-auth'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { GradientText } from '@/components/ui/gradient-text'
 import { GlassCard } from '@/components/ui/glass-card'
 import { Badge } from '@/components/ui/badge'
@@ -16,10 +12,11 @@ import { SectionLayout } from '@/components/patterns/section-layout'
 import { FeatureCard } from '@/components/patterns/feature-card'
 import { StatCard } from '@/components/patterns/stat-card'
 import { PricingCard } from '@/components/patterns/pricing-card'
+import { SiteHeader } from '@/components/patterns/site-header'
+import { SiteFooter } from '@/components/patterns/site-footer'
 import {
   Sparkles, Zap, Code, TrendingUp, CheckCircle, ArrowRight,
   Rocket, Shield, Globe, Terminal, Cpu, Brain, Star,
-  Menu, X, LayoutDashboard
 } from 'lucide-react'
 
 const featureIcons = [Brain, Zap, Code, TrendingUp, Globe, Shield]
@@ -89,92 +86,11 @@ function TerminalMockup() {
 
 export default function HomePage() {
   const { t, lang } = useTranslation()
-  const { user, loading: authLoading } = useAuth()
-  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
 
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-border bg-background/70 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold tracking-tight gradient-text-strong">Nexora</span>
-            </Link>
-
-            <div className="hidden md:flex items-center gap-8">
-              {([['#features', t.nav.features], ['#pricing', t.nav.pricing], ['#docs', t.nav.docs]] as [string, string][]).map(([href, label]) => (
-                <a key={href} href={href} className="text-sm text-muted-foreground hover:text-foreground transition-colors relative group">
-                  {label}
-                  <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-foreground transition-all group-hover:w-full" />
-                </a>
-              ))}
-              <div className="flex items-center gap-2 pl-4 border-l border-border">
-                <LanguageSwitcher />
-                <ThemeToggle />
-                {!authLoading && (
-                  user ? (
-                    <Link href="/dashboard">
-                      <Button size="sm" variant="outline" className="gap-2">
-                        <LayoutDashboard className="w-3.5 h-3.5" />
-                        Dashboard
-                      </Button>
-                    </Link>
-                  ) : (
-                    <>
-                      <Link href="/auth/login">
-                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">{t.nav.login}</Button>
-                      </Link>
-                      <Link href="/auth/register">
-                        <Button size="sm" variant="outline">
-                          {t.nav.start}
-                        </Button>
-                      </Link>
-                    </>
-                  )
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 md:hidden">
-              <LanguageSwitcher compact />
-              <ThemeToggle />
-              <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 rounded-lg hover:bg-accent transition-colors">
-                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="md:hidden py-4 border-t border-border space-y-2"
-            >
-              {([['#features', t.nav.features], ['#pricing', t.nav.pricing], ['#docs', t.nav.docs]] as [string, string][]).map(([href, label]) => (
-                <a key={href} href={href} onClick={() => setMenuOpen(false)} className="block px-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</a>
-              ))}
-              <div className="flex gap-2 pt-2">
-                {user ? (
-                  <Link href="/dashboard" className="flex-1">
-                    <Button className="w-full" variant="outline" size="sm">
-                      <LayoutDashboard className="w-3.5 h-3.5" />Dashboard
-                    </Button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/auth/login" className="flex-1"><Button variant="outline" className="w-full" size="sm">{t.nav.login}</Button></Link>
-                    <Link href="/auth/register" className="flex-1"><Button className="w-full" variant="outline" size="sm">{t.nav.start}</Button></Link>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </nav>
+      <SiteHeader />
 
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
         <div className="orb orb-float-1 w-[700px] h-[700px] bg-foreground/[0.03] top-[5%] left-[-15%]" />
@@ -394,46 +310,7 @@ export default function HomePage() {
         </motion.div>
       </SectionLayout>
 
-      <footer className="border-t border-border relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-16">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <span className="font-bold gradient-text-strong">Nexora</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-4">{t.footer.desc}</p>
-              <LanguageSwitcher />
-            </div>
-            {t.footer.cols.map(col => (
-              <div key={col.title}>
-                <h3 className="text-sm font-semibold mb-4">{col.title}</h3>
-                <ul className="space-y-2.5">
-                  {col.links.map(link => (
-                    <li key={link}>
-                      <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors relative group">
-                        {link}
-                        <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-foreground/30 transition-all group-hover:w-full" />
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Nexora. {t.footer.rights}
-            </p>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/50">
-              <Shield className="w-3 h-3" />
-              <span>Secured by TLS 1.3</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

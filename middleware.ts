@@ -97,8 +97,17 @@ export async function middleware(req: NextRequest) {
     return new NextResponse(null, { status: 204, headers: corsHeaders })
   }
 
-  // Model-proxy: auth pre-check + distributed rate limit
-  if (pathname.startsWith('/api/proxy/model-proxy/')) {
+  // Model-proxy + web/crawl proxy: auth pre-check + distributed rate limit.
+  // /api/proxy/web and /api/proxy/crawl call a paid third-party (Tavily) with
+  // Nexora's own key, same as model-proxy calls paid LLM providers — without
+  // this they'd have real auth (verifyToken, inside the route handler) but no
+  // rate limit, so a valid token could burn the whole Tavily quota alone.
+  const RATE_LIMITED_PREFIXES = [
+    '/api/proxy/model-proxy/',
+    '/api/proxy/web',
+    '/api/proxy/crawl',
+  ]
+  if (RATE_LIMITED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const authHeader = req.headers.get('authorization')
     const token = authHeader?.replace(/^Bearer\s+/i, '').trim()
 
