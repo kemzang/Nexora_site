@@ -17,11 +17,24 @@ async function sha256(text: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, state } = await req.json()
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID requis' }, { status: 400 })
+    // L'identite vient du jeton, JAMAIS du corps de la requete. Cette route
+    // acceptait auparavant un userId arbitraire et emettait un code valide pour
+    // lui : n'importe qui connaissant un identifiant pouvait obtenir un code,
+    // l'echanger contre un jeton et prendre le controle du compte.
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Non authentifie' }, { status: 401 })
     }
+
+    const accessToken = authHeader.slice('Bearer '.length)
+    const { data: authData, error: authError } =
+      await supabase.auth.getUser(accessToken)
+    const userId = authData?.user?.id
+    if (authError || !userId) {
+      return NextResponse.json({ error: 'Session invalide' }, { status: 401 })
+    }
+
+    const { state } = await req.json().catch(() => ({ state: undefined }))
 
     // Clean up previously expired or unused auth codes for this user
     // This prevents accumulation of stale codes in the api_keys table

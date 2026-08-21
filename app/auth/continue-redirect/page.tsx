@@ -28,18 +28,50 @@ export default function Page() {
           return
         }
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser()
-        if (userError || !user) {
+        // getSession() lit la session localement. getUser() faisait un aller-retour
+        // reseau sous verrou : quand il ne rendait pas la main, la page restait
+        // bloquee sur « Authentification en cours… » indefiniment, sans erreur.
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) {
           window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.href)}`
           return
         }
 
-        const response = await fetch('/api/auth/generate-auth-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, state })
-        })
-        const data = await response.json()
+        // Borne de temps : sans elle, une requete qui ne repond pas laisse
+        // l'utilisateur devant un spinner sans fin.
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 15000)
+        let response: Response
+        try {
+          response = await fetch('/api/auth/generate-auth-code', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              // L'identite est prouvee par le jeton ; le serveur ignore tout
+              // userId qu'on lui passerait.
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ state }),
+            signal: controller.signal,
+          })
+        } catch (fetchError) {
+          setStatus('error')
+          setMessage(
+            (fetchError as Error)?.name === 'AbortError'
+              ? "Le serveur n'a pas repondu a temps. Verifie ta connexion et reessaie."
+              : "Impossible de joindre le serveur d'authentification."
+          )
+          return
+        } finally {
+          clearTimeout(timeout)
+        }
+
+        if (response.status === 401) {
+          window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.href)}`
+          return
+        }
+
+        const data = await response.json().catch(() => ({}))
 
         if (!response.ok || !data.success) {
           setStatus('error')
@@ -62,7 +94,9 @@ export default function Page() {
       } catch (err) {
         console.error('Auth error:', err)
         setStatus('error')
-        setMessage('Erreur inattendue lors de l\'authentification')
+        setMessage(
+          `Erreur inattendue : ${err instanceof Error ? err.message : String(err)}`
+        )
       }
     }
 
