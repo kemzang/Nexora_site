@@ -6,6 +6,12 @@ import type { FimModelId } from '@/lib/modelRouter'
 
 export const runtime = 'nodejs'
 
+// Duree max de la fonction. 60 s est le plafond du plan Vercel Hobby, donc
+// cette valeur se deploie sur tous les plans. Sur un plan Pro, elle peut etre
+// montee jusqu'a 300 pour les generations tres longues.
+// Streaming LLM : voir chat/completions.
+export const maxDuration = 60
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!

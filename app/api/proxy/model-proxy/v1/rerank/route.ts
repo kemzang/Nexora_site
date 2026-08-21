@@ -3,6 +3,12 @@ import { verifyToken } from '@/lib/auth-verify'
 
 export const runtime = 'nodejs'
 
+// Duree max de la fonction. 60 s est le plafond du plan Vercel Hobby, donc
+// cette valeur se deploie sur tous les plans. Sur un plan Pro, elle peut etre
+// montee jusqu'a 300 pour les generations tres longues.
+// Rerank : un gros batch peut depasser le defaut Vercel.
+export const maxDuration = 60
+
 /**
  * Reranking endpoint — used by Nexora IDE for codebase search context.
  * Routes to Cohere or falls back to a simple BM25-style score if no key is configured.

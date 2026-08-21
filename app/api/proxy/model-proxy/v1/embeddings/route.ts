@@ -3,6 +3,12 @@ import { verifyToken } from '@/lib/auth-verify'
 
 export const runtime = 'nodejs'
 
+// Duree max de la fonction. 60 s est le plafond du plan Vercel Hobby, donc
+// cette valeur se deploie sur tous les plans. Sur un plan Pro, elle peut etre
+// montee jusqu'a 300 pour les generations tres longues.
+// Embeddings : un gros batch peut depasser le defaut Vercel.
+export const maxDuration = 60
+
 // Embedding providers supported
 const EMBEDDING_ROUTES: Record<string, { url: string; keyEnv: string; minPlan?: string }> = {
   'text-embedding-3-small': {

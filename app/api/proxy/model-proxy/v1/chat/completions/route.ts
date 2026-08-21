@@ -6,6 +6,13 @@ import { cacheGet, cacheSet } from '@/lib/upstash-cache'
 
 export const runtime = 'nodejs'
 
+// Duree max de la fonction. 60 s est le plafond du plan Vercel Hobby, donc
+// cette valeur se deploie sur tous les plans. Sur un plan Pro, elle peut etre
+// montee jusqu'a 300 pour les generations tres longues.
+// Streaming LLM : la generation depasse tres largement le defaut Vercel
+// (10-15 s selon le plan), qui coupait les reponses longues en plein milieu.
+export const maxDuration = 60
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -19,9 +26,58 @@ const supabase = createClient(
 // le plan/quota (jusqu'à 5 min de dérive entre instances). Si Upstash n'est pas
 // configuré (UPSTASH_REDIS_REST_URL absent), cacheGet renvoie toujours null et
 // on retombe exactement sur le comportement L1→Supabase d'origine.
-const planCache = new Map<string, { plan: PlanId; expiresAt: number }>()
-const usageCache = new Map<string, { total: number; expiresAt: number }>()
-const createdAtCache = new Map<string, { createdAt: string; expiresAt: number }>()
+//
+// Ces Map vivent aussi longtemps que l'instance. Sans borne, une instance
+// chaude qui voit passer beaucoup d'utilisateurs distincts les fait grossir
+// indefiniment jusqu'a saturer la memoire de la fonction. BoundedTtlMap plafonne
+// le nombre d'entrees et evince les plus anciennes : le cache reste un cache,
+// pas une fuite.
+const CACHE_MAX_ENTRIES = 5_000
+
+class BoundedTtlMap<V extends { expiresAt: number }> {
+  private map = new Map<string, V>()
+
+  constructor(private readonly maxEntries = CACHE_MAX_ENTRIES) {}
+
+  get(key: string): V | undefined {
+    const entry = this.map.get(key)
+    if (!entry) return undefined
+    if (entry.expiresAt <= Date.now()) {
+      this.map.delete(key)
+      return undefined
+    }
+    // Re-inserer marque l'entree comme recemment utilisee : Map preserve
+    // l'ordre d'insertion, donc la plus ancienne cle est la premiere.
+    this.map.delete(key)
+    this.map.set(key, entry)
+    return entry
+  }
+
+  set(key: string, value: V): void {
+    if (this.map.has(key)) {
+      this.map.delete(key)
+    } else if (this.map.size >= this.maxEntries) {
+      // Purge d'abord ce qui est expire ; si tout est encore valide, evince
+      // l'entree la plus anciennement utilisee.
+      const now = Date.now()
+      for (const [k, v] of this.map) {
+        if (v.expiresAt <= now) this.map.delete(k)
+      }
+      if (this.map.size >= this.maxEntries) {
+        const oldest = this.map.keys().next()
+        if (!oldest.done) this.map.delete(oldest.value)
+      }
+    }
+    this.map.set(key, value)
+  }
+}
+
+const planCache = new BoundedTtlMap<{ plan: PlanId; expiresAt: number }>()
+const usageCache = new BoundedTtlMap<{ total: number; expiresAt: number }>()
+const createdAtCache = new BoundedTtlMap<{
+  createdAt: string
+  expiresAt: number
+}>()
 
 const MAX_TOKENS_PER_PLAN: Record<PlanId, number> = {
   free: 2048,
@@ -172,6 +228,35 @@ async function getUserCreatedAt(userId: string): Promise<string | undefined> {
   return createdAt
 }
 
+/**
+ * Somme des crédits du mois. Passe par la fonction SQL get_monthly_usage
+ * (migration 005) pour que l'agrégation se fasse dans Postgres : sans elle on
+ * rapatriait toutes les lignes du mois pour n'en tirer qu'un entier.
+ *
+ * Repli sur l'ancien calcul si la fonction n'existe pas encore, pour que le
+ * code puisse être déployé avant la migration sans bloquer les utilisateurs.
+ */
+async function sumMonthlyUsage(userId: string, since: string): Promise<number> {
+  const { data, error } = await supabase.rpc('get_monthly_usage', {
+    p_user_id: userId,
+    p_since: since,
+  })
+
+  if (!error && data !== null && data !== undefined) {
+    return Number(data) || 0
+  }
+
+  const { data: rows } = await supabase
+    .from('usage_sessions')
+    .select('tokens_input, tokens_total')
+    .gte('started_at', since)
+    .eq('user_id', userId)
+  return (rows ?? []).reduce(
+    (sum, r) => sum + (r.tokens_total ?? r.tokens_input ?? 0),
+    0,
+  )
+}
+
 async function checkMonthlyLimit(userId: string, plan: PlanId): Promise<string | null> {
   const createdAt = await getUserCreatedAt(userId)
   const planLimit = getEffectiveTokenLimit(plan, createdAt)
@@ -190,12 +275,7 @@ async function checkMonthlyLimit(userId: string, plan: PlanId): Promise<string |
 
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const { data } = await supabase
-    .from('usage_sessions')
-    .select('tokens_input, tokens_total')
-    .gte('started_at', startOfMonth)
-    .eq('user_id', userId)
-  const usage = (data ?? []).reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
+  const usage = await sumMonthlyUsage(userId, startOfMonth)
   usageCache.set(userId, { total: usage, expiresAt: Date.now() + 60_000 })
   void cacheSet(`usage:${userId}`, usage, 60)
   return usage >= planLimit ? planLimit.toString() : null
