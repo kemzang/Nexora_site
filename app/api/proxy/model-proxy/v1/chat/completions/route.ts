@@ -79,14 +79,27 @@ const createdAtCache = new BoundedTtlMap<{
   expiresAt: number
 }>()
 
+/*
+ * Plafond de tokens de SORTIE par requete.
+ *
+ * Le palier gratuit etait a 2048, en dessous des 4096 que l'extension demande :
+ * chaque reponse etait donc tronquee, et une reponse coupee en plein milieu
+ * d'une fonction rend du code syntaxiquement casse. L'utilisateur relance
+ * alors sa demande — ce qui coute PLUS cher qu'une reponse complete du premier
+ * coup, en plus de donner l'impression que le modele est mauvais.
+ *
+ * Un plafond bas n'economise donc rien : il transforme une requete utile en
+ * deux requetes inutilisables. 4096 est le minimum viable pour de la
+ * generation de code.
+ */
 const MAX_TOKENS_PER_PLAN: Record<PlanId, number> = {
-  free: 2048,
-  test1: 4096,
-  test2: 4096,
-  starter: 4096,
-  pro: 8192,
-  business: 16384,
-  enterprise: 32768,
+  free: 4096,
+  test1: 8192,
+  test2: 8192,
+  starter: 8192,
+  pro: 16384,
+  business: 32768,
+  enterprise: 64000,
 }
 
 const API_ROUTES: Record<string, { baseUrl: string; keyEnv: string; format: 'openai' | 'anthropic' | 'gemini' }> = {
