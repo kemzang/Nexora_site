@@ -166,7 +166,7 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
               <Card className="glass group hover:glass-hover transition-all duration-300 cursor-default overflow-hidden">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-semibold">{stat.label}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">{stat.label}</p>
                     <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${stat.bg} flex items-center justify-center group-hover:scale-110 transition-transform ring-1 ${stat.ring}`}>
                       <stat.icon className={`w-4 h-4 ${stat.color}`} />
                     </div>

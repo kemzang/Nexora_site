@@ -65,7 +65,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <nav className="space-y-6 sticky top-24">
             {docLinks.map(section => (
               <div key={section.section}>
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 px-2">{section.section}</p>
+                <p className="text-xs uppercase tracking-widest font-semibold text-muted-foreground mb-2 px-2">{section.section}</p>
                 {section.links.map(link => (
                   <Link
                     key={link.href}

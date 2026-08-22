@@ -67,7 +67,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Le plan Free expire-t-il ?',
-    a: "Non — le plan Free reste disponible aussi longtemps que vous le souhaitez. Vous recevez 100 000 crédits dès l'inscription (valables votre premier mois), puis 10 000 crédits par mois ensuite.",
+    a: "Non — le plan Free reste disponible aussi longtemps que vous le souhaitez, avec 100 000 crédits chaque mois.",
   },
   {
     q: 'Puis-je collaborer avec mon équipe ?',
@@ -198,7 +198,7 @@ export default function PricingPageClient() {
           </table>
         </div>
         <p className="text-center text-xs text-muted-foreground/70 mt-6 max-w-2xl mx-auto">
-          L'autocomplétion nécessite le plan Starter ou supérieur. Le plan Free inclut 100 000 crédits le premier mois, puis 10 000 crédits/mois.
+          L'autocomplétion nécessite le plan Starter ou supérieur. Le plan Free inclut 100 000 crédits chaque mois.
         </p>
       </SectionLayout>
 

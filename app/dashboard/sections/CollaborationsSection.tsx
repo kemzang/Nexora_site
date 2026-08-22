@@ -168,7 +168,7 @@ export default function CollaborationsSection() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">
                       Créée le {formatDate(room.created_at)}
                     </p>
                   </div>

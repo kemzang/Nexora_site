@@ -111,7 +111,7 @@ export default function ChatQuickStartPage() {
 
       <h2 className="text-xl font-bold mb-5">Commandes clavier</h2>
       <div className="rounded-xl border border-border/60 overflow-hidden text-sm">
-        <div className="bg-white/[0.03] px-4 py-2.5 grid grid-cols-2 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+        <div className="bg-white/[0.03] px-4 py-2.5 grid grid-cols-2 text-xs uppercase tracking-widest text-muted-foreground font-semibold">
           <span>Action</span>
           <span>Raccourci</span>
         </div>

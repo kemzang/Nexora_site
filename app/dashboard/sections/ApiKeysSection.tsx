@@ -301,7 +301,7 @@ export default function ApiKeysSection() {
                         <Clock className="w-3 h-3" />{timeAgo(key.last_used_at)}
                       </span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">Créée le {formatDate(key.created_at)}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">Créée le {formatDate(key.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {deleteConfirm === key.id ? (

@@ -108,12 +108,12 @@ function InvoiceModal({ invoice, user, onClose }: { invoice: Invoice; user: User
           {/* Billing info */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">De</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">De</p>
               <p className="text-sm font-semibold">Nexora SAS</p>
               <p className="text-xs text-muted-foreground">Plateforme IA pour développeurs</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Facturé à</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Facturé à</p>
               <p className="text-sm font-semibold">{user.firstName} {user.lastName}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
@@ -121,7 +121,7 @@ function InvoiceModal({ invoice, user, onClose }: { invoice: Invoice; user: User
 
           {/* Items */}
           <div className="rounded-xl border border-border/60 overflow-hidden">
-            <div className="bg-white/[0.03] px-4 py-2.5 grid grid-cols-3 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            <div className="bg-white/[0.03] px-4 py-2.5 grid grid-cols-3 text-xs uppercase tracking-widest text-muted-foreground font-semibold">
               <span className="col-span-2">Description</span>
               <span className="text-right">Montant</span>
             </div>
@@ -241,7 +241,7 @@ export default function FacturesSection() {
           ) : (
             <div className="space-y-2">
               {/* Table header */}
-              <div className="hidden sm:grid grid-cols-[1fr_120px_140px_100px_auto] gap-4 px-4 py-2 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+              <div className="hidden sm:grid grid-cols-[1fr_120px_140px_100px_auto] gap-4 px-4 py-2 text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                 <span>Facture</span>
                 <span>Montant</span>
                 <span>Période</span>

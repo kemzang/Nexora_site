@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
+import { PLANS } from '@/lib/models'
 import Link from 'next/link'
 
 interface SubscriptionData {
@@ -154,15 +155,20 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
           features: Array.isArray(plan.features) ? plan.features : [],
         })
       } else {
+        // Pas de ligne user_subscriptions active = plan Free. On lit les
+        // chiffres depuis PLANS.free (lib/models.ts) plutôt que de les
+        // dupliquer ici, pour ne plus jamais désynchroniser cet affichage de
+        // la limite réellement appliquée côté serveur (chat/completions).
+        const freePlan = PLANS.free
         setSub({
-          planName: 'Free',
-          planSlug: 'free',
-          price: 0,
-          tokensPerMonth: 10000,
-          tokensRemaining: Math.max(0, 10000 - tokensUsed),
+          planName: freePlan.name,
+          planSlug: freePlan.id,
+          price: freePlan.price,
+          tokensPerMonth: freePlan.tokensPerMonth,
+          tokensRemaining: Math.max(0, freePlan.tokensPerMonth - tokensUsed),
           renewalDate: null,
           status: 'active',
-          features: ['100K tokens le 1er mois, puis 10K/mois', '200 requêtes/jour', 'DeepSeek V3 & Gemini Flash'],
+          features: freePlan.features,
         })
       }
     } catch {
@@ -284,7 +290,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
                 className="relative"
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] font-semibold shadow-lg">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold shadow-lg">
                     ⭐ Populaire
                   </div>
                 )}

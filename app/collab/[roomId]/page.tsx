@@ -50,7 +50,7 @@ function MessageBubble({ msg, myUserId }: { msg: CollabMessage; myUserId: string
         {isAI ? 'AI' : msg.sender_name[0]?.toUpperCase() ?? '?'}
       </div>
       <div className={`max-w-[75%] flex flex-col gap-0.5 ${isMe ? 'items-end' : 'items-start'}`}>
-        <span className="text-[11px] text-slate-400 px-1">
+        <span className="text-xs text-slate-400 px-1">
           {isMe ? 'Vous' : msg.sender_name} · {time}
         </span>
         <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
@@ -59,7 +59,7 @@ function MessageBubble({ msg, myUserId }: { msg: CollabMessage; myUserId: string
           : 'bg-white text-slate-800 border border-slate-100 rounded-tl-sm'
         }`}>
           {isAI && (
-            <span className="block text-[10px] font-semibold text-foreground/70 mb-1 uppercase tracking-wider">
+            <span className="block text-xs font-semibold text-foreground/70 mb-1 uppercase tracking-wider">
               {msg.model_id ?? 'AI'}
             </span>
           )}
@@ -342,7 +342,7 @@ export default function CollabRoomPage() {
         {/* Members sidebar */}
         <aside className="hidden md:flex flex-col w-44 border-r border-slate-100 bg-white overflow-y-auto">
           <div className="px-3 py-2.5 border-b border-slate-50">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">En ligne</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">En ligne</p>
           </div>
           {members.map(m => (
             <div key={m.user_id} className="flex items-center gap-2 px-3 py-2">
@@ -356,7 +356,7 @@ export default function CollabRoomPage() {
             <p className="text-xs text-slate-400 px-3 py-3">Aucun membre en ligne</p>
           )}
           <div className="mt-auto border-t border-slate-100 p-3">
-            <a href={vscodeLink} className="flex items-center gap-1.5 text-[11px] text-foreground/80 hover:text-foreground font-medium">
+            <a href={vscodeLink} className="flex items-center gap-1.5 text-xs text-foreground/80 hover:text-foreground font-medium">
               <ExternalLink className="w-3 h-3" />
               Ouvrir dans VS Code
             </a>
@@ -403,7 +403,7 @@ export default function CollabRoomPage() {
                 <Send className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1.5 px-1">
+            <p className="text-xs text-slate-400 mt-1.5 px-1">
               Les réponses IA s'affichent en temps réel depuis VS Code
             </p>
           </div>

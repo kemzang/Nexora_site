@@ -179,9 +179,9 @@ function AreaChart({ data, period }: AreaChartProps) {
             transform: 'translate(-50%, -100%)',
           }}
         >
-          <p className="text-[11px] text-muted-foreground mb-0.5">{new Date(hovered.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <p className="text-xs text-muted-foreground mb-0.5">{new Date(hovered.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           <p className="font-bold text-sm text-foreground">{hovered.tokens.toLocaleString('fr-FR')} tokens</p>
-          <p className="text-[11px] text-muted-foreground">{hovered.requests} requête{hovered.requests > 1 ? 's' : ''}</p>
+          <p className="text-xs text-muted-foreground">{hovered.requests} requête{hovered.requests > 1 ? 's' : ''}</p>
         </div>
       )}
     </div>
@@ -308,7 +308,7 @@ export default function UtilisationSection() {
             <Card className="glass">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">{s.label}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">{s.label}</p>
                   <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${s.bg} flex items-center justify-center`}>
                     <s.icon className={`w-3.5 h-3.5 ${s.color}`} />
                   </div>

@@ -46,7 +46,7 @@ function InstallCard({
       {code && (
         <>
           <CodeBlock code={code} />
-          {codeNote && <p className="text-[11px] text-muted-foreground/70 -mt-2 mb-1">{codeNote}</p>}
+          {codeNote && <p className="text-xs text-muted-foreground/70 -mt-2 mb-1">{codeNote}</p>}
         </>
       )}
       <div className="flex-1" />
@@ -78,7 +78,7 @@ function FeatureDocCard({
           <Icon className="w-4 h-4 text-foreground/70" />
         </div>
         {badge && (
-          <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground/80 px-2 py-0.5 rounded-full border border-border/60">{badge}</span>
+          <span className="text-xs uppercase tracking-wide font-semibold text-muted-foreground/80 px-2 py-0.5 rounded-full border border-border/60">{badge}</span>
         )}
       </div>
       <h3 className="font-semibold text-sm mb-1">{title}</h3>

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
+import { PLANS } from '@/lib/models'
+import { getUserPlan, isMonthlyCallLimitReached, recordCall } from '@/lib/quota'
 
 export const runtime = 'nodejs'
 
@@ -87,6 +89,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'web search not configured' }, { status: 503 })
     }
 
+    // ── Quota — Tavily bills per call, so cap it per plan/month like model
+    // tokens (see lib/quota.ts). Independent of the flat per-IP rate limit in
+    // middleware.ts, which only guards against short bursts, not sustained
+    // monthly cost from a single valid token.
+    const userPlan = await getUserPlan(userId)
+    const searchLimit = PLANS[userPlan].webSearchesPerMonth
+    if (await isMonthlyCallLimitReached(userId, 'web_search', searchLimit)) {
+      const now = new Date()
+      const retryAfter = Math.ceil(
+        (new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime() - now.getTime()) / 1000,
+      )
+      return NextResponse.json(
+        {
+          error: `Monthly web search limit reached (${searchLimit}). Upgrade your plan to continue.`,
+          code: 'WEB_SEARCH_LIMIT_REACHED',
+          plan: userPlan,
+          limit: searchLimit,
+          retry_after: retryAfter,
+        },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } },
+      )
+    }
+
     // ── Upstream call ───────────────────────────────────────────────────────
     let upstreamResp: Response
     try {
@@ -153,6 +178,8 @@ export async function POST(req: NextRequest) {
           uri: { type: 'url', value: r.url },
         }
       })
+
+    await recordCall(userId, 'web_search', { n: maxResults })
 
     return NextResponse.json(contextItems)
   } catch (err) {

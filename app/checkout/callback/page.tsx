@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 
 function CallbackContent() {
   const searchParams = useSearchParams()
@@ -17,10 +18,54 @@ function CallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading')
 
   useEffect(() => {
-    const reference = searchParams.get('reference')
+    const provider = searchParams.get('provider')
     const urlStatus = searchParams.get('status')
-
     if (urlStatus === 'canceled') { setStatus('failed'); return }
+
+    // ── Lemon Squeezy : pas de statut à interroger côté fournisseur — la
+    // vraie activation vient d'un webhook asynchrone (app/api/webhooks/
+    // lemonsqueezy). On sonde donc notre propre backend jusqu'à ce que le
+    // plan attendu apparaisse (généralement quelques secondes).
+    if (provider === 'lemonsqueezy') {
+      const expectedPlan = searchParams.get('plan')
+      let attempts = 0
+      const MAX_ATTEMPTS = 15 // ~30s à 2s d'intervalle
+
+      const poll = async () => {
+        attempts++
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          const authToken = session?.access_token
+          const res = await fetch('/api/proxy/ide/credits', {
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+          })
+          const data = await res.json()
+          if (data.plan && (!expectedPlan || data.plan === expectedPlan)) {
+            setStatus('success')
+            showToast('Paiement confirmé !', 'success')
+            setTimeout(() => router.push('/dashboard'), 2500)
+            return
+          }
+        } catch { /* on retente */ }
+
+        if (attempts >= MAX_ATTEMPTS) {
+          // Le paiement a probablement réussi (Lemon Squeezy nous a renvoyés
+          // ici) mais le webhook n'est pas encore arrivé — on ne montre pas
+          // "échec", on renvoie vers le dashboard qui reflétera l'état dès
+          // que le webhook aura été traité.
+          showToast('Paiement en cours de confirmation — ça va apparaître dans quelques instants.', 'info')
+          router.push('/dashboard')
+          return
+        }
+        setTimeout(poll, 2000)
+      }
+
+      poll()
+      return
+    }
+
+    // ── Autres fournisseurs (legacy) : vérification synchrone par référence.
+    const reference = searchParams.get('reference')
     if (!reference) { setStatus('failed'); return }
 
     const verify = async () => {

@@ -165,7 +165,7 @@ export function PlatformsSection({ lang }: { lang: Lang }) {
             <VSCodeLogo className="w-11 h-11" />
             <div>
               <h3 className="font-semibold text-foreground text-lg leading-tight">VS Code</h3>
-              <p className="text-[11px] text-muted-foreground">Visual Studio Code</p>
+              <p className="text-xs text-muted-foreground">Visual Studio Code</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.vscodeDesc}</p>
@@ -189,7 +189,7 @@ export function PlatformsSection({ lang }: { lang: Lang }) {
             <JetBrainsLogo className="w-11 h-11" />
             <div>
               <h3 className="font-semibold text-foreground text-lg leading-tight">JetBrains</h3>
-              <p className="text-[11px] text-muted-foreground">Toute la suite</p>
+              <p className="text-xs text-muted-foreground">Toute la suite</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">{t.jetbrainsDesc}</p>
@@ -197,7 +197,7 @@ export function PlatformsSection({ lang }: { lang: Lang }) {
             {JETBRAINS_IDES.map((ide) => (
               <span
                 key={ide}
-                className="px-2 py-0.5 rounded-md bg-muted border border-border text-[10px] text-muted-foreground"
+                className="px-2 py-0.5 rounded-md bg-muted border border-border text-xs text-muted-foreground"
               >
                 {ide}
               </span>
@@ -222,11 +222,11 @@ export function PlatformsSection({ lang }: { lang: Lang }) {
             </div>
             <div>
               <h3 className="font-semibold text-foreground text-lg leading-tight">CLI</h3>
-              <p className="text-[11px] text-muted-foreground">Ligne de commande</p>
+              <p className="text-xs text-muted-foreground">Ligne de commande</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t.cliDesc}</p>
-          <p className="text-[11px] text-muted-foreground/70 mt-5 mb-1.5">{t.cliHint}</p>
+          <p className="text-xs text-muted-foreground/70 mt-5 mb-1.5">{t.cliHint}</p>
           <button
             onClick={copyCli}
             className="flex items-center justify-between gap-2 w-full rounded-lg bg-muted border border-border px-3 py-2.5 font-mono text-xs text-foreground/70 hover:border-foreground/20 transition-colors"

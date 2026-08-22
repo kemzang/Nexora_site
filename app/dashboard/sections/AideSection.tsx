@@ -107,7 +107,7 @@ export default function AideSection() {
                   <step.icon className={`w-4.5 h-4.5 ${step.color}`} />
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground font-mono mb-0.5">ÉTAPE {step.step}</p>
+                  <p className="text-xs text-muted-foreground font-mono mb-0.5">ÉTAPE {step.step}</p>
                   <p className="text-sm font-semibold">{step.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{step.desc}</p>
                 </div>

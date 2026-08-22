@@ -126,7 +126,7 @@ export default function DashboardPage() {
             <NexoraLogo />
             <div>
               <span className="font-bold text-sm text-foreground tracking-tight">Nexora</span>
-              <span className="block text-[10px] text-muted-foreground/70 leading-none mt-0.5">Dashboard</span>
+              <span className="block text-xs text-muted-foreground/70 leading-none mt-0.5">Dashboard</span>
             </div>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors">
@@ -136,7 +136,7 @@ export default function DashboardPage() {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 flex flex-col gap-1.5 overflow-y-auto">
-          <p className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-[0.12em] px-3 mb-2">
+          <p className="text-xs font-semibold text-muted-foreground/40 uppercase tracking-[0.12em] px-3 mb-2">
             Navigation
           </p>
           {sidebarLinks.map(link => {
@@ -176,7 +176,7 @@ export default function DashboardPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-foreground text-xs font-semibold truncate">{user.firstName} {user.lastName}</p>
-              <p className="text-muted-foreground/60 text-[10px] truncate mt-0.5">{user.email}</p>
+              <p className="text-muted-foreground/60 text-xs truncate mt-0.5">{user.email}</p>
             </div>
           </div>
           <div className="flex gap-2">
