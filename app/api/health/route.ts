@@ -22,6 +22,27 @@ export async function GET(req: NextRequest) {
     checks.database = 'down'
   }
 
+  // Presence des cles fournisseur. Cet endpoint est public : on n'expose
+  // JAMAIS la valeur ni un fragment, seulement si la variable est definie.
+  // Cela repond a « la cle est-elle bien posee en production ? » ; savoir si
+  // c'est la BONNE cle ne peut se verifier qu'en envoyant une vraie requete.
+  const providers: Record<string, boolean> = {
+    deepseek: !!process.env.DEEPSEEK_API_KEY,
+    gemini: !!process.env.GEMINI_API_KEY,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    cohere_rerank: !!process.env.COHERE_API_KEY,
+    tavily_web: !!process.env.TAVILY_API_KEY,
+  }
+
+  // Sans DeepSeek ni Gemini, aucun modele du palier gratuit ne repond.
+  if (!providers.deepseek && !providers.gemini) {
+    checks.models = 'down'
+  } else if (!providers.deepseek || !providers.gemini) {
+    checks.models = 'degraded'
+  } else {
+    checks.models = 'ok'
+  }
+
   const allOk = Object.values(checks).every(v => v === 'ok')
   const anyDown = Object.values(checks).some(v => v === 'down')
 
@@ -35,6 +56,7 @@ export async function GET(req: NextRequest) {
     latency_ms: Date.now() - t0,
     version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     services: checks,
+    providers,
     proxy: 'nexora-mu-henna.vercel.app',
   }
 
