@@ -90,7 +90,14 @@ export default function Page() {
         setStatus('success')
         setMessage('Authentification réussie ! Redirection vers ton éditeur…')
 
-        setTimeout(() => { window.location.href = editorUrl.toString() }, 1500)
+        // Le lien vscode:// passe la main a l'editeur mais laisse l'onglet
+        // ouvert sur cette page, qui n'a plus rien a montrer. On enchaine sur
+        // le dashboard : l'utilisateur atterrit sur quelque chose d'utile
+        // plutot que sur un ecran de transition fige.
+        setTimeout(() => {
+          window.location.href = editorUrl.toString()
+          setTimeout(() => { window.location.href = '/dashboard' }, 2000)
+        }, 1500)
       } catch (err) {
         console.error('Auth error:', err)
         setStatus('error')
@@ -141,7 +148,8 @@ export default function Page() {
             </div>
             <p className="text-emerald-400 font-medium">{message}</p>
             <p className="text-muted-foreground text-sm">
-              Si ton éditeur ne s'ouvre pas automatiquement, fermez cette fenêtre.
+              Si ton éditeur ne s'ouvre pas, tu peux fermer cette fenêtre.
+              Sinon, tu vas être redirigé vers ton tableau de bord.
             </p>
           </div>
         )}

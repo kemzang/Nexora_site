@@ -41,6 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth()
 
+    // Filet de securite : tant que `loading` est vrai, l'en-tete du site
+    // n'affiche NI les boutons de connexion NI le lien Dashboard. Une promesse
+    // d'auth qui pend laissait donc une barre de navigation amputee, sans
+    // aucune erreur visible. Au pire on affiche l'etat deconnecte, ce qui est
+    // recuperable ; rester bloque ne l'est pas.
+    const failsafe = setTimeout(() => setLoading(false), 8000)
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: any, session: any) => {
@@ -55,7 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(failsafe)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (credentials: LoginCredentials) => {

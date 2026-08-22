@@ -93,9 +93,31 @@ export class AuthService {
     }
   }
 
+  /**
+   * getUser() interroge le serveur sous verrou et peut ne jamais rendre la main :
+   * ni le catch ni un finally ne s'executent alors, et tout appelant qui
+   * l'attend reste bloque — c'est ce qui laissait l'en-tete du site sans bouton
+   * de connexion et la page d'authentification en chargement perpetuel.
+   *
+   * La session locale porte deja l'utilisateur : on la lit d'abord, sans reseau.
+   * getUser() ne sert plus que de repli, borne dans le temps.
+   */
   static async getCurrentUser(): Promise<AuthUser | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        return this.mapAuthUser(session.user)
+      }
+
+      const timeout = new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), 5000),
+      )
+      const lookup = supabase.auth
+        .getUser()
+        .then(({ data }) => data?.user ?? null)
+        .catch(() => null)
+
+      const user = await Promise.race([lookup, timeout])
       return user ? this.mapAuthUser(user) : null
     } catch (error) {
       return null
