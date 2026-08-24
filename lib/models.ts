@@ -26,8 +26,12 @@ export interface Plan {
   price: number
   priceLabel: string
   tokensPerMonth: number
-  firstMonthTokens?: number
   maxRequestsPerDay: number
+  // Appels /api/proxy/web (recherche) et /api/proxy/crawl (crawl) autorisés
+  // par mois — Tavily facture au call, pas au token, donc distinct de
+  // tokensPerMonth. Voir lib/quota.ts. 99999 = illimité (Enterprise).
+  webSearchesPerMonth: number
+  webCrawlsPerMonth: number
   // Nombre max de personnes dans une session de collaboration (propriétaire
   // inclus). 99999 = illimité (Enterprise).
   maxCollaborators: number
@@ -146,13 +150,14 @@ export const PLANS: Record<PlanId, Plan> = {
     nameFr: 'Découverte',
     price: 0,
     priceLabel: '$0',
-    tokensPerMonth: 10000,
-    firstMonthTokens: 100000,
+    tokensPerMonth: 100000,
     maxRequestsPerDay: 200,
+    webSearchesPerMonth: 30,
+    webCrawlsPerMonth: 5,
     maxCollaborators: 1,
     models: ['deepseek-chat', 'gemini-flash'],
     features: [
-      '100K crédits le 1er mois, puis 10K/mois',
+      '100 000 crédits/mois',
       '200 requêtes/jour',
       'DeepSeek V3 & Gemini Flash',
       'Chat IA + Autocomplétion',
@@ -169,6 +174,8 @@ export const PLANS: Record<PlanId, Plan> = {
     // Petit budget volontaire : sert juste à tester le parcours payant.
     tokensPerMonth: 30000,
     maxRequestsPerDay: 200,
+    webSearchesPerMonth: 50,
+    webCrawlsPerMonth: 8,
     maxCollaborators: 2,
     durationDays: 7,
     isTest: true,
@@ -188,6 +195,8 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$2',
     tokensPerMonth: 50000,
     maxRequestsPerDay: 200,
+    webSearchesPerMonth: 80,
+    webCrawlsPerMonth: 12,
     maxCollaborators: 2,
     durationDays: 14,
     isTest: true,
@@ -207,6 +216,8 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$5',
     tokensPerMonth: 4000000,
     maxRequestsPerDay: 500,
+    webSearchesPerMonth: 200,
+    webCrawlsPerMonth: 25,
     maxCollaborators: 2,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro'],
     features: [
@@ -225,6 +236,8 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$12',
     tokensPerMonth: 15000000,
     maxRequestsPerDay: 2000,
+    webSearchesPerMonth: 800,
+    webCrawlsPerMonth: 100,
     maxCollaborators: 5,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'claude-sonnet'],
     modelsLabel: 'DeepSeek, Gemini, Claude Haiku & Sonnet',
@@ -245,6 +258,8 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$30',
     tokensPerMonth: 40000000,
     maxRequestsPerDay: 5000,
+    webSearchesPerMonth: 2500,
+    webCrawlsPerMonth: 300,
     maxCollaborators: 20,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'claude-sonnet', 'claude-opus'],
     features: [
@@ -263,6 +278,8 @@ export const PLANS: Record<PlanId, Plan> = {
     priceLabel: '$80',
     tokensPerMonth: 100000000,
     maxRequestsPerDay: 99999,
+    webSearchesPerMonth: 99999,
+    webCrawlsPerMonth: 99999,
     maxCollaborators: 99999,
     models: ['deepseek-chat', 'gemini-flash', 'gemini-pro', 'claude-haiku', 'claude-sonnet', 'claude-opus'],
     features: [
@@ -297,14 +314,11 @@ export function computeCreditsConsumed(
   return Math.ceil(totalTokens * getCreditMultiplier(modelId))
 }
 
-// Retourne la limite mensuelle effective : 100K le 1er mois pour free, 10K ensuite
+// Limite mensuelle du plan. `userCreatedAt` n'est plus utilisé pour un bonus
+// premier mois (tous les plans ont un montant mensuel fixe désormais), mais
+// reste dans la signature pour ne pas casser les appelants existants.
 export function getEffectiveTokenLimit(planId: PlanId, userCreatedAt?: string): number {
-  const plan = PLANS[planId]
-  if (planId === 'free' && plan.firstMonthTokens && userCreatedAt) {
-    const ageInDays = (Date.now() - new Date(userCreatedAt).getTime()) / 86_400_000
-    if (ageInDays <= 30) return plan.firstMonthTokens
-  }
-  return plan.tokensPerMonth
+  return PLANS[planId].tokensPerMonth
 }
 
 function getLastMessage(messages: ComplexMessage[]): string {
