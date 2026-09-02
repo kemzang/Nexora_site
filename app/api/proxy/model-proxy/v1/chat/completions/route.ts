@@ -128,14 +128,21 @@ interface UsageContext {
 async function recordUsage(ctx: UsageContext, outputTokens: number): Promise<void> {
   const credits = computeCreditsConsumed(ctx.modelId, ctx.inputTokens, outputTokens)
   try {
-    await supabase.from('usage_sessions').insert({
+    const { error } = await supabase.from('usage_sessions').insert({
       user_id: ctx.userId,
       // started_at explicite : le dashboard ET le quota filtrent par started_at >=
       // début du mois. Sans valeur (si la colonne n'a pas de défaut DB), les lignes
       // seraient exclues → conso affichée à 0 et quota jamais décompté.
       started_at: new Date().toISOString(),
       session_type: 'chat_proxy',
-      model_id: ctx.modelId,
+      // PAS model_id : cette colonne est une UUID FK vers ai_models(id), pas
+      // un slug texte. ctx.modelId vaut "deepseek-chat"/"claude-sonnet"/etc,
+      // donc l'y mettre faisait echouer l'insert a chaque appel (erreur
+      // "invalid input syntax for type uuid") — silencieusement, avalee par
+      // le catch ci-dessous. Resultat verifie en base : usage_sessions restait
+      // a zero ligne pour TOUT le monde, quel que soit l'usage reel. Le slug
+      // est deja conserve dans metadata.model plus bas ; recordCall() dans
+      // lib/quota.ts evite deja ce meme piege, avec le meme commentaire.
       tokens_input: ctx.inputTokens,
       tokens_output: outputTokens,
       tokens_total: credits, // crédits pondérés — c'est ce qui décompte le quota
@@ -148,8 +155,15 @@ async function recordUsage(ctx: UsageContext, outputTokens: number): Promise<voi
         creditMultiplier: credits / Math.max(1, ctx.inputTokens + outputTokens),
       },
     })
-  } catch {
-    // tracking best-effort — ne jamais casser la réponse
+    if (error) {
+      // Le suivi reste best-effort (on ne casse jamais la réponse pour ça),
+      // mais une erreur d'insert doit rester visible dans les logs Vercel —
+      // avant ce correctif, un catch muet a fait disparaître ce type de bug
+      // pendant des mois sans qu'aucune alerte ne remonte nulle part.
+      console.error('[model-proxy] recordUsage insert failed:', error)
+    }
+  } catch (err) {
+    console.error('[model-proxy] recordUsage threw:', err)
   }
 }
 
