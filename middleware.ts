@@ -102,10 +102,16 @@ export async function middleware(req: NextRequest) {
   // Nexora's own key, same as model-proxy calls paid LLM providers — without
   // this they'd have real auth (verifyToken, inside the route handler) but no
   // rate limit, so a valid token could burn the whole Tavily quota alone.
+  //
+  // collab/rooms and keys/create use the exact same Bearer nxr_/eyJ contract
+  // (verifyToken() inside the route, 401 without it) — same treatment closes
+  // the same gap: unlimited room/key creation for any authenticated account.
   const RATE_LIMITED_PREFIXES = [
     '/api/proxy/model-proxy/',
     '/api/proxy/web',
     '/api/proxy/crawl',
+    '/api/collab/rooms',
+    '/api/keys/create',
   ]
   if (RATE_LIMITED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const authHeader = req.headers.get('authorization')
@@ -166,9 +172,60 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
+  // payments/* (auth optionnelle selon la route — pas le meme contrat
+  // nxr_/eyJ strict que ci-dessus) et le webhook Lemon Squeezy (authentifie
+  // par signature HMAC a l'interieur du handler, pas par Bearer token) :
+  // rate-limit IP seule, sans exiger de format de token en amont, pour ne
+  // pas casser leur logique d'auth existante tout en fermant le meme trou
+  // (aucune limite de debit avant aujourd'hui).
+  const IP_ONLY_RATE_LIMITED_PREFIXES = [
+    '/api/payments/',
+    '/api/webhooks/lemonsqueezy',
+  ]
+  if (IP_ONLY_RATE_LIMITED_PREFIXES.some((p) => pathname.startsWith(p))) {
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1'
+
+    const { allowed, remaining, resetIn } = await checkRateLimit(ip)
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded', retry_after: resetIn },
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Retry-After': String(resetIn),
+            'X-RateLimit-Limit': String(RATE_MAX_REQUESTS),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + resetIn),
+          },
+        },
+      )
+    }
+
+    const res = NextResponse.next()
+    Object.entries({
+      ...corsHeaders,
+      'X-RateLimit-Limit': String(RATE_MAX_REQUESTS),
+      'X-RateLimit-Remaining': String(remaining),
+      'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000) + resetIn),
+    }).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/api/proxy/:path*', '/api/auth/:path*'],
+  matcher: [
+    '/api/proxy/:path*',
+    '/api/auth/:path*',
+    '/api/collab/:path*',
+    '/api/keys/:path*',
+    '/api/payments/:path*',
+    '/api/webhooks/:path*',
+  ],
 }

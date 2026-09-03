@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
 import { selectBestModel, hasImageContent, estimateTokens, getEffectiveTokenLimit, computeCreditsConsumed, type ModelId, type PlanId } from '@/lib/models'
 import { cacheGet, cacheSet } from '@/lib/upstash-cache'
+import { captureServerError } from '@/lib/sentry'
 
 export const runtime = 'nodejs'
 
@@ -160,10 +161,15 @@ async function recordUsage(ctx: UsageContext, outputTokens: number): Promise<voi
       // mais une erreur d'insert doit rester visible dans les logs Vercel —
       // avant ce correctif, un catch muet a fait disparaître ce type de bug
       // pendant des mois sans qu'aucune alerte ne remonte nulle part.
+      // captureServerError() ferme la boucle : ce cas precis (colonne
+      // model_id incompatible) aurait ete detecte par Sentry des le premier
+      // appel plutot que des mois plus tard, a la main.
       console.error('[model-proxy] recordUsage insert failed:', error)
+      captureServerError(error, { route: 'model-proxy/chat/completions', stage: 'recordUsage.insert', userId: ctx.userId })
     }
   } catch (err) {
     console.error('[model-proxy] recordUsage threw:', err)
+    captureServerError(err, { route: 'model-proxy/chat/completions', stage: 'recordUsage.catch', userId: ctx.userId })
   }
 }
 
@@ -812,6 +818,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('[model-proxy] error:', err)
+    captureServerError(err, { route: 'model-proxy/chat/completions' })
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

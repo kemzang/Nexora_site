@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 import { verifyToken } from '@/lib/auth-verify'
 import { PLANS, type PlanId } from '@/lib/models'
+import { captureServerError } from '@/lib/sentry'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// zod etait une dependance jamais utilisee : cette route validait `name`/
+// `displayName` a la main (juste un `?.trim()`), donc un payload malforme
+// (ex. name: 123 au lieu d'une string) faisait planter `.trim()` avec une
+// TypeError rattrapee par le catch generique — 500 au lieu d'un 400 clair.
+const createRoomSchema = z.object({
+  name: z.string().trim().max(100).optional(),
+  displayName: z.string().trim().max(100).optional(),
+})
 
 /** Plan actif de l'utilisateur (défaut: free). Détermine la limite de collaborateurs. */
 async function getUserPlan(userId: string): Promise<PlanId> {
@@ -31,7 +42,15 @@ export async function POST(req: NextRequest) {
     const userId = await verifyToken(authHeader.split(' ')[1])
     if (!userId) return NextResponse.json({ error: 'Token invalide' }, { status: 401 })
 
-    const { name, displayName } = await req.json().catch(() => ({}))
+    const body = await req.json().catch(() => ({}))
+    const parsed = createRoomSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Requête invalide', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
+      )
+    }
+    const { name, displayName } = parsed.data
 
     const inviteToken = Array.from(crypto.getRandomValues(new Uint8Array(24)))
       .map(b => b.toString(16).padStart(2, '0'))
@@ -81,6 +100,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ room, inviteLink, webLink }, { status: 201 })
   } catch (err) {
+    console.error('[collab/rooms] POST error:', err)
+    captureServerError(err, { route: 'collab/rooms', method: 'POST' })
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
@@ -105,6 +126,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ owned: ownedRooms ?? [] })
   } catch (err) {
+    console.error('[collab/rooms] GET error:', err)
+    captureServerError(err, { route: 'collab/rooms', method: 'GET' })
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

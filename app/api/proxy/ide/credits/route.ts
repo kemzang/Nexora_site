@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-verify'
 import { createClient } from '@supabase/supabase-js'
 import { PLANS, type PlanId } from '@/lib/models'
+import { captureServerError } from '@/lib/sentry'
 
 export const runtime = 'nodejs'
 
@@ -26,32 +27,57 @@ export async function GET(req: NextRequest) {
     return buildResponse(cached.plan, cached.used, cached.periodEnd)
   }
 
-  const { data: subscription } = await supabase
-    .from('user_subscriptions')
-    .select('current_period_end, subscription_plans!inner(slug)')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    // Exclut un abonnement expiré → l'utilisateur repasse en Free.
-    .gt('current_period_end', new Date().toISOString())
-    .maybeSingle()
+  // Sans ce try/catch, un hoquet Supabase (reseau, timeout) remontait en 500
+  // brut sans log — exactement la meme classe de silence qui a fait croire
+  // pendant des mois que la conso etait bloquee a 0 (cf. recordUsage() dans
+  // model-proxy/v1/chat/completions/route.ts). Ici on degrade proprement sur
+  // le cache perime si dispo, sinon un 503 explicite plutot qu'un crash muet.
+  try {
+    const { data: subscription, error: subError } = await supabase
+      .from('user_subscriptions')
+      .select('current_period_end, subscription_plans!inner(slug)')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      // Exclut un abonnement expiré → l'utilisateur repasse en Free.
+      .gt('current_period_end', new Date().toISOString())
+      .maybeSingle()
 
-  const plan = ((subscription?.subscription_plans as { slug?: string } | null)?.slug ?? 'free') as PlanId
-  const periodEnd = (subscription?.current_period_end as string | undefined) ?? null
+    if (subError) throw subError
 
-  const now = new Date()
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const plan = ((subscription?.subscription_plans as { slug?: string } | null)?.slug ?? 'free') as PlanId
+    const periodEnd = (subscription?.current_period_end as string | undefined) ?? null
 
-  const { data: sessions } = await supabase
-    .from('usage_sessions')
-    .select('tokens_input, tokens_total')
-    .eq('user_id', userId)
-    .gte('started_at', startOfMonth)
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-  const used = (sessions ?? []).reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('usage_sessions')
+      .select('tokens_input, tokens_total')
+      .eq('user_id', userId)
+      .gte('started_at', startOfMonth)
 
-  usageCache.set(userId, { used, plan, periodEnd, expiresAt: Date.now() + 60_000 })
+    if (sessionsError) throw sessionsError
 
-  return buildResponse(plan, used, periodEnd)
+    const used = (sessions ?? []).reduce((s, r) => s + (r.tokens_total ?? r.tokens_input ?? 0), 0)
+
+    usageCache.set(userId, { used, plan, periodEnd, expiresAt: Date.now() + 60_000 })
+
+    return buildResponse(plan, used, periodEnd)
+  } catch (error) {
+    console.error('[ide/credits] Supabase error:', error)
+    captureServerError(error, { route: 'ide/credits', userId })
+
+    // Repli sur le dernier cache connu (meme perime) plutot qu'un 503 sec :
+    // mieux vaut un chiffre legerement en retard qu'un ecran d'erreur.
+    if (cached) {
+      return buildResponse(cached.plan, cached.used, cached.periodEnd)
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to load usage — please retry' },
+      { status: 503 },
+    )
+  }
 }
 
 function buildResponse(plan: PlanId, used: number, periodEnd: string | null) {
