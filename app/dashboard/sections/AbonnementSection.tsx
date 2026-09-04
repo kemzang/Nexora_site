@@ -143,7 +143,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
 
       if (data?.subscription_plans) {
         const plan = data.subscription_plans
-        const tokensPerMonth: number = plan.tokens_per_month || 10000
+        const tokensPerMonth: number = plan.tokens_per_month || PLANS.free.tokensPerMonth
         setSub({
           planName: plan.name || 'Free',
           planSlug: plan.slug || 'free',

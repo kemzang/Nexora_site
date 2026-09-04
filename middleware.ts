@@ -181,6 +181,7 @@ export async function middleware(req: NextRequest) {
   const IP_ONLY_RATE_LIMITED_PREFIXES = [
     '/api/payments/',
     '/api/webhooks/lemonsqueezy',
+    '/api/webhooks/paddle',
   ]
   if (IP_ONLY_RATE_LIMITED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const ip =

@@ -90,8 +90,9 @@ export default function TermsPage() {
                 l'autre.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                Les paiements sont traités par notre prestataire tiers NotchPay (carte bancaire et Mobile
-                Money). Nexora ne stocke pas vos données de carte bancaire.
+                Les paiements sont traités par notre prestataire tiers Paddle, qui agit en tant que revendeur
+                officiel (Merchant of Record) pour les transactions par carte bancaire. Nexora ne stocke pas vos
+                données de carte bancaire.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Une fois votre quota mensuel de crédits atteint, l'accès aux fonctionnalités IA est suspendu

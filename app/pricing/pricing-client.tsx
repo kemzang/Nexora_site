@@ -63,7 +63,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Quels moyens de paiement acceptez-vous ?',
-    a: "La carte bancaire et le Mobile Money (MTN Mobile Money, Orange Money) via notre partenaire de paiement NotchPay, selon votre pays.",
+    a: "La carte bancaire (Visa, Mastercard) via notre partenaire de paiement Paddle, disponible dans le monde entier.",
   },
   {
     q: 'Le plan Free expire-t-il ?',
@@ -145,7 +145,7 @@ export default function PricingPageClient() {
               >
                 <PricingCard
                   name={plan.name}
-                  price={`${plan.price}€`}
+                  price={plan.priceLabel}
                   period={plan.price > 0 ? '/mois' : undefined}
                   features={plan.features}
                   href={`/checkout?plan=${key}`}
@@ -181,7 +181,7 @@ export default function PricingPageClient() {
             </thead>
             <tbody>
               {[
-                { label: 'Prix', render: (k: PlanId) => PLANS[k].price > 0 ? `${PLANS[k].price}€/mois` : 'Gratuit' },
+                { label: 'Prix', render: (k: PlanId) => PLANS[k].price > 0 ? `${PLANS[k].priceLabel}/mois` : 'Gratuit' },
                 { label: 'Crédits / mois', render: (k: PlanId) => formatCredits(PLANS[k].tokensPerMonth) },
                 { label: 'Requêtes / jour', render: (k: PlanId) => formatRequests(PLANS[k].maxRequestsPerDay) },
                 { label: 'Collaborateurs max', render: (k: PlanId) => formatCollaborators(PLANS[k].maxCollaborators) },

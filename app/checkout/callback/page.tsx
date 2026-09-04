@@ -22,11 +22,12 @@ function CallbackContent() {
     const urlStatus = searchParams.get('status')
     if (urlStatus === 'canceled') { setStatus('failed'); return }
 
-    // ── Lemon Squeezy : pas de statut à interroger côté fournisseur — la
-    // vraie activation vient d'un webhook asynchrone (app/api/webhooks/
-    // lemonsqueezy). On sonde donc notre propre backend jusqu'à ce que le
-    // plan attendu apparaisse (généralement quelques secondes).
-    if (provider === 'lemonsqueezy') {
+    // ── Lemon Squeezy / Paddle : pas de statut à interroger côté fournisseur
+    // — la vraie activation vient d'un webhook asynchrone (app/api/webhooks/
+    // lemonsqueezy ou app/api/webhooks/paddle). On sonde donc notre propre
+    // backend jusqu'à ce que le plan attendu apparaisse (généralement
+    // quelques secondes).
+    if (provider === 'lemonsqueezy' || provider === 'paddle') {
       const expectedPlan = searchParams.get('plan')
       let attempts = 0
       const MAX_ATTEMPTS = 15 // ~30s à 2s d'intervalle

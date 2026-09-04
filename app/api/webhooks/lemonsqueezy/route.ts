@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { PLANS, type PlanId } from '@/lib/models'
+import { captureServerError } from '@/lib/sentry'
 
 // ── Lemon Squeezy webhook ────────────────────────────────────────────────────
 // Configure in the Lemon Squeezy dashboard (Settings > Webhooks) pointing at
@@ -167,6 +168,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('[lemonsqueezy webhook] handler error:', err)
+    captureServerError(err, { eventName, reference })
     // On répond quand même 200 : une erreur de notre côté ne doit pas
     // déclencher un déluge de re-essais Lemon Squeezy pour un événement
     // qu'on a déjà reçu et logué. Le log ci-dessus reste la source de vérité

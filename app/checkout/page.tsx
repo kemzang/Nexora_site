@@ -12,27 +12,45 @@ import { CreditCard, Lock, ArrowLeft, Loader2, Shield, Wifi } from 'lucide-react
 import { useAuth } from '@/hooks/use-auth'
 import { useTranslation } from '@/lib/i18n/context'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { PLANS, type PlanId } from '@/lib/models'
+import { PADDLE_PRICE_IDS, isPaddleSandbox } from '@/lib/paddle'
 
 declare global {
   interface Window {
-    LemonSqueezy?: {
-      Setup: (opts: { eventHandler: (event: { event: string; data?: unknown }) => void }) => void
-      Url: { Open: (url: string) => void }
+    Paddle?: {
+      Environment: { set: (env: 'sandbox' | 'production') => void }
+      Initialize: (opts: {
+        token: string
+        eventCallback?: (event: { name: string; data?: unknown }) => void
+      }) => void
+      Checkout: {
+        open: (opts: {
+          items: { priceId: string; quantity: number }[]
+          customer?: { email: string }
+          customData?: Record<string, unknown>
+          settings?: { successUrl?: string }
+        }) => void
+      }
     }
   }
 }
 
 /* ─── Plan config ────────────────────────────────────────────────── */
-const planDetails: Record<string, { name: string; price: string; color: string }> = {
-  free:       { name: 'Free',          price: '0€',  color: '#94a3b8' },
-  // Forfaits de test temporaires ($1 / $2)
-  test1:      { name: 'Test 1 semaine',  price: '1€',  color: '#94a3b8' },
-  test2:      { name: 'Test 2 semaines', price: '2€',  color: '#94a3b8' },
-  starter:    { name: 'Starter',       price: '5€',  color: '#38bdf8' },
-  pro:        { name: 'Pro',           price: '12€', color: '#f59e0b' },
-  business:   { name: 'Business',      price: '30€', color: '#10b981' },
-  enterprise: { name: 'Enterprise',    price: '80€', color: '#94a3b8' },
+const PLAN_COLORS: Record<string, string> = {
+  free: '#94a3b8',
+  test1: '#94a3b8',
+  test2: '#94a3b8',
+  starter: '#38bdf8',
+  pro: '#f59e0b',
+  business: '#10b981',
+  enterprise: '#94a3b8',
 }
+const planDetails: Record<string, { name: string; price: string; color: string }> = Object.fromEntries(
+  Object.entries(PLANS).map(([key, plan]) => [
+    key,
+    { name: plan.name, price: plan.priceLabel, color: PLAN_COLORS[key] ?? '#94a3b8' },
+  ]),
+)
 
 /* ─── Virtual card (decorative) ──────────────────────────────────── */
 function VirtualCard({ holder, exp }: { holder: string; exp: string }) {
@@ -86,7 +104,7 @@ function VirtualCard({ holder, exp }: { holder: string; exp: string }) {
 function CheckoutForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const { t } = useTranslation()
   const plan = searchParams.get('plan') || 'starter'
   const currentPlan = planDetails[plan] || planDetails.pro
@@ -96,50 +114,56 @@ function CheckoutForm() {
   const [error, setError] = useState<string | null>(null)
   const [scriptReady, setScriptReady] = useState(false)
 
-  // Enregistre le handler de succès dès que Lemon.js est chargé — c'est lui
-  // qui nous dit que le paiement (dans l'overlay, jamais hors de cette page)
-  // a abouti côté client. La vraie activation de l'abonnement se fait par
-  // webhook côté serveur (voir app/api/webhooks/lemonsqueezy) ; cet event
-  // sert seulement à faire avancer l'UI immédiatement.
+  const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
+
+  // Initialise Paddle.js dès que le script est chargé. Le callback d'event
+  // nous dit que le paiement (dans l'overlay, jamais hors de cette page) a
+  // abouti côté client. La vraie activation de l'abonnement se fait par
+  // webhook côté serveur (voir app/api/webhooks/paddle) ; cet event sert
+  // seulement à faire avancer l'UI immédiatement.
   useEffect(() => {
-    if (!scriptReady || !window.LemonSqueezy) return
-    window.LemonSqueezy.Setup({
-      eventHandler: (event) => {
-        if (event.event === 'Checkout.Success') {
-          router.push(`/checkout/callback?provider=lemonsqueezy&plan=${encodeURIComponent(plan)}`)
+    if (!scriptReady || !window.Paddle || !clientToken) return
+    window.Paddle.Environment.set(isPaddleSandbox(clientToken) ? 'sandbox' : 'production')
+    window.Paddle.Initialize({
+      token: clientToken,
+      eventCallback: (event) => {
+        if (event.name === 'checkout.completed') {
+          router.push(`/checkout/callback?provider=paddle&plan=${encodeURIComponent(plan)}`)
         }
       },
     })
-  }, [scriptReady, router, plan])
+  }, [scriptReady, clientToken, router, plan])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    if (!scriptReady || !window.LemonSqueezy) {
+    if (!scriptReady || !window.Paddle || !clientToken) {
+      setError(ch.errors.initError)
+      return
+    }
+    if (!user) {
+      setError(ch.errors.initError)
+      return
+    }
+
+    const priceId = PADDLE_PRICE_IDS[plan as PlanId]
+    if (!priceId) {
       setError(ch.errors.initError)
       return
     }
 
     setLoading(true)
     try {
-      const res = await fetch('/api/payments/lemonsqueezy/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      window.Paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customer: { email: user.email },
+        customData: { user_id: user.id, plan },
+        settings: {
+          successUrl: `${appUrl}/checkout/callback?provider=paddle&plan=${encodeURIComponent(plan)}`,
         },
-        body: JSON.stringify({ plan }),
       })
-      const data = await res.json()
-
-      if (!data.success || !data.url) {
-        setError(data.error || ch.errors.initError)
-        setLoading(false)
-        return
-      }
-
-      window.LemonSqueezy.Url.Open(data.url)
       setLoading(false)
     } catch {
       setError(ch.errors.connection)
@@ -150,7 +174,7 @@ function CheckoutForm() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <Script
-        src="https://app.lemonsqueezy.com/js/lemon.js"
+        src="https://cdn.paddle.com/paddle/v2/paddle.js"
         strategy="afterInteractive"
         onReady={() => setScriptReady(true)}
       />
@@ -220,7 +244,7 @@ function CheckoutForm() {
             <div className="flex justify-center">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-xs text-muted-foreground/60">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Secured by Lemon Squeezy
+                Secured by Paddle
               </div>
             </div>
           </div>

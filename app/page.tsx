@@ -14,6 +14,7 @@ import { StatCard } from '@/components/patterns/stat-card'
 import { PricingCard } from '@/components/patterns/pricing-card'
 import { SiteHeader } from '@/components/patterns/site-header'
 import { SiteFooter } from '@/components/patterns/site-footer'
+import { PLANS } from '@/lib/models'
 import {
   Sparkles, Zap, Code, TrendingUp, CheckCircle, ArrowRight,
   Rocket, Shield, Globe, Terminal, Cpu, Brain, Star,
@@ -22,11 +23,11 @@ import {
 const featureIcons = [Brain, Zap, Code, TrendingUp, Globe, Shield]
 
 const plans = [
-  { key: 'free',       name: 'Free',       price: '0€',   href: '/checkout?plan=free',       popular: false },
-  { key: 'starter',    name: 'Starter',    price: '5€',   href: '/checkout?plan=starter',    popular: false },
-  { key: 'pro',        name: 'Pro',        price: '12€',  href: '/checkout?plan=pro',        popular: true  },
-  { key: 'business',   name: 'Business',   price: '30€',  href: '/checkout?plan=business',   popular: false },
-  { key: 'enterprise', name: 'Enterprise', price: '80€',  href: '/checkout?plan=enterprise', popular: false },
+  { key: 'free',       name: PLANS.free.name,       price: PLANS.free.priceLabel,       href: '/checkout?plan=free',       popular: false },
+  { key: 'starter',    name: PLANS.starter.name,    price: PLANS.starter.priceLabel,    href: '/checkout?plan=starter',    popular: false },
+  { key: 'pro',        name: PLANS.pro.name,        price: PLANS.pro.priceLabel,        href: '/checkout?plan=pro',        popular: true  },
+  { key: 'business',   name: PLANS.business.name,   price: PLANS.business.priceLabel,   href: '/checkout?plan=business',   popular: false },
+  { key: 'enterprise', name: PLANS.enterprise.name, price: PLANS.enterprise.priceLabel, href: '/checkout?plan=enterprise', popular: false },
 ]
 
 function TerminalMockup() {
@@ -265,7 +266,7 @@ export default function HomePage() {
               <PricingCard
                 name={plan.name}
                 price={plan.price}
-                period={plan.price !== '0€' ? t.pricing.period : undefined}
+                period={plan.key !== 'free' ? t.pricing.period : undefined}
                 features={t.pricing.planFeatures[plan.key] || []}
                 href={plan.href}
                 popular={plan.popular}

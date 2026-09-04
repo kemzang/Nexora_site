@@ -152,7 +152,7 @@ const fr: Translations = {
       enterprise: 'Tous les modèles',
     },
     planFeatures: {
-      free: ['100K crédits le 1er mois, puis 10K/mois', '200 requêtes/jour', 'DeepSeek, Gemini Flash'],
+      free: ['100 000 crédits/mois', '200 requêtes/jour', 'DeepSeek, Gemini Flash'],
       starter: ['4M crédits/mois', '500 requêtes/jour', '+ Gemini Pro', 'Autocomplétion illimitée'],
       pro: ['15M crédits/mois', '2 000 requêtes/jour', '+ Claude Haiku & Sonnet', 'Mode Agent', 'Support prioritaire'],
       business: ['40M crédits/mois', '5 000 requêtes/jour', '+ Claude Opus', 'Mode équipe', 'Support prioritaire'],
@@ -289,7 +289,7 @@ const en: Translations = {
       enterprise: 'All models',
     },
     planFeatures: {
-      free: ['100K credits first month, then 10K/mo', '200 requests/day', 'DeepSeek, Gemini Flash'],
+      free: ['100K credits/month', '200 requests/day', 'DeepSeek, Gemini Flash'],
       starter: ['4M credits/mo', '500 requests/day', '+ Gemini Pro', 'Unlimited autocomplete'],
       pro: ['15M credits/mo', '2,000 requests/day', '+ Claude Haiku & Sonnet', 'Agent Mode', 'Priority support'],
       business: ['40M credits/mo', '5,000 requests/day', '+ Claude Opus', 'Team mode', 'Priority support'],
@@ -426,7 +426,7 @@ const es: Translations = {
       enterprise: 'Todos los modelos',
     },
     planFeatures: {
-      free: ['100K créditos primer mes, luego 10K/mes', '200 solicitudes/día', 'DeepSeek, Gemini Flash'],
+      free: ['100K créditos/mes', '200 solicitudes/día', 'DeepSeek, Gemini Flash'],
       starter: ['4M créditos/mes', '500 solicitudes/día', '+ Gemini Pro', 'Autocompletado ilimitado'],
       pro: ['15M créditos/mes', '2.000 solicitudes/día', '+ Claude Haiku & Sonnet', 'Modo Agente', 'Soporte prioritario'],
       business: ['40M créditos/mes', '5.000 solicitudes/día', '+ Claude Opus', 'Modo equipo', 'Soporte prioritario'],
@@ -563,7 +563,7 @@ const pt: Translations = {
       enterprise: 'Todos os modelos',
     },
     planFeatures: {
-      free: ['100K créditos no 1º mês, depois 10K/mês', '200 requisições/dia', 'DeepSeek, Gemini Flash'],
+      free: ['100K créditos/mês', '200 requisições/dia', 'DeepSeek, Gemini Flash'],
       starter: ['4M créditos/mês', '500 requisições/dia', '+ Gemini Pro', 'Autocompletar ilimitado'],
       pro: ['15M créditos/mês', '2.000 requisições/dia', '+ Claude Haiku & Sonnet', 'Modo Agente', 'Suporte prioritário'],
       business: ['40M créditos/mês', '5.000 requisições/dia', '+ Claude Opus', 'Modo equipe', 'Suporte prioritário'],

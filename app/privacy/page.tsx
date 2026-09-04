@@ -25,7 +25,7 @@ const SECTIONS = [
 
 const SUBPROCESSORS = [
   { name: 'Supabase', role: "Hébergement de la base de données, authentification et stockage du compte utilisateur." },
-  { name: 'NotchPay', role: "Traitement des paiements (carte bancaire et Mobile Money). Nexora ne stocke pas vos données de carte." },
+  { name: 'Paddle', role: "Revendeur officiel (Merchant of Record) : traite les paiements par carte bancaire, la TVA/taxes internationales et la facturation. Nexora ne stocke pas vos données de carte." },
   { name: 'Resend', role: "Envoi des emails transactionnels (confirmation de paiement, notifications de compte)." },
   { name: 'Upstash', role: "Cache technique utilisé pour la limitation de débit (anti-abus) et la cohérence des quotas." },
 ]
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
               <h2 className="text-lg font-bold mb-3">1. Données collectées</h2>
               <ul className="text-sm text-muted-foreground leading-relaxed space-y-1.5 list-disc list-inside">
                 <li><strong className="text-foreground/80 font-medium">Compte</strong> : adresse email, nom affiché, langue préférée.</li>
-                <li><strong className="text-foreground/80 font-medium">Abonnement & facturation</strong> : plan souscrit, historique de paiement (traité par NotchPay, voir section 5).</li>
+                <li><strong className="text-foreground/80 font-medium">Abonnement & facturation</strong> : plan souscrit, historique de paiement (traité par Paddle, voir section 5).</li>
                 <li><strong className="text-foreground/80 font-medium">Utilisation du Service</strong> : volume de tokens consommés par requête, modèle IA utilisé et horodatage — nécessaires au calcul de votre quota et à la facturation. Le contenu de vos conversations et de votre code est transmis aux modèles IA pour générer une réponse, mais n'est pas conservé par Nexora au-delà de ce qui est nécessaire au fonctionnement du Service.</li>
                 <li><strong className="text-foreground/80 font-medium">Préférences d'extension</strong> : réglages enregistrés dans l'extension IDE (modèle préféré, etc.).</li>
                 <li><strong className="text-foreground/80 font-medium">Clés API</strong> : si vous générez des clés API depuis le tableau de bord pour authentifier l'extension ou la CLI.</li>
@@ -85,9 +85,10 @@ export default function PrivacyPage() {
             <section id="paiement" className="mb-9 scroll-mt-24">
               <h2 className="text-lg font-bold mb-3">3. Paiement</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Les paiements sont traités par notre prestataire NotchPay, qui gère directement vos informations
-                de carte bancaire ou de Mobile Money. Nexora n'a pas accès à votre numéro de carte complet et ne
-                le stocke pas sur ses serveurs.
+                Les paiements sont traités par notre prestataire Paddle, qui agit en tant que revendeur officiel
+                (Merchant of Record) et gère directement vos informations de carte bancaire ainsi que la TVA/taxes
+                applicables. Nexora n'a pas accès à votre numéro de carte complet et ne le stocke pas sur ses
+                serveurs.
               </p>
             </section>
 

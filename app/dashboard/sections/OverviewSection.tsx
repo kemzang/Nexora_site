@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Zap, Key, BarChart3, Star, ArrowRight, Bot, TrendingUp, Clock, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
+import { PLANS } from '@/lib/models'
 import Link from 'next/link'
 
 interface OverviewSectionProps {
@@ -78,7 +79,7 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
 
       const planName = plan?.name || 'Free'
       const planSlug = plan?.slug || 'free'
-      const tokensPerMonth = plan?.tokens_per_month || 10000
+      const tokensPerMonth = plan?.tokens_per_month || PLANS.free.tokensPerMonth
 
       setStats({
         tokensRemaining: Math.max(0, tokensPerMonth - tokensUsed),
