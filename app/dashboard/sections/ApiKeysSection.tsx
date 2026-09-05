@@ -156,7 +156,7 @@ export default function ApiKeysSection() {
         <CardContent className="p-4 flex gap-3">
           <Shield className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-300/90 leading-relaxed">
-            Vos clés API donnent un accès complet à vos tokens Nexora. Ne les partagez jamais et révoquez immédiatement toute clé compromise.
+            Vos clés API donnent un accès complet à vos crédits Nexora. Ne les partagez jamais et révoquez immédiatement toute clé compromise.
           </p>
         </CardContent>
       </Card>

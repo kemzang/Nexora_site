@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   Sparkles, Zap, Star, Check, ArrowRight, Crown, Loader2,
-  Calendar, RefreshCw, AlertCircle
+  Calendar, RefreshCw, AlertCircle, XCircle
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -22,6 +22,7 @@ interface SubscriptionData {
   renewalDate: string | null
   status: string
   features: string[]
+  cancelAtPeriodEnd: boolean
 }
 
 const UPGRADE_PLANS = [
@@ -79,9 +80,12 @@ const UPGRADE_PLANS = [
 const PLAN_ORDER = ['free', 'starter', 'pro', 'business', 'enterprise']
 
 export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: string) => void }) {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [sub, setSub] = useState<SubscriptionData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [cancelConfirm, setCancelConfirm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
   // Plans actifs en base qui ne sont pas déjà dans la liste codée en dur
   // (ex. plans de test). Ils s'affichent automatiquement et se masquent dès
   // qu'on passe leur `is_active` à false en base — aucun redéploiement requis.
@@ -126,7 +130,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
       const [subResult, sessionsResult] = await Promise.all([
         supabase
           .from('user_subscriptions')
-          .select('status, current_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
+          .select('status, current_period_end, cancel_at_period_end, subscription_plans(name, slug, price, tokens_per_month, features)')
           .eq('user_id', userId)
           .eq('status', 'active')
           .maybeSingle() as any,
@@ -153,6 +157,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
           renewalDate: data.current_period_end,
           status: data.status,
           features: Array.isArray(plan.features) ? plan.features : [],
+          cancelAtPeriodEnd: !!data.cancel_at_period_end,
         })
       } else {
         // Pas de ligne user_subscriptions active = plan Free. On lit les
@@ -169,12 +174,51 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
           renewalDate: null,
           status: 'active',
           features: freePlan.features,
+          cancelAtPeriodEnd: false,
         })
       }
     } catch {
       setSub(null)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function callSubscriptionAction(action: 'cancel-subscription' | 'resume-subscription') {
+    const res = await fetch(`/api/payments/paddle/${action}`, {
+      method: 'POST',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Erreur serveur')
+    }
+  }
+
+  async function handleCancelRenewal() {
+    setCancelling(true)
+    setCancelError(null)
+    try {
+      await callSubscriptionAction('cancel-subscription')
+      setSub((s) => (s ? { ...s, cancelAtPeriodEnd: true } : s))
+      setCancelConfirm(false)
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'Erreur serveur')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  async function handleResumeRenewal() {
+    setCancelling(true)
+    setCancelError(null)
+    try {
+      await callSubscriptionAction('resume-subscription')
+      setSub((s) => (s ? { ...s, cancelAtPeriodEnd: false } : s))
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'Erreur serveur')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -238,7 +282,7 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
             {/* Token usage bar */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Tokens utilisés ce mois</span>
+                <span className="text-muted-foreground">Crédits utilisés ce mois</span>
                 <span className="text-foreground font-medium">
                   {(sub.tokensPerMonth - sub.tokensRemaining).toLocaleString('fr-FR')} / {sub.tokensPerMonth.toLocaleString('fr-FR')}
                 </span>
@@ -252,11 +296,11 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
                 />
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{sub.tokensRemaining.toLocaleString('fr-FR')} tokens restants</span>
+                <span>{sub.tokensRemaining.toLocaleString('fr-FR')} crédits restants</span>
                 {sub.renewalDate && (
                   <span className="flex items-center gap-1">
                     <RefreshCw className="w-3 h-3" />
-                    Renouvellement le {new Date(sub.renewalDate).toLocaleDateString('fr-FR')}
+                    {sub.cancelAtPeriodEnd ? 'Accès jusqu\'au' : 'Renouvellement le'} {new Date(sub.renewalDate).toLocaleDateString('fr-FR')}
                   </span>
                 )}
               </div>
@@ -266,6 +310,54 @@ export default function AbonnementSection({ onNavigate }: { onNavigate?: (s: str
               <div className="mt-4 flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 Vous approchez de votre limite mensuelle. Pensez à upgrader.
+              </div>
+            )}
+
+            {sub.planSlug !== 'free' && sub.renewalDate && (
+              <div className="mt-4 pt-4 border-t border-border/50">
+                {cancelError && (
+                  <p className="text-xs text-red-400 mb-2">{cancelError}</p>
+                )}
+                {sub.cancelAtPeriodEnd ? (
+                  <div className="flex items-center justify-between gap-3 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2.5">
+                    <span className="text-amber-300/90">
+                      Le renouvellement automatique est désactivé — votre accès {sub.planName} s'arrête le{' '}
+                      {new Date(sub.renewalDate).toLocaleDateString('fr-FR')}.
+                    </span>
+                    <button
+                      onClick={handleResumeRenewal}
+                      disabled={cancelling}
+                      className="shrink-0 px-2.5 py-1 rounded-lg bg-white/[0.06] text-foreground hover:bg-white/[0.1] font-medium transition-colors disabled:opacity-50"
+                    >
+                      {cancelling ? 'Réactivation...' : 'Réactiver'}
+                    </button>
+                  </div>
+                ) : cancelConfirm ? (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">Arrêter le renouvellement automatique ? Vous garderez l'accès jusqu'au {new Date(sub.renewalDate).toLocaleDateString('fr-FR')}.</span>
+                    <button
+                      onClick={handleCancelRenewal}
+                      disabled={cancelling}
+                      className="shrink-0 px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 font-medium transition-colors disabled:opacity-50"
+                    >
+                      {cancelling ? 'Confirmation...' : 'Oui, arrêter'}
+                    </button>
+                    <button
+                      onClick={() => setCancelConfirm(false)}
+                      className="shrink-0 px-2.5 py-1 rounded-lg bg-white/[0.05] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Garder
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setCancelConfirm(true)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-400 transition-colors"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    Annuler le renouvellement automatique
+                  </button>
+                )}
               </div>
             )}
           </CardContent>

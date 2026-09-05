@@ -43,6 +43,7 @@ interface PaddlePayload {
     custom_data?: { user_id?: string; plan?: string } | null
     next_billed_at?: string | null
     current_billing_period?: { ends_at?: string } | null
+    scheduled_change?: { action?: string; effective_at?: string } | null
   }
 }
 
@@ -103,11 +104,22 @@ async function activateFromCustomData(
   if (error) console.error('[paddle webhook] insert user_subscriptions failed:', error.message)
 }
 
-async function renewSubscription(reference: string, periodEnd: string | undefined): Promise<void> {
+async function renewSubscription(
+  reference: string,
+  periodEnd: string | undefined,
+  scheduledChange: PaddlePayload['data']['scheduled_change'],
+): Promise<void> {
   if (!periodEnd) return
+  // `scheduled_change.action === 'cancel'` reflète une résiliation programmée
+  // (via notre bouton ou le portail client Paddle) : on garde ce champ en
+  // phase avec Paddle, quelle que soit son origine.
   const { error } = await admin
     .from('user_subscriptions')
-    .update({ current_period_end: new Date(periodEnd).toISOString(), status: 'active' })
+    .update({
+      current_period_end: new Date(periodEnd).toISOString(),
+      status: 'active',
+      cancel_at_period_end: scheduledChange?.action === 'cancel',
+    })
     .eq('stripe_subscription_id', reference)
   if (error) console.error('[paddle webhook] renew failed:', error.message)
 }
@@ -157,7 +169,7 @@ export async function POST(req: NextRequest) {
           break
         case 'subscription.updated':
           if (payload.data.status === 'active') {
-            await renewSubscription(reference, periodEnd)
+            await renewSubscription(reference, periodEnd, payload.data.scheduled_change)
           } else if (payload.data.status === 'canceled' || payload.data.status === 'paused') {
             await deactivateSubscription(reference)
           }

@@ -102,7 +102,7 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
 
   const statCards = [
     {
-      label: 'Tokens restants',
+      label: 'Crédits restants',
       value: stats.tokensRemaining.toLocaleString('fr-FR'),
       sub: `Sur ${stats.tokensTotal.toLocaleString('fr-FR')} ce mois`,
       icon: Zap,
@@ -229,7 +229,7 @@ export default function OverviewSection({ user, onNavigate }: OverviewSectionPro
                   {
                     icon: CreditCard,
                     label: stats.planSlug === 'free' ? 'Passer au Pro' : 'Gérer l\'abonnement',
-                    desc: stats.planSlug === 'free' ? 'Débloquer plus de tokens' : 'Voir votre plan',
+                    desc: stats.planSlug === 'free' ? 'Débloquer plus de crédits' : 'Voir votre plan',
                     color: 'text-amber-400',
                     bg: 'bg-amber-500/10',
                     hover: 'hover:bg-amber-500/15 hover:border-amber-500/30',

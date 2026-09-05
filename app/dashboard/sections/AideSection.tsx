@@ -18,12 +18,12 @@ const FAQ = [
     a: 'Dans VS Code, ouvrez la palette de commandes (Ctrl+Shift+P), tapez "Nexora: Login" et suivez les instructions. Vous serez redirigé vers votre navigateur pour vous authentifier.',
   },
   {
-    q: 'Qu\'est-ce qu\'un token et comment sont-ils comptés ?',
-    a: 'Un token correspond approximativement à 4 caractères de texte. Chaque requête IA consomme des tokens en entrée (votre message + contexte) et en sortie (la réponse générée). Le décompte est visible dans votre tableau de bord.',
+    q: 'Qu\'est-ce qu\'un crédit et comment est-il compté ?',
+    a: 'Un crédit correspond à un token (environ 4 caractères de texte), pondéré selon le modèle utilisé — les modèles plus puissants (Claude Opus, Sonnet...) consomment plus de crédits par token que les modèles économiques (DeepSeek, Gemini Flash). Chaque requête IA consomme des crédits en entrée (votre message + contexte) et en sortie (la réponse générée). Le décompte est visible dans votre tableau de bord.',
   },
   {
-    q: 'Mes tokens non utilisés sont-ils reportés au mois suivant ?',
-    a: 'Non, les tokens se réinitialisent à chaque renouvellement mensuel. Ils ne sont pas cumulables d\'un mois à l\'autre.',
+    q: 'Mes crédits non utilisés sont-ils reportés au mois suivant ?',
+    a: 'Non, les crédits se réinitialisent à chaque renouvellement mensuel. Ils ne sont pas cumulables d\'un mois à l\'autre.',
   },
   {
     q: 'Comment changer de plan ou annuler mon abonnement ?',

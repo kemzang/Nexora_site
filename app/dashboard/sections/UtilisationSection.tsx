@@ -180,7 +180,7 @@ function AreaChart({ data, period }: AreaChartProps) {
           }}
         >
           <p className="text-xs text-muted-foreground mb-0.5">{new Date(hovered.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <p className="font-bold text-sm text-foreground">{hovered.tokens.toLocaleString('fr-FR')} tokens</p>
+          <p className="font-bold text-sm text-foreground">{hovered.tokens.toLocaleString('fr-FR')} crédits</p>
           <p className="text-xs text-muted-foreground">{hovered.requests} requête{hovered.requests > 1 ? 's' : ''}</p>
         </div>
       )}
@@ -252,7 +252,7 @@ export default function UtilisationSection() {
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Utilisation</h1>
-          <p className="text-muted-foreground text-sm mt-1">Consommation globale de tokens sur la période</p>
+          <p className="text-muted-foreground text-sm mt-1">Consommation globale de crédits sur la période</p>
         </div>
         {/* Period filter */}
         <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-border/50">
@@ -276,7 +276,7 @@ export default function UtilisationSection() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
-            label: 'Tokens consommés',
+            label: 'Crédits consommés',
             value: loading ? '—' : totalTokens.toLocaleString('fr-FR'),
             icon: Zap,
             color: 'text-foreground/70',
@@ -326,7 +326,7 @@ export default function UtilisationSection() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-foreground/70" />
-              Consommation de tokens
+              Consommation de crédits
               {!loading && hasData && trend !== 0 && (
                 <span className={`flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-md ${
                   trend > 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'
@@ -367,7 +367,7 @@ export default function UtilisationSection() {
               <p className="text-sm font-medium">Pic de consommation</p>
               <p className="text-xs text-muted-foreground">
                 {new Date(peakDay.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} ·{' '}
-                <span className="text-foreground/70 font-medium">{peakDay.tokens.toLocaleString('fr-FR')} tokens</span> ·{' '}
+                <span className="text-foreground/70 font-medium">{peakDay.tokens.toLocaleString('fr-FR')} crédits</span> ·{' '}
                 {peakDay.requests} requête{peakDay.requests > 1 ? 's' : ''}
               </p>
             </div>

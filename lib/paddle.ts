@@ -18,3 +18,16 @@ export const PADDLE_PRICE_IDS: Partial<Record<PlanId, string>> = {
 export function isPaddleSandbox(clientToken: string | undefined): boolean {
   return !clientToken || clientToken.startsWith('test_')
 }
+
+/** Base URL de l'API Paddle server-side, selon PADDLE_ENV (voir .env.local). */
+export function paddleApiBaseUrl(): string {
+  return process.env.PADDLE_ENV === 'production'
+    ? 'https://api.paddle.com'
+    : 'https://sandbox-api.paddle.com'
+}
+
+/** Extrait l'id de souscription Paddle depuis la référence stockée en base ("paddle_sub_<id>"). */
+export function paddleSubscriptionIdFromReference(reference: string): string | null {
+  const m = reference.match(/^paddle_sub_(.+)$/)
+  return m ? m[1] : null
+}
